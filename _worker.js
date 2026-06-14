@@ -1668,7 +1668,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
             text += `📱 **${t("device_limit")}**: ${maxCfgTxt}\n`;
             text += `📝 **${t("notes")}**: ${notesTxt}\n`;
             text += `━━━━━━━━━━━━━━━━\n`;
-            text += `🔗 **${t("lbl_subscription")}:**\n${subSync}`;
+            text += `🔗 **${t("lbl_subscription")}:**\n\`${subSync}\``;
             
             const kb = {
                 inline_keyboard: [
@@ -2127,7 +2127,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     await fetch(`${tgApi}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: chatId, text: subUrl })
+                        body: JSON.stringify({ chat_id: chatId, text: `\`${subUrl}\``, parse_mode: 'Markdown' })
                     });
                     answerText = t("sub_link_sent");
                 }
