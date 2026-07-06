@@ -4483,6 +4483,11 @@ function buildPortCheckboxes(wrapId, selectedPorts) {
       textarea.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
+  window.changeThemeVariant = function(val) {
+      document.documentElement.setAttribute('data-theme', val);
+      localStorage.setItem('theme_variant', val);
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
       const savedVariant = localStorage.getItem('theme_variant') || 'system';
       document.documentElement.setAttribute('data-theme', savedVariant);
