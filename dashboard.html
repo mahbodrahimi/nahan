@@ -1113,57 +1113,56 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                           </div>
 
                           <!-- Section: Cloudflare -->
-<div class="bg-[var(--color-surface)] rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden" data-accordion="">
-    <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-        <div class="flex items-center gap-3">
-            <span class="text-lg">☁️</span>
-            <span class="text-sm font-bold text-slate-700 dark:text-white" data-i18n="adv_cloudflare">Cloudflare</span>
-        </div>
-        <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-200 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-    </button>
-    <div data-accordion-content="" class="transition-all duration-300" style="max-height:0;overflow:hidden;visibility:hidden">
-        <div class="space-y-3 px-5 pb-5 pt-1">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_acc">CF Account ID</label>
-                    <input type="text" id="cfg-cf-acc" placeholder="a1b2c3d4e5f6..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_token">CF API Token</label>
-                    <div class="relative">
-                        <input type="password" id="cfg-cf-token" placeholder="Bearer Token (Read Analytics)" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono pe-12">
-                        <button type="button" onclick="const n=document.getElementById('cfg-cf-token');n.type=n.type==='password'?'text':'password'" class="absolute inset-y-0 end-0 flex items-center px-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">👁️</button>
-                    </div>
-                </div>
-            </div>
-            <div class="space-y-1">
-                <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_worker">CF Worker Script Name</label>
-                <input type="text" id="cfg-cf-worker" placeholder="e.g. nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
-                <p class="text-xs text-slate-400" data-i18n="desc_cf_worker">Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.</p>
-            </div>
-            <p class="text-xs text-slate-400" data-i18n="desc_cf_api">Optional: Monitor Worker free usage limits (100k/day). Needs Account Analytics Read permission.</p>
-            <div class="border-t border-slate-100 dark:border-darkborder pt-3">
-                <button type="button" onclick="document.getElementById('cf-helper-guide').classList.toggle('hidden')" class="w-full text-start px-4 py-3 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold rounded-xl flex items-center justify-between transition-colors">
-                    <span class="flex items-center gap-1.5">
-                        💡 <span data-i18n="cf_help_title">Need help getting these? Beginner's Guide</span>
-                    </span>
-                    <span class="text-[10px] transform transition-transform duration-200">▼</span>
-                </button>
-                <div id="cf-helper-guide" class="hidden mt-3 p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200 dark:border-darkborder rounded-2xl text-[11px] space-y-4 text-start leading-relaxed">
-                    <div class="space-y-1 pb-3 border-b border-dashed border-slate-200 dark:border-darkborder">
-                        <h5 class="font-extrabold text-[var(--color-text)] flex items-center gap-1">🇬🇧 Beginner's Walkthrough:</h5>
-                        <ol class="list-decimal list-inside space-y-1 text-slate-500 dark:text-slate-400">
-                            <li><strong>CF API Token:</strong> Click <a href="https://dash.cloudflare.com/profile/api-tokens?template=edit-workers" target="_blank" class="text-primary hover:underline font-bold">Api Token Template ↗</a>. Click <strong>Use Template</strong>, then <strong>Continue to summary</strong> &gt; <strong>Create Token</strong>. Copy and paste above!</li>
-                            <li><strong>CF Account ID:</strong> Open any Cloudflare Workers page. Copy the 32-char string after <code>dash.cloudflare.com/</code> in the URL.</li>
-                            <li><strong>Worker Script Name:</strong> Go to <strong>Compute &gt; Workers &amp; Pages</strong> in Cloudflare. Copy your worker's name.</li>
-                        </ol>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-                      </div>
+                              <div class="bg-[var(--color-surface)] rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden" data-accordion="">
+                                  <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                      <div class="flex items-center gap-3">
+                                          <span class="text-lg">☁️</span>
+                                          <span class="text-sm font-bold text-slate-700 dark:text-white" data-i18n="adv_cloudflare">Cloudflare</span>
+                                      </div>
+                                      <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-200 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                  </button>
+                                  <div data-accordion-content="" class="transition-all duration-300" style="max-height:0;overflow:hidden;visibility:hidden">
+                                      <div class="space-y-3 px-5 pb-5 pt-1">
+                                          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                              <div class="space-y-1">
+                                                  <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_acc">CF Account ID</label>
+                                                  <input type="text" id="cfg-cf-acc" placeholder="a1b2c3d4e5f6..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
+                                              </div>
+                                              <div class="space-y-1">
+                                                  <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_token">CF API Token</label>
+                                                  <div class="relative">
+                                                      <input type="password" id="cfg-cf-token" placeholder="Bearer Token (Read Analytics)" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono pe-12">
+                                                      <button type="button" onclick="const n=document.getElementById('cfg-cf-token');n.type=n.type==='password'?'text':'password'" class="absolute inset-y-0 end-0 flex items-center px-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">👁️</button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                          <div class="space-y-1">
+                                              <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_worker">CF Worker Script Name</label>
+                                              <input type="text" id="cfg-cf-worker" placeholder="e.g. nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
+                                              <p class="text-xs text-slate-400" data-i18n="desc_cf_worker">Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.</p>
+                                          </div>
+                                          <p class="text-xs text-slate-400" data-i18n="desc_cf_api">Optional: Monitor Worker free usage limits (100k/day). Needs Account Analytics Read permission.</p>
+                                          <div class="border-t border-slate-100 dark:border-darkborder pt-3">
+                                              <button type="button" onclick="document.getElementById('cf-helper-guide').classList.toggle('hidden')" class="w-full text-start px-4 py-3 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold rounded-xl flex items-center justify-between transition-colors">
+                                                  <span class="flex items-center gap-1.5">
+                                                      💡 <span data-i18n="cf_help_title">Need help getting these? Beginner's Guide</span>
+                                                  </span>
+                                                  <span class="text-[10px] transform transition-transform duration-200">▼</span>
+                                              </button>
+                                              <div id="cf-helper-guide" class="hidden mt-3 p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200 dark:border-darkborder rounded-2xl text-[11px] space-y-4 text-start leading-relaxed">
+                                                  <div class="space-y-1 pb-3 border-b border-dashed border-slate-200 dark:border-darkborder">
+                                                      <h5 class="font-extrabold text-[var(--color-text)] flex items-center gap-1">🇬🇧 Beginner's Walkthrough:</h5>
+                                                      <ol class="list-decimal list-inside space-y-1 text-slate-500 dark:text-slate-400">
+                                                          <li><strong>CF API Token:</strong> Click <a href="https://dash.cloudflare.com/profile/api-tokens?template=edit-workers" target="_blank" class="text-primary hover:underline font-bold">Api Token Template ↗</a>. Click <strong>Use Template</strong>, then <strong>Continue to summary</strong> &gt; <strong>Create Token</strong>. Copy and paste above!</li>
+                                                          <li><strong>CF Account ID:</strong> Open any Cloudflare Workers page. Copy the 32-char string after <code>dash.cloudflare.com/</code> in the URL.</li>
+                                                          <li><strong>Worker Script Name:</strong> Go to <strong>Compute &gt; Workers &amp; Pages</strong> in Cloudflare. Copy your worker's name.</li>
+                                                      </ol>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
                           <!-- USERS VIEW -->
                       <div id="view-users" class="hidden space-y-4">
                           <!-- Compact Stats Bar -->
