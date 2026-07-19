@@ -2094,81 +2094,97 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           // ============================================
           // CHECK FOR UPDATE FUNCTION
           // ============================================
-async function checkForUpdate() {
-    const btn = document.getElementById('btn-check-update');
-    const statusDiv = document.getElementById('update-status');
-    const actionsDiv = document.getElementById('update-actions');
-    
-    if (!btn) return;
-    
-    const origText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Checking...';
-    
-    statusDiv.classList.remove('hidden');
-    statusDiv.className = 'text-sm text-slate-500 animate-pulse';
-    statusDiv.innerHTML = 'Checking for updates...';
-    applyLang();
-    
-    try {
-        console.log('Sending check_for_update request...'); // ← دیباگ
-        
-        const res = await fetch(baseRoute + '/api/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                key: sessionKey, 
-                action: 'check_for_update' 
-            })
-        });
-        
-        const result = await res.json();
-        console.log('Update check result:', result); // ← دیباگ
-        
-        const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-        
-        if (result.error) {
-            statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-            statusDiv.innerHTML = `❌ ${result.error}`;
-            actionsDiv.classList.add('hidden');
-            return;
-        }
-        
-        if (result.updateAvailable) {
-            statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
-            statusDiv.innerHTML = `🎉 ${t('update_available')} (${result.latest})`;
-            
-            pendingUpdate = {
-                current: result.current,
-                latest: result.latest,
-                whatsNew: result.whatsNew
-            };
-            
-            actionsDiv.classList.remove('hidden');
-            actionsDiv.innerHTML = `
-                <button onclick="showUpdateConfirmModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    <span>${t('update_now')}</span>
-                </button>
-            `;
-        } else {
-            statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-            statusDiv.innerHTML = `✅ ${t('update_not_available')} (current: ${result.current})`;
-            actionsDiv.classList.add('hidden');
-        }
-        
-        applyLang();
-        
-    } catch (e) {
-        console.error('Update check error:', e); // ← دیباگ
-        statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-        statusDiv.innerHTML = `❌ ${t('update_check_failed') || 'Failed to check for updates.'}`;
-        actionsDiv.classList.add('hidden');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = origText;
-    }
-}
+          async function checkForUpdate() {
+              const btn = document.getElementById('btn-check-update');
+              const statusDiv = document.getElementById('update-status');
+              const actionsDiv = document.getElementById('update-actions');
+              
+              if (!btn) return;
+              
+              const origText = btn.innerHTML;
+              btn.disabled = true;
+              btn.innerHTML = '⏳ Checking...';
+              
+              statusDiv.classList.remove('hidden');
+              statusDiv.className = 'text-sm text-slate-500 animate-pulse';
+              statusDiv.innerHTML = '<span data-i18n="checking_update">Checking for updates...</span>';
+              applyLang();
+              
+              try {
+                  // Check remote version
+                  const versionRes = await fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/version');
+                  const latestVersion = (await versionRes.text()).trim();
+                  
+                  // Get current version from DOM
+                  const currentVersionEl = document.getElementById('app-version');
+                  const currentVersion = currentVersionEl ? currentVersionEl.textContent.replace('v', '').trim() : '0.0.0';
+                  
+                  if (latestVersion && latestVersion !== currentVersion) {
+                      // Show update available
+                      const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+                      statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
+                      statusDiv.innerHTML = `🎉 ${t('update_available')} (${latestVersion})`;
+                      
+                      // Fetch what's new
+                      let whatsNewText = '';
+                      try {
+                          const wnRes = await fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/whatnew');
+                          const wnText = await wnRes.text();
+                          // Parse what's new
+                          const lines = wnText.split('\n').filter(line => line.trim());
+                          const versionLine = lines.find(line => line.trim().startsWith(latestVersion));
+                          if (versionLine) {
+                              const startIdx = lines.indexOf(versionLine) + 1;
+                              let endIdx = lines.length;
+                              for (let i = startIdx; i < lines.length; i++) {
+                                  if (lines[i].trim().match(/^[\d.]+/)) {
+                                      endIdx = i;
+                                      break;
+                                  }
+                              }
+                              const changes = lines.slice(startIdx, endIdx).filter(line => line.trim());
+                              whatsNewText = changes.join('\n');
+                          } else {
+                              // Fallback: use all content
+                              whatsNewText = wnText;
+                          }
+                      } catch (e) {
+                          console.error('Error fetching changelog:', e);
+                          whatsNewText = 'Update available. Please check GitHub for details.';
+                      }
+                      
+                      pendingUpdate = {
+                          current: currentVersion,
+                          latest: latestVersion,
+                          whatsNew: whatsNewText
+                      };
+                      
+                      // Show update button
+                      actionsDiv.classList.remove('hidden');
+                      actionsDiv.innerHTML = `
+                          <button onclick="showUpdateConfirmModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                              <span>${t('update_now')}</span>
+                          </button>
+                      `;
+                  } else {
+                      statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+                      statusDiv.innerHTML = `✅ ${i18n[lang]?.update_not_available || 'You are running the latest version.'}`;
+                      actionsDiv.classList.add('hidden');
+                  }
+                  
+                  applyLang();
+                  
+              } catch (e) {
+                  statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+                  statusDiv.innerHTML = `❌ ${i18n[lang]?.update_check_failed || 'Failed to check for updates.'}`;
+                  actionsDiv.classList.add('hidden');
+              } finally {
+                  btn.disabled = false;
+                  btn.innerHTML = origText;
+              }
+          }
+
           // ============================================
           // UPDATE CONFIRMATION MODAL
           // ============================================
@@ -2297,64 +2313,25 @@ async function checkForUpdate() {
           // ============================================
           // The applyUpdate function is now a placeholder that shows a message
           // about manual update process.
-async function applyUpdate() {
-    const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-    
-    // Close the modal
-    closeUpdateConfirmModal();
-    
-    // Show loading status
-    const statusDiv = document.getElementById('update-status');
-    const actionsDiv = document.getElementById('update-actions');
-    
-    statusDiv.classList.remove('hidden');
-    statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400 animate-pulse';
-    statusDiv.innerHTML = '⏳ ' + (lang === 'fa' ? 'در حال بروزرسانی... لطفاً صبر کنید...' : 'Updating... Please wait...');
-    actionsDiv.classList.add('hidden');
-    applyLang();
-    
-    try {
-        // Send apply_update request to backend
-        const res = await fetch(baseRoute + '/api/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                key: sessionKey, 
-                action: 'apply_update' 
-            })
-        });
-        
-        const result = await res.json();
-        
-        if (result.success) {
-            statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-            statusDiv.innerHTML = '✅ ' + (lang === 'fa' 
-                ? `بروزرسانی با موفقیت انجام شد! (نسخه ${result.latest})` 
-                : `Update successful! (version ${result.latest})`);
-            
-            // Show reload button
-            actionsDiv.classList.remove('hidden');
-            actionsDiv.innerHTML = `
-                <button onclick="location.reload()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all">
-                    🔄 ${lang === 'fa' ? 'بارگذاری مجدد' : 'Reload'}
-                </button>
-            `;
-        } else {
-            statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-            statusDiv.innerHTML = '❌ ' + (lang === 'fa' 
-                ? `بروزرسانی ناموفق: ${result.error || 'خطای ناشناخته'}` 
-                : `Update failed: ${result.error || 'Unknown error'}`);
-        }
-        
-    } catch (e) {
-        statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-        statusDiv.innerHTML = '❌ ' + (lang === 'fa' 
-            ? `خطا در ارتباط با سرور: ${e.message}` 
-            : `Server error: ${e.message}`);
-    }
-    
-    applyLang();
-}
+          async function applyUpdate() {
+              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+              
+              // Close the modal
+              closeUpdateConfirmModal();
+              
+              // Show a message that the user needs to update manually
+              const statusDiv = document.getElementById('update-status');
+              const actionsDiv = document.getElementById('update-actions');
+              
+              statusDiv.classList.remove('hidden');
+              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
+              statusDiv.innerHTML = '🔧 ' + (lang === 'fa' 
+                  ? 'برای بروزرسانی به داشبورد → تنظیمات → برسی آپدیت مراجعه کنید و سپس روی دکمه بروزرسانی کلیک کنید.'
+                  : 'To update, go to Dash → Settings → Check for Update and click the update button.');
+              
+              actionsDiv.classList.add('hidden');
+              applyLang();
+          }
 
           function checkVersionPopup() {
               const popupKey = `nahan_shown_v__CURRENT_VERSION__`;
