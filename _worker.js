@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "2.9.4";
+const CURRENT_VERSION = "2.9.5";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -27,7 +27,7 @@ const safeBtoa = (str) => {
 // ===== AUTO UPDATE CONFIGURATION =====
 const CLEAN_IPS_URL = "https://mahbodrahimi.ir/Nahan/iplist.txt";
 const CLEAN_IPS_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
-const SOURCE_UPDATE_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours - CHANGE THIS VALUE TO CHANGE CHECK INTERVAL
+const SOURCE_UPDATE_INTERVAL = 0.5 * 60 * 60 * 1000; // 6 hours - CHANGE THIS VALUE TO CHANGE CHECK INTERVAL
 const SOURCE_REPO = "mahbodrahimi/nahan"; // GitHub repository for source updates
 let lastCleanIpsUpdate = 0;
 let lastSourceUpdateCheck = 0;
@@ -35,7 +35,7 @@ let lastSourceUpdateCheck = 0;
 const SYSTEM_DEFAULTS = {
     name: "",
     apiRoute: "sync",
-    maintenanceHost: "https://www.ubuntu.com, https://www.docker.com",
+    maintenanceHost: "https://www.microsoft.com/en-us/windows/, https://www.kali.org/",
     backupRelay: "",
     customRelay: "",
     masterKey: "admin",
