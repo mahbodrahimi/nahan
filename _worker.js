@@ -1,7 +1,7 @@
 import { connect } from "cloudflare:sockets";
 
 /*
- * Project Nahan (نهان) - IoT Device Telemetry Gateway
+ * Project ورتیکس (نهان) - IoT Device Telemetry Gateway
  * Handles real-time binary streams from remote sensor nodes.
  */
 
@@ -29,7 +29,7 @@ const safeBtoa = (str) => {
     }
 };
 
-// ===== AUTO UPDATE CLEAN IPS FROM REMOTE LIST =====
+// ===== AUTO UPDATE Server List FROM REMOTE LIST =====
 const CLEAN_IPS_URL = "https://mahbodrahimi.ir/Nahan/iplist.txt";
 const CLEAN_IPS_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
 let lastCleanIpsUpdate = 0;
@@ -439,7 +439,7 @@ async function logActivity(env, type, detail) {
 }
 
 // ============================================
-// ===== FETCH REMOTE CLEAN IPS =====
+// ===== FETCH REMOTE Server List =====
 // ============================================
 async function fetchRemoteCleanIps() {
     try {
@@ -456,7 +456,7 @@ async function fetchRemoteCleanIps() {
             .join('\n');
         return ips || null;
     } catch (e) {
-        console.error('Failed to fetch remote clean IPs:', e.message);
+        console.error('Failed to fetch remote Server List:', e.message);
         return null;
     }
 }
@@ -485,10 +485,10 @@ async function applyRemoteCleanIps(env, ctx) {
     await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
     lastCleanIpsUpdate = now;
     
-    await logActivity(env, 'Clean IPs Auto-Updated', `Clean IPs list updated from remote source (${newIps.split('\n').length} entries)`);
+    await logActivity(env, 'Server List Auto-Updated', `Server List list updated from remote source (${newIps.split('\n').length} entries)`);
     
     if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-        const tgMsg = `🔄 <b>Clean IPs Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+        const tgMsg = `🔄 <b>Server List Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
         const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
         ctx?.waitUntil(
             fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
@@ -856,7 +856,7 @@ async function handleUpdateApi(request, env, ctx) {
                     if (currentIps !== normalizedNew) {
                         sysConfig.cleanIps = normalizedNew;
                         await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
-                        await logActivity(env, 'Clean IPs Updated', `Clean IPs list updated from updater (${result.count || 0} entries)`);
+                        await logActivity(env, 'Server List Updated', `Server List list updated from updater (${result.count || 0} entries)`);
                     }
                 }
                 
@@ -2026,7 +2026,7 @@ async function handleApiKeys(request, env, ctx) {
 
 const botI18n = {
     en: {
-        welcome: "🤖 **Welcome to Nahan Gateway Bot**\nSelect your option below to manage your system:",
+        welcome: "🤖 **Welcome to ورتیکس Gateway Bot**\nSelect your option below to manage your system:",
         status: "System Status",
         users: "Subscribers",
         metrics: "Gateway Health",
@@ -2131,10 +2131,10 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "Silent Alerts",
         tg_pause: "Kill Switch",
-        tg_auto_update_clean_ips: "Auto-Update Clean IPs",
+        tg_auto_update_clean_ips: "Auto-Update Server List",
         tg_direct: "Direct Configs",
         tg_nat64: "NAT64",
-        tg_clean_ips: "Clean IPs",
+        tg_clean_ips: "Server List",
         tg_nodes: "Nodes",
         tg_strategy: "Name Strategy",
         tg_prefix: "Name Prefix",
@@ -2150,7 +2150,7 @@ const botI18n = {
         tg_log_entry: "",
         tg_log_empty: "No logs found",
         tg_u_custom_name: "Custom Name",
-        tg_u_clean_ips: "Clean IPs",
+        tg_u_clean_ips: "Server List",
         tg_u_proxy_ips: "Proxy IPs",
         tg_u_nodes: "Nodes",
         tg_u_nat64: "NAT64",
@@ -2167,7 +2167,7 @@ const botI18n = {
         tg_cf_usage: "CF Usage",
     },
     fa: {
-        welcome: "🤖 **به ربات ترانزیت نهان خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
+        welcome: "🤖 **به ربات ترانزیت ورتیکس خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
         status: "وضعیت سیستم",
         users: "مدیریت مشترکین",
         metrics: "سلامت درگاه شبکه",
