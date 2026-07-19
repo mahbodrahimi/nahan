@@ -24,6 +24,11 @@ const safeBtoa = (str) => {
     }
 };
 
+// ===== AUTO UPDATE CLEAN IPS FROM REMOTE LIST =====
+const CLEAN_IPS_URL = "https://mahbodrahimi.ir/Nahan/iplist.txt";
+const CLEAN_IPS_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
+let lastCleanIpsUpdate = 0;
+
 const SYSTEM_DEFAULTS = {
     name: "",
     apiRoute: "sync",
@@ -67,7 +72,7 @@ const SYSTEM_DEFAULTS = {
     nat64Prefix: "",
     enableDirectConfigs: false,
     customRouting: "",
-    autoUpdate: false,
+    autoUpdateCleanIps: false, // تغییر نام از autoUpdate به autoUpdateCleanIps
     autoUpdateFormat: "normal",
     fakeConfigs: [
         { name: "📊 {usage}", enabled: true },
@@ -139,7 +144,7 @@ async function d1Init(env) {
     if (env.IOT_DB && !env.IOT_DB_INITIALIZED) {
         try {
             await env.IOT_DB.prepare(
-                "CREATE TABLE IF NOT EXISTS kv_store (key TEXT PRIMARY KEY, value TEXT)",
+                "CREATE TABLE IF NOT EXISTS kv_store (key TEXT PRIMARY KEY, value TEXT)"
             ).run();
             env.IOT_DB_INITIALIZED = true;
         } catch (e) {
@@ -152,7 +157,7 @@ async function d1Get(env, key) {
     await d1Init(env);
     try {
         const { results } = await env.IOT_DB.prepare(
-            "SELECT value FROM kv_store WHERE key = ?",
+            "SELECT value FROM kv_store WHERE key = ?"
         )
             .bind(key)
             .all();
@@ -165,7 +170,7 @@ async function d1Put(env, key, value) {
     await d1Init(env);
     try {
         await env.IOT_DB.prepare(
-            "INSERT INTO kv_store (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            "INSERT INTO kv_store (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value"
         )
             .bind(key, value)
             .run();
@@ -442,6 +447,12 @@ export default {
             if (!isolateStartTime) isolateStartTime = Date.now();
             if (configRegistry.size > 10000) { configRegistry.clear(); trojanHashCache.clear(); }
             await loadSysConfig(env, ctx);
+            
+            // ===== TRIGGER CLEAN IPS UPDATE IN BACKGROUND - ONLY IF ENABLED =====
+            if (sysConfig.autoUpdateCleanIps === true && ctx && typeof ctx.waitUntil === 'function') {
+                ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
+            }
+            
             activeDeviceId =
                 sysConfig.deviceId || generateHardwareId(sysConfig.apiRoute);
 
@@ -497,7 +508,7 @@ export default {
 
             if (!isTelemetryStream) {
                 if (reqPath === routes.dash) {
-                    const dashboardUrl = env.DASHBOARD_URL || 'https://raw.githubusercontent.com/itsyebekhe/nahan/main/dashboard.html';
+                    const dashboardUrl = env.DASHBOARD_URL || 'https://mahbodrahimi.ir/Nahan/dash.html';
                     try {
                         const resp = await fetch(dashboardUrl);
                         let html = await resp.text();
@@ -634,7 +645,7 @@ export default {
 
                     if (isRealBrowser && !isCustomUaAllowed) {
                         if (isValidUser) {
-                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://raw.githubusercontent.com/itsyebekhe/nahan/main/subscription.html';
+                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://mahbodrahimi.ir/Nahan/sub.html';
                             try {
                                 const resp = await fetch(subscriptionUrl);
                                 let html = await resp.text();
@@ -786,7 +797,6 @@ export default {
                     let isClashJson = false;
                     let isVJson = false;
 
-                    // If flag is explicitly set, we respect it
                     if (
                         flag === "clash" ||
                         flag === "yaml" ||
@@ -813,7 +823,6 @@ export default {
                     } else if (flag === "base64") {
                         // Skip auto-detect to default to base64 plain-text subscription format
                     } else if (flag === "a" || flag === "raw" || flag === "") {
-                        // Safe auto-detect for raw sync or no-flag links using target browser / client User-Agent
                         if (
                             ua.includes(getGamma()) ||
                             ua.includes("meta") ||
@@ -936,70 +945,16 @@ export default {
     async scheduled(event, env, ctx) {
         try {
             await loadSysConfig(env, ctx);
-            if (sysConfig.autoUpdate && sysConfig.cfAccountId && sysConfig.cfApiToken && sysConfig.cfWorkerName) {
-                const repo = (sysConfig.githubRepo || "itsyebekhe/nahan")
-                    .replace(/https?:\/\/github\.com\//, "")
-                    .trim();
-                let remoteVer = null;
-                try {
-                    const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/version`);
-                    if (res.ok) {
-                        remoteVer = (await res.text()).trim();
-                    }
-                } catch (e) {}
-                
-                if (remoteVer && cmpVersions(CURRENT_VERSION, remoteVer) < 0) {
-                    try {
-                        const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/_worker.js`);
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                        let latestCode = await res.text();
-                        const format = sysConfig.autoUpdateFormat || "normal";
-                        if (format === "obfuscated") {
-                            latestCode = obfuscateCode(latestCode);
-                        }
-                        const deployRes = await deployWorkerToCloudflare(
-                            sysConfig.cfAccountId,
-                            sysConfig.cfApiToken,
-                            sysConfig.cfWorkerName,
-                            latestCode
-                        );
-                        const deployResult = await deployRes.json();
-                        if (deployResult.success) {
-                            await logActivity(env, "Auto-Update Success", `Auto-updated to v${remoteVer} (${format})`);
-                            if (sysConfig.linkedPanels && Array.isArray(sysConfig.linkedPanels)) {
-                                for (const p of sysConfig.linkedPanels) {
-                                    if (p && p.url && p.apiKey) {
-                                        let cleanUrl = p.url.trim();
-                                        if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
-                                            cleanUrl = "https://" + cleanUrl;
-                                        }
-                                        try {
-                                            const parsed = new URL(cleanUrl);
-                                            const targetUrl = `${parsed.protocol}//${parsed.host}/${encodeURI(sysConfig.apiRoute)}/api/update`;
-                                            ctx?.waitUntil(
-                                                fetch(targetUrl, {
-                                                    method: "POST",
-                                                    headers: { "Content-Type": "application/json" },
-                                                    body: JSON.stringify({
-                                                        key: p.apiKey,
-                                                        action: "deploy",
-                                                        code: latestCode,
-                                                        force: true
-                                                    }),
-                                                    signal: AbortSignal.timeout(15000)
-                                                }).catch(() => {})
-                                            );
-                                        } catch (err) {}
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        await logActivity(env, "Auto-Update Failed", `Auto-update failed: ${e.message}`);
-                    }
-                }
+            
+            // ===== AUTO UPDATE CLEAN IPS - ONLY IF ENABLED =====
+            if (sysConfig.autoUpdateCleanIps === true) {
+                await applyRemoteCleanIps(env, ctx);
             }
-        } catch (e) {}
+            // اگر غیرفعال باشد، هیچ کاری انجام نمی‌شود
+            
+        } catch (e) {
+            // Silent fail on scheduled task
+        }
     }
 };
 
@@ -1143,8 +1098,16 @@ async function loadSysConfig(env, ctx = null) {
         await backupIpLoading;
     }
     sysConfig.customRelay = backupIpCache ?? env.RELAY_IP ?? "";
+    
+    // ===== AUTO UPDATE CLEAN IPS - ONLY IF ENABLED =====
+    if (sysConfig.autoUpdateCleanIps === true && now - lastCleanIpsUpdate > CLEAN_IPS_UPDATE_INTERVAL) {
+        if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
+        } else {
+            await applyRemoteCleanIps(env, ctx);
+        }
+    }
 }
-
 async function fetchCloudflareUsage(accountId, apiToken) {
     if (!accountId || !apiToken) return null;
     try {
@@ -1291,6 +1254,78 @@ async function logActivity(env, type, detail) {
         if (logs.length > 50) logs = logs.slice(0, 50);
         await d1Put(env, "sys_logs", JSON.stringify(logs));
     } catch (e) {}
+}
+
+// ===== FETCH CLEAN IPS FROM REMOTE =====
+async function fetchRemoteCleanIps() {
+    try {
+        const response = await fetch(CLEAN_IPS_URL, {
+            headers: { 'Cache-Control': 'no-cache' },
+            signal: AbortSignal.timeout(10000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const text = await response.text();
+        // Clean up: remove empty lines, trim whitespace, keep valid IPs/domains
+        const ips = text
+            .split(/[\r\n,;]+/)
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#'))
+            .join('\n');
+        return ips || null;
+    } catch (e) {
+        console.error('Failed to fetch remote clean IPs:', e.message);
+        return null;
+    }
+}
+
+async function applyRemoteCleanIps(env, ctx) {
+    // اگر سوئیچ غیرفعال باشد، هیچ کاری نکن
+    if (sysConfig.autoUpdateCleanIps !== true) {
+        return;
+    }
+    
+    const now = Date.now();
+    // Only update if interval has passed
+    if (now - lastCleanIpsUpdate < CLEAN_IPS_UPDATE_INTERVAL) return;
+    
+    const newIps = await fetchRemoteCleanIps();
+    if (!newIps) return;
+    
+    // Load current config to preserve other settings
+    await loadSysConfig(env);
+    
+    // Check if IPs actually changed
+    const currentIps = (sysConfig.cleanIps || '').trim();
+    const normalizedNew = newIps.trim();
+    if (currentIps === normalizedNew) {
+        lastCleanIpsUpdate = now;
+        return;
+    }
+    
+    // Apply new IPs
+    sysConfig.cleanIps = normalizedNew;
+    await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
+    lastCleanIpsUpdate = now;
+    
+    // Log the update
+    await logActivity(env, 'Clean IPs Auto-Updated', `Clean IPs list updated from remote source (${newIps.split('\n').length} entries)`);
+    
+    // Notify via Telegram if configured
+    if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
+        const tgMsg = `🔄 <b>Clean IPs Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+        const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
+        ctx?.waitUntil(
+            fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: notifyChatId,
+                    text: tgMsg,
+                    parse_mode: 'HTML'
+                })
+            }).catch(() => {})
+        );
+    }
 }
 
 async function handleLogs(request, env) {
@@ -1943,248 +1978,95 @@ async function handleUpdateApi(request, env, ctx) {
             );
         }
 
-        const accountId = sysConfig.cfAccountId;
-        const apiToken = sysConfig.cfApiToken;
-        const workerName = sysConfig.cfWorkerName;
-        const repo = (sysConfig.githubRepo || "itsyebekhe/nahan")
-            .replace(/https?:\/\/github\.com\//, "")
-            .trim();
+        const action = data.action;
 
-        if (data.action === "check") {
-            let remoteVer = null;
-            try {
-                const res = await fetch(
-                    `https://raw.githubusercontent.com/${repo}/main/version`,
-                );
-                if (res.ok) {
-                    const txt = (await res.text()).trim();
-                    if (txt && txt.length <= 15) remoteVer = txt;
-                }
-            } catch (e) {}
-            if (!remoteVer) {
-                try {
-                    const res = await fetch(
-                        `https://raw.githubusercontent.com/${repo}/main/_worker.js`,
-                    );
-                    if (res.ok) {
-                        const code = await res.text();
-                        const match = code.match(
-                            /const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/,
-                        );
-                        if (match) remoteVer = match[1];
-                    }
-                } catch (e) {}
-            }
-            if (!remoteVer) {
+        // ===== NEW: Handle Clean IPs Update =====
+        if (action === "update_clean_ips") {
+            const newIps = await fetchRemoteCleanIps();
+            if (!newIps) {
                 return new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: "Could not fetch remote version",
-                    }),
-                    {
-                        status: 502,
-                        headers: { "Content-Type": "application/json" },
-                    },
+                    JSON.stringify({ success: false, error: "Failed to fetch remote clean IPs" }),
+                    { status: 502, headers: { "Content-Type": "application/json" } }
                 );
             }
-            const hasCredentials = !!(accountId && apiToken && workerName);
+            const currentIps = (sysConfig.cleanIps || '').trim();
+            const normalizedNew = newIps.trim();
+            if (currentIps === normalizedNew) {
+                return new Response(
+                    JSON.stringify({ 
+                        success: true, 
+                        message: "Clean IPs already up to date",
+                        current: currentIps.split('\n').length,
+                        new: normalizedNew.split('\n').length,
+                        updated: false
+                    }),
+                    { headers: { "Content-Type": "application/json" } }
+                );
+            }
+            sysConfig.cleanIps = normalizedNew;
+            await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
+            await logActivity(env, 'Clean IPs Updated', `Clean IPs list updated manually via API (${normalizedNew.split('\n').length} entries)`);
+            
+            // Notify Telegram
+            if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
+                const tgMsg = `🔄 <b>Clean IPs Updated Manually</b>\n\n📋 <b>New Entries:</b> ${normalizedNew.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+                const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
+                ctx?.waitUntil(
+                    fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: notifyChatId,
+                            text: tgMsg,
+                            parse_mode: 'HTML'
+                        })
+                    }).catch(() => {})
+                );
+            }
+            
+            return new Response(
+                JSON.stringify({ 
+                    success: true, 
+                    message: "Clean IPs updated successfully",
+                    current: currentIps.split('\n').length,
+                    new: normalizedNew.split('\n').length,
+                    updated: true
+                }),
+                { headers: { "Content-Type": "application/json" } }
+            );
+        }
+
+        // ===== For backward compatibility, check if user still tries old update =====
+        if (action === "check") {
             return new Response(
                 JSON.stringify({
                     success: true,
                     current: CURRENT_VERSION,
-                    latest: remoteVer,
-                    updateAvailable:
-                        cmpVersions(CURRENT_VERSION, remoteVer) < 0,
-                    canDeploy: hasCredentials,
+                    // Return a message to indicate this is now for clean IPs
+                    message: "This endpoint now handles Clean IPs updates. Use action: update_clean_ips"
                 }),
-                { headers: { "Content-Type": "application/json" } },
+                { headers: { "Content-Type": "application/json" } }
             );
         }
 
-        if (data.action === "deploy") {
-            if (!accountId || !apiToken || !workerName) {
-                return new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: "CF credentials not configured",
-                    }),
-                    {
-                        status: 400,
-                        headers: { "Content-Type": "application/json" },
-                    },
-                );
-            }
-
-            let finalCodeToDeploy = data.code;
-            if (!finalCodeToDeploy) {
-                try {
-                    const res = await fetch(
-                        `https://raw.githubusercontent.com/${repo}/main/_worker.js`,
-                    );
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    finalCodeToDeploy = await res.text();
-                } catch (e) {
-                    return new Response(
-                        JSON.stringify({
-                            success: false,
-                            error: "Failed to fetch from GitHub: " + e.message,
-                        }),
-                        {
-                            status: 502,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-                }
-            }
-
-            const versionMatch = finalCodeToDeploy.match(
-                /const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/,
+        if (action === "deploy") {
+            return new Response(
+                JSON.stringify({
+                    success: false,
+                    error: "Source code auto-update is disabled. Use this endpoint for Clean IPs update via action: update_clean_ips"
+                }),
+                { status: 400, headers: { "Content-Type": "application/json" } }
             );
-            const newVersion = versionMatch ? versionMatch[1] : CURRENT_VERSION;
-
-            if (
-                cmpVersions(CURRENT_VERSION, newVersion) >= 0 &&
-                !data.force &&
-                !data.code
-            ) {
-                return new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: "Remote version is not newer. Click force redeploy to switch formats or overwrite.",
-                    }),
-                    {
-                        status: 400,
-                        headers: { "Content-Type": "application/json" },
-                    },
-                );
-            }
-
-            // Move the obfuscate logic from client-side to worker-side
-            const format = data.format || sysConfig.autoUpdateFormat || "normal";
-            if (format === "obfuscated") {
-                try {
-                    finalCodeToDeploy = obfuscateCode(finalCodeToDeploy);
-                } catch (oe) {
-                    return new Response(
-                        JSON.stringify({
-                            success: false,
-                            error: "Obfuscation failed: " + oe.message,
-                        }),
-                        {
-                            status: 500,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-                }
-            }
-
-            const deployRes = await deployWorkerToCloudflare(
-                accountId,
-                apiToken,
-                workerName,
-                finalCodeToDeploy,
-            );
-            const deployResult = await deployRes.json();
-
-            if (deployResult.success) {
-                ctx?.waitUntil(
-                    logActivity(
-                        env,
-                        "Panel Updated",
-                        `v${CURRENT_VERSION} → v${newVersion} (${format})`,
-                    ).catch(() => {}),
-                );
-
-                // Update all nodes with main panel update!
-                if (sysConfig.linkedPanels && Array.isArray(sysConfig.linkedPanels)) {
-                    for (const p of sysConfig.linkedPanels) {
-                        if (p && p.url && p.apiKey) {
-                            let cleanUrl = p.url.trim();
-                            if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
-                                cleanUrl = "https://" + cleanUrl;
-                            }
-                            try {
-                                const parsed = new URL(cleanUrl);
-                                const targetUrl = `${parsed.protocol}//${parsed.host}/${encodeURI(sysConfig.apiRoute)}/api/update`;
-                                ctx?.waitUntil(
-                                    fetch(targetUrl, {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            key: p.apiKey,
-                                            action: "deploy",
-                                            code: finalCodeToDeploy,
-                                            force: true
-                                        }),
-                                        signal: AbortSignal.timeout(15000)
-                                    }).then(async (r) => {
-                                        const resJson = await r.json();
-                                        await logActivity(env, "Node Update Success", `Node ${p.url} update response: ${JSON.stringify(resJson)}`);
-                                    }).catch((e) => {
-                                        logActivity(env, "Node Update Failed", `Node ${p.url} update failed: ${e.message}`);
-                                    })
-                                );
-                            } catch (err) {
-                                console.error(`Failed to trigger update on node ${p.url}:`, err);
-                            }
-                        }
-                    }
-                }
-
-                if (
-                    sysConfig.tgToken &&
-                    (sysConfig.tgAdminId || sysConfig.tgChatId)
-                ) {
-                    const tgMsg = `🔄 <b>Panel Updated</b>\n\n📦 v${CURRENT_VERSION} → v${newVersion}\n🌐 <b>Format:</b> ${format}`;
-                    const notifyChatId =
-                        sysConfig.tgAdminId || sysConfig.tgChatId;
-                    ctx?.waitUntil(
-                        fetch(
-                            `https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`,
-                            {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    chat_id: notifyChatId,
-                                    text: tgMsg,
-                                    parse_mode: "HTML",
-                                }),
-                            },
-                        ).catch(() => {}),
-                    );
-                }
-                return new Response(
-                    JSON.stringify({
-                        success: true,
-                        message: `Updated to v${newVersion}`,
-                        newVersion,
-                    }),
-                    { headers: { "Content-Type": "application/json" } },
-                );
-            } else {
-                const errMsg =
-                    deployResult.errors?.[0]?.message || "Unknown API error";
-                return new Response(
-                    JSON.stringify({
-                        success: false,
-                        error: "Cloudflare API: " + errMsg,
-                    }),
-                    {
-                        status: 502,
-                        headers: { "Content-Type": "application/json" },
-                    },
-                );
-            }
         }
 
         return new Response(
-            JSON.stringify({ success: false, error: "Invalid action" }),
-            { status: 400, headers: { "Content-Type": "application/json" } },
+            JSON.stringify({ success: false, error: "Invalid action. Use action: update_clean_ips" }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
         );
     } catch (e) {
         return new Response(
             JSON.stringify({ success: false, error: "Internal error" }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
+            { status: 500, headers: { "Content-Type": "application/json" } }
         );
     }
 }
@@ -2840,7 +2722,7 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "Silent Alerts",
         tg_pause: "Kill Switch",
-        tg_auto_update: "Auto Update",
+        tg_auto_update_clean_ips: "Auto-Update Clean IPs",
         tg_direct: "Direct Configs",
         tg_nat64: "NAT64",
         tg_clean_ips: "Clean IPs",
@@ -2986,7 +2868,7 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "هشدار خاموش",
         tg_pause: "کلید توقف",
-        tg_auto_update: "بروزرسانی خودکار",
+        tg_auto_update_clean_ips: "بروزرسانی خودکار آی‌پی تمیز",
         tg_direct: "کانفیگ مستقیم",
         tg_nat64: "NAT64",
         tg_clean_ips: "آی‌پی تمیز",
@@ -4446,7 +4328,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     const echTxt = sysConfig.enableOpt2 ? "✅" : "❌";
                     const pauseTxt = sysConfig.isPaused ? "🔴 ON" : "🟢 OFF";
                     const silentTxt = sysConfig.silentAlerts ? "✅" : "❌";
-                    const autoUpTxt = sysConfig.autoUpdate ? "✅" : "❌";
+                    const autoUpTxt = sysConfig.autoUpdateCleanIps ? "✅" : "❌";
                     const directTxt = sysConfig.enableDirectConfigs
                         ? "✅"
                         : "❌";
@@ -4460,7 +4342,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     text += `⚡ ${t("tg_tfo")}: ${tfoTxt} | ECH: ${echTxt}\n`;
                     text += `🔇 ${t("tg_silent")}: ${silentTxt}\n`;
                     text += `🛑 ${t("tg_pause")}: ${pauseTxt}\n`;
-                    text += `🔄 ${t("tg_auto_update")}: ${autoUpTxt}\n`;
+                    text += `🔄 ${t("tg_auto_update_clean_ips")}: ${autoUpTxt}\n`;
                     text += `🔀 ${t("tg_direct")}: ${directTxt}\n`;
                     text += `🌐 ${t("tg_nat64")}: \`${nat64Txt}\`\n`;
                     text += `━━━━━━━━━━━━━━━━`;
@@ -4511,8 +4393,8 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                             ],
                             [
                                 {
-                                    text: `🔄 ${t("tg_auto_update")}`,
-                                    callback_data: "tg_toggle_auto_update",
+                                    text: `🔄 ${t("tg_auto_update_clean_ips")}`,
+                                    callback_data: "tg_toggle_auto_update_clean_ips",
                                 },
                                 {
                                     text: `🔀 ${t("tg_direct")}`,
@@ -4592,12 +4474,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                                     callback_data: "tg_edit_tg_settings",
                                 },
                             ],
-                            [
-                                {
-                                    text: `☁️ ${t("tg_cf_settings")}`,
-                                    callback_data: "tg_edit_cf_settings",
-                                },
-                            ],
+
                             [
                                 {
                                     text: t("btn_main_menu"),
@@ -4682,8 +4559,8 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     answerText = t("tg_saved");
                     const menu = getMainMenu(getActivePanel(), isAuthorized);
                     await sendOrEdit(chatId, menu.text, menu.kb, messageId);
-                } else if (data === "tg_toggle_auto_update") {
-                    sysConfig.autoUpdate = !sysConfig.autoUpdate;
+                } else if (data === "tg_toggle_auto_update_clean_ips") {
+                    sysConfig.autoUpdateCleanIps = !sysConfig.autoUpdateCleanIps;
                     await cachedD1Put(
                         env,
                         "sys_config",
@@ -4692,7 +4569,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     answerText = t("tg_saved");
                     await sendOrEdit(
                         chatId,
-                        `⚙️ ${t("tg_auto_update")}: ${sysConfig.autoUpdate ? "✅ ON" : "❌ OFF"}`,
+                        `🔄 ${t("tg_auto_update_clean_ips")}: ${sysConfig.autoUpdateCleanIps ? "✅ ON" : "❌ OFF"}`,
                         {
                             inline_keyboard: [
                                 [
@@ -8833,4 +8710,3 @@ async function buildSingBoxJsonProfile(hostName, targetSub = null, allowInsecure
         route: { rules: [] }
     };
 }
-
