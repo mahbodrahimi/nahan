@@ -1995,25 +1995,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           let hostName = window.location.hostname, localUUID = "";
 
           // Fetch current version from remote source
-          function fetchCurrentVersion() {
-              fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/version')
-                  .then(res => res.text())
-                  .then(version => {
-                      const cleanVersion = version.trim();
-                      const versionBadges = document.querySelectorAll('#top-version-badge, #app-version');
-                      versionBadges.forEach(el => {
-                          el.textContent = 'v' + cleanVersion;
-                      });
-                      // Update modal badge
-                      const modalBadge = document.getElementById('modal-version-badge');
-                      if (modalBadge) {
-                          modalBadge.textContent = 'v' + cleanVersion;
-                      }
-                  })
-                  .catch(err => console.error('Error fetching version:', err));
-          }
-          fetchCurrentVersion();
-
+          
           // Override CURRENT_VERSION from remote fetch
           const originalVersion = CURRENT_VERSION;
           // We'll update it dynamically
@@ -2116,8 +2098,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   const latestVersion = (await versionRes.text()).trim();
                   
                   // Get current version from DOM
-                  const currentVersionEl = document.getElementById('app-version');
-                  const currentVersion = currentVersionEl ? currentVersionEl.textContent.replace('v', '').trim() : '0.0.0';
+                  const currentVersion = CURRENT_VERSION;
                   
                   if (latestVersion && latestVersion !== currentVersion) {
                       // Show update available
