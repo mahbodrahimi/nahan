@@ -2297,6 +2297,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
 async function applyUpdate() {
     const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
     const btn = document.getElementById('btn-apply-update');
+    const modal = document.getElementById('modal-update-confirm');
+    
+    if (!btn) return;
+    
     const origText = btn.innerHTML;
     
     // غیرفعال کردن دکمه و نمایش وضعیت در حال انجام
@@ -2304,49 +2308,67 @@ async function applyUpdate() {
     btn.innerHTML = '⏳ ' + t('update_applying');
     
     try {
-        // درخواست آپدیت به سرور (Worker)
+        // ارسال درخواست آپدیت به سرور (Worker)
         const res = await fetch(baseRoute + '/api/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 key: sessionKey,
-                action: 'apply_update' // اکشن جدید برای اعمال آپدیت
+                action: 'apply_update'  // این همان اکشنی است که در Worker.js پردازش میشود
             })
         });
         
         const data = await res.json();
         
-        if (data.success) {
-            // نمایش پیغام موفقیت
-            const statusDiv = document.getElementById('update-status');
+        // بستن مودال
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
+        // نمایش نتیجه
+        const statusDiv = document.getElementById('update-status');
+        const actionsDiv = document.getElementById('update-actions');
+        
+        if (statusDiv) {
             statusDiv.classList.remove('hidden');
-            statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-            statusDiv.innerHTML = '✅ ' + t('update_applied');
             
-            // بستن مودال
-            closeUpdateConfirmModal();
-            
-            // بارگذاری مجدد صفحه بعد از چند ثانیه
-            setTimeout(() => {
-                window.location.reload();
-            }, 3000);
-        } else {
-            // نمایش خطا
-            const statusDiv = document.getElementById('update-status');
-            statusDiv.classList.remove('hidden');
-            statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-            statusDiv.innerHTML = '❌ ' + t('update_failed').replace('{error}', data.error || 'Unknown error');
-            
-            // فعال‌سازی مجدد دکمه
-            btn.disabled = false;
-            btn.innerHTML = origText;
+            if (data.success) {
+                statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+                statusDiv.innerHTML = '✅ ' + (data.message || t('update_applied'));
+                
+                if (actionsDiv) {
+                    actionsDiv.classList.add('hidden');
+                }
+                
+                // بارگذاری مجدد صفحه بعد از 3 ثانیه
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+                statusDiv.innerHTML = '❌ ' + t('update_failed').replace('{error}', data.error || 'Unknown error');
+                
+                // فعال کردن مجدد دکمه
+                btn.disabled = false;
+                btn.innerHTML = origText;
+            }
         }
     } catch (e) {
-        // مدیریت خطای شبکه
+        console.error('Update error:', e);
+        
+        // بستن مودال
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
         const statusDiv = document.getElementById('update-status');
-        statusDiv.classList.remove('hidden');
-        statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-        statusDiv.innerHTML = '❌ ' + t('update_failed').replace('{error}', e.message);
+        if (statusDiv) {
+            statusDiv.classList.remove('hidden');
+            statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+            statusDiv.innerHTML = '❌ ' + t('update_failed').replace('{error}', e.message);
+        }
         
         btn.disabled = false;
         btn.innerHTML = origText;
