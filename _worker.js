@@ -6,6 +6,10 @@ import { connect } from "cloudflare:sockets";
  */
 
 const CURRENT_VERSION = "2.9.5";
+const SOURCE_REPO = "mahbodrahimi/nahan";
+const WHATNEW_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/whatnew`;
+const VERSION_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/version`;
+const SOURCE_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/_worker.js`;
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -28,6 +32,10 @@ const safeBtoa = (str) => {
 const CLEAN_IPS_URL = "https://mahbodrahimi.ir/Nahan/iplist.txt";
 const CLEAN_IPS_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
 let lastCleanIpsUpdate = 0;
+
+// ===== LAST UPDATE CHECK =====
+let lastUpdateCheck = 0;
+const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
 
 const SYSTEM_DEFAULTS = {
     name: "",
@@ -72,7 +80,7 @@ const SYSTEM_DEFAULTS = {
     nat64Prefix: "",
     enableDirectConfigs: false,
     customRouting: "",
-    autoUpdateCleanIps: false, // تغییر نام از autoUpdate به autoUpdateCleanIps
+    autoUpdateCleanIps: false,
     autoUpdateFormat: "normal",
     fakeConfigs: [
         { name: "📊 {usage}", enabled: true },
@@ -441,6 +449,195 @@ function trackUsage(uuid, bytes, env, ctx) {
     }
 }
 
+// ===== FETCH WHATS NEW FROM GITHUB =====
+async function fetchWhatsNew() {
+    try {
+        const response = await fetch(WHATNEW_URL, {
+            headers: { 'Cache-Control': 'no-cache' },
+            signal: AbortSignal.timeout(10000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.text();
+    } catch (e) {
+        console.error('Failed to fetch what\'s new:', e.message);
+        return null;
+    }
+}
+
+// ===== FETCH LATEST VERSION FROM GITHUB =====
+async function fetchLatestVersion() {
+    try {
+        const response = await fetch(VERSION_URL, {
+            headers: { 'Cache-Control': 'no-cache' },
+            signal: AbortSignal.timeout(10000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return (await response.text()).trim();
+    } catch (e) {
+        console.error('Failed to fetch latest version:', e.message);
+        return null;
+    }
+}
+
+// ===== FETCH LATEST SOURCE FROM GITHUB =====
+async function fetchLatestSource() {
+    try {
+        const response = await fetch(SOURCE_URL, {
+            headers: { 'Cache-Control': 'no-cache' },
+            signal: AbortSignal.timeout(15000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.text();
+    } catch (e) {
+        console.error('Failed to fetch source:', e.message);
+        return null;
+    }
+}
+
+// ===== COMPARE VERSIONS =====
+function compareVersions(v1, v2) {
+    const strip = (v) => String(v).replace(/^v/, '').trim();
+    const p1 = strip(v1).split('.').map(Number);
+    const p2 = strip(v2).split('.').map(Number);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+        const n1 = p1[i] || 0;
+        const n2 = p2[i] || 0;
+        if (n1 > n2) return 1;
+        if (n2 > n1) return -1;
+    }
+    return 0;
+}
+
+// ===== CHECK FOR UPDATE =====
+async function checkForUpdate(env, ctx) {
+    const now = Date.now();
+    // Only check every 6 hours
+    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+        return {
+            checked: false,
+            message: "Last check was less than 6 hours ago"
+        };
+    }
+    
+    lastUpdateCheck = now;
+    const latestVersion = await fetchLatestVersion();
+    const whatsNew = await fetchWhatsNew();
+    
+    if (!latestVersion) {
+        return {
+            checked: true,
+            error: "Failed to fetch latest version"
+        };
+    }
+    
+    const currentVersion = CURRENT_VERSION || "0.0.0";
+    const isNewer = compareVersions(latestVersion, currentVersion) > 0;
+    
+    // Log the check
+    await logActivity(env, 'Update Check', `Checked for updates: current=${currentVersion}, latest=${latestVersion}, available=${isNewer}`);
+    
+    return {
+        checked: true,
+        current: currentVersion,
+        latest: latestVersion,
+        updateAvailable: isNewer,
+        whatsNew: whatsNew,
+        repo: SOURCE_REPO
+    };
+}
+
+// ===== APPLY SOURCE UPDATE =====
+async function applySourceUpdate(env, ctx) {
+    const latestVersion = await fetchLatestVersion();
+    const sourceCode = await fetchLatestSource();
+    
+    if (!latestVersion || !sourceCode) {
+        return {
+            success: false,
+            error: "Failed to fetch latest version or source code"
+        };
+    }
+    
+    const currentVersion = CURRENT_VERSION || "0.0.0";
+    const isNewer = compareVersions(latestVersion, currentVersion) > 0;
+    
+    if (!isNewer) {
+        return {
+            success: false,
+            error: "No new version available",
+            current: currentVersion,
+            latest: latestVersion
+        };
+    }
+    
+    // Deploy the new code
+    const accountId = sysConfig.cfAccountId;
+    const apiToken = sysConfig.cfApiToken;
+    const workerName = sysConfig.cfWorkerName;
+    
+    if (!accountId || !apiToken || !workerName) {
+        return {
+            success: false,
+            error: "CF credentials not configured"
+        };
+    }
+    
+    const format = sysConfig.autoUpdateFormat || "normal";
+    let codeToDeploy = sourceCode;
+    
+    if (format === "obfuscated") {
+        try {
+            codeToDeploy = obfuscateCode(sourceCode);
+        } catch (e) {
+            codeToDeploy = sourceCode;
+        }
+    }
+    
+    const deployRes = await deployWorkerToCloudflare(
+        accountId,
+        apiToken,
+        workerName,
+        codeToDeploy
+    );
+    
+    const deployResult = await deployRes.json();
+    
+    if (deployResult.success) {
+        await logActivity(env, 'Source Updated', `Updated to v${latestVersion} (${format})`);
+        
+        // Notify Telegram
+        if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
+            const tgMsg = `🔄 <b>Source Code Updated</b>\n\n📦 <b>Version:</b> ${currentVersion} → ${latestVersion}\n🌐 <b>Repo:</b> ${SOURCE_REPO}\n🔧 <b>Format:</b> ${format}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+            const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
+            ctx?.waitUntil(
+                fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: notifyChatId,
+                        text: tgMsg,
+                        parse_mode: 'HTML'
+                    })
+                }).catch(() => {})
+            );
+        }
+        
+        return {
+            success: true,
+            message: `Updated to v${latestVersion}`,
+            current: currentVersion,
+            latest: latestVersion,
+            format: format
+        };
+    } else {
+        const errMsg = deployResult.errors?.[0]?.message || 'Unknown API error';
+        return {
+            success: false,
+            error: "Cloudflare API: " + errMsg
+        };
+    }
+}
+
 export default {
     async fetch(request, env, ctx) {
         try {
@@ -508,7 +705,7 @@ export default {
 
             if (!isTelemetryStream) {
                 if (reqPath === routes.dash) {
-                    const dashboardUrl = env.DASHBOARD_URL || 'https://mahbodrahimi.ir/Nahan/dash.html';
+                    const dashboardUrl = env.DASHBOARD_URL || 'https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/dashboard.html';
                     try {
                         const resp = await fetch(dashboardUrl);
                         let html = await resp.text();
@@ -645,7 +842,7 @@ export default {
 
                     if (isRealBrowser && !isCustomUaAllowed) {
                         if (isValidUser) {
-                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://mahbodrahimi.ir/Nahan/sub.html';
+                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/subscription.html';
                             try {
                                 const resp = await fetch(subscriptionUrl);
                                 let html = await resp.text();
@@ -950,7 +1147,14 @@ export default {
             if (sysConfig.autoUpdateCleanIps === true) {
                 await applyRemoteCleanIps(env, ctx);
             }
-            // اگر غیرفعال باشد، هیچ کاری انجام نمی‌شود
+            
+            // Check for updates but don't auto-update
+            if (sysConfig.cfAccountId && sysConfig.cfApiToken && sysConfig.cfWorkerName) {
+                const result = await checkForUpdate(env, ctx);
+                if (result.updateAvailable) {
+                    await logActivity(env, 'Update Available', `Version ${result.latest} is available. Current: ${result.current}`);
+                }
+            }
             
         } catch (e) {
             // Silent fail on scheduled task
@@ -1108,6 +1312,7 @@ async function loadSysConfig(env, ctx = null) {
         }
     }
 }
+
 async function fetchCloudflareUsage(accountId, apiToken) {
     if (!accountId || !apiToken) return null;
     try {
@@ -1980,7 +2185,7 @@ async function handleUpdateApi(request, env, ctx) {
 
         const action = data.action;
 
-        // ===== NEW: Handle Clean IPs Update =====
+        // ===== Handle Clean IPs Update =====
         if (action === "update_clean_ips") {
             const newIps = await fetchRemoteCleanIps();
             if (!newIps) {
@@ -2036,14 +2241,35 @@ async function handleUpdateApi(request, env, ctx) {
             );
         }
 
-        // ===== For backward compatibility, check if user still tries old update =====
+        // ===== NEW: Check for Update =====
+        if (action === "check_for_update") {
+            const result = await checkForUpdate(env, ctx);
+            return new Response(
+                JSON.stringify(result),
+                { headers: { "Content-Type": "application/json" } }
+            );
+        }
+
+        // ===== NEW: Apply Update =====
+        if (action === "apply_update") {
+            const result = await applySourceUpdate(env, ctx);
+            return new Response(
+                JSON.stringify(result),
+                { headers: { "Content-Type": "application/json" } }
+            );
+        }
+
+        // ===== For backward compatibility =====
         if (action === "check") {
+            const result = await checkForUpdate(env, ctx);
             return new Response(
                 JSON.stringify({
                     success: true,
-                    current: CURRENT_VERSION,
-                    // Return a message to indicate this is now for clean IPs
-                    message: "This endpoint now handles Clean IPs updates. Use action: update_clean_ips"
+                    current: result.current,
+                    latest: result.latest,
+                    updateAvailable: result.updateAvailable,
+                    whatsNew: result.whatsNew,
+                    message: "Use action: check_for_update for detailed check, or apply_update to deploy"
                 }),
                 { headers: { "Content-Type": "application/json" } }
             );
@@ -2053,19 +2279,23 @@ async function handleUpdateApi(request, env, ctx) {
             return new Response(
                 JSON.stringify({
                     success: false,
-                    error: "Source code auto-update is disabled. Use this endpoint for Clean IPs update via action: update_clean_ips"
+                    error: "Source code auto-deploy is disabled. Use action: apply_update to manually update",
+                    message: "This endpoint now requires manual confirmation. Check for updates first using check_for_update, then apply_update to deploy."
                 }),
                 { status: 400, headers: { "Content-Type": "application/json" } }
             );
         }
 
         return new Response(
-            JSON.stringify({ success: false, error: "Invalid action. Use action: update_clean_ips" }),
+            JSON.stringify({ 
+                success: false, 
+                error: "Invalid action. Available: update_clean_ips, check_for_update, apply_update, check" 
+            }),
             { status: 400, headers: { "Content-Type": "application/json" } }
         );
     } catch (e) {
         return new Response(
-            JSON.stringify({ success: false, error: "Internal error" }),
+            JSON.stringify({ success: false, error: "Internal error: " + e.message }),
             { status: 500, headers: { "Content-Type": "application/json" } }
         );
     }
@@ -2723,6 +2953,8 @@ const botI18n = {
         tg_silent: "Silent Alerts",
         tg_pause: "Kill Switch",
         tg_auto_update_clean_ips: "Auto-Update Clean IPs",
+        tg_check_for_update: "Check for Update",
+        tg_update_available: "Update Available!",
         tg_direct: "Direct Configs",
         tg_nat64: "NAT64",
         tg_clean_ips: "Clean IPs",
@@ -2756,6 +2988,10 @@ const botI18n = {
         tg_conns: "Active Connections",
         tg_version: "Version",
         tg_cf_usage: "CF Usage",
+        update_available_msg: "🎉 <b>New version available!</b>\n\nCurrent: <code>{current}</code>\nLatest: <code>{latest}</code>\n\n📋 <b>What's New:</b>\n{whatsNew}\n\nDo you want to update now?",
+        update_confirmed: "Updating to version {version}...",
+        update_success: "✅ <b>Update successful!</b>\n\nPanel updated to version {version}.",
+        update_failed: "❌ <b>Update failed!</b>\n\nError: {error}",
     },
     fa: {
         welcome:
@@ -2869,6 +3105,8 @@ const botI18n = {
         tg_silent: "هشدار خاموش",
         tg_pause: "کلید توقف",
         tg_auto_update_clean_ips: "بروزرسانی خودکار آی‌پی تمیز",
+        tg_check_for_update: "بررسی آپدیت جدید",
+        tg_update_available: "آپدیت جدید موجود است!",
         tg_direct: "کانفیگ مستقیم",
         tg_nat64: "NAT64",
         tg_clean_ips: "آی‌پی تمیز",
@@ -2902,6 +3140,10 @@ const botI18n = {
         tg_conns: "اتصالات فعال",
         tg_version: "نسخه",
         tg_cf_usage: "مصرف کلودفلر",
+        update_available_msg: "🎉 <b>نسخه جدید موجود است!</b>\n\nنسخه فعلی: <code>{current}</code>\nنسخه جدید: <code>{latest}</code>\n\n📋 <b>تغییرات جدید:</b>\n{whatsNew}\n\nآیا می‌خواهید بروزرسانی کنید؟",
+        update_confirmed: "در حال بروزرسانی به نسخه {version}...",
+        update_success: "✅ <b>بروزرسانی موفق!</b>\n\nپنل به نسخه {version} بروزرسانی شد.",
+        update_failed: "❌ <b>بروزرسانی ناموفق!</b>\n\nخطا: {error}",
     },
 };
 
@@ -3206,6 +3448,13 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                         callback_data: "tg_logs_menu",
                     },
                 ]);
+                // Check for update button
+                inline_keyboard.push([
+                    {
+                        text: `🔄 ${t("tg_check_for_update")}`,
+                        callback_data: "check_for_update",
+                    },
+                ]);
             }
             inline_keyboard.push([
                 {
@@ -3463,6 +3712,112 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
             return { text, kb };
         };
 
+        // ===== NEW: Handle Update Check =====
+        async function handleUpdateCheck(chatId, messageId) {
+            try {
+                const result = await checkForUpdate(env, ctx);
+                
+                if (result.updateAvailable) {
+                    const msg = t("update_available_msg")
+                        .replace(/{current}/g, result.current)
+                        .replace(/{latest}/g, result.latest)
+                        .replace(/{whatsNew}/g, result.whatsNew || t("no_changelog"));
+                    
+                    const kb = {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: `✅ ${t("btn_confirm")}`,
+                                    callback_data: `apply_update:${result.latest}`,
+                                },
+                                {
+                                    text: `❌ ${t("btn_cancel")}`,
+                                    callback_data: "main_menu",
+                                },
+                            ],
+                        ],
+                    };
+                    await sendOrEdit(chatId, msg, kb, messageId);
+                } else {
+                    const msg = `✅ **${t("tg_check_for_update")}**\n\nCurrent version: \`${result.current}\`\n${result.latest ? `Latest version: \`${result.latest}\`` : ''}\n\n${result.error ? `❌ ${result.error}` : 'No updates available.'}`;
+                    const kb = {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: t("btn_main_menu"),
+                                    callback_data: "main_menu",
+                                },
+                            ],
+                        ],
+                    };
+                    await sendOrEdit(chatId, msg, kb, messageId);
+                }
+            } catch (e) {
+                const msg = `❌ ${t("update_failed").replace(/{error}/g, e.message)}`;
+                const kb = {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: t("btn_main_menu"),
+                                callback_data: "main_menu",
+                            },
+                        ],
+                    ],
+                };
+                await sendOrEdit(chatId, msg, kb, messageId);
+            }
+        }
+
+        // ===== NEW: Handle Apply Update =====
+        async function handleApplyUpdate(chatId, messageId, version) {
+            try {
+                await sendOrEdit(chatId, t("update_confirmed").replace(/{version}/g, version), null, messageId);
+                
+                const result = await applySourceUpdate(env, ctx);
+                
+                if (result.success) {
+                    const msg = t("update_success").replace(/{version}/g, result.latest);
+                    const kb = {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: t("btn_main_menu"),
+                                    callback_data: "main_menu",
+                                },
+                            ],
+                        ],
+                    };
+                    await sendOrEdit(chatId, msg, kb, messageId);
+                } else {
+                    const msg = t("update_failed").replace(/{error}/g, result.error);
+                    const kb = {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: t("btn_main_menu"),
+                                    callback_data: "main_menu",
+                                },
+                            ],
+                        ],
+                    };
+                    await sendOrEdit(chatId, msg, kb, messageId);
+                }
+            } catch (e) {
+                const msg = t("update_failed").replace(/{error}/g, e.message);
+                const kb = {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: t("btn_main_menu"),
+                                callback_data: "main_menu",
+                            },
+                        ],
+                    ],
+                };
+                await sendOrEdit(chatId, msg, kb, messageId);
+            }
+        }
+
         if (update.callback_query) {
             const cb = update.callback_query;
             const chatId = cb.message?.chat?.id;
@@ -3509,6 +3864,11 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                 if (data === "main_menu") {
                     const menu = getMainMenu(activePanel, isAuthorized);
                     await sendOrEdit(chatId, menu.text, menu.kb, messageId);
+                } else if (data === "check_for_update") {
+                    await handleUpdateCheck(chatId, messageId);
+                } else if (data.startsWith("apply_update:")) {
+                    const version = data.replace("apply_update:", "");
+                    await handleApplyUpdate(chatId, messageId, version);
                 } else if (data === "sys_lang") {
                     sysConfig.tgBotLang = langCode === "fa" ? "en" : "fa";
                     await cachedD1Put(
