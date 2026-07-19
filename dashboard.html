@@ -1,8 +1,6 @@
-<!DOCTYPE html><html lang="en" class="dark"><head>
-<link rel="icon" type="image/png" sizes="16x16" href="https://raw.githubusercontent.com/mahbodrahimi/nahan/323a5e7dc4281a422cf650671b580df231cf888f/icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/mahbodrahimi/nahan/323a5e7dc4281a422cf650671b580df231cf888f/icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/mahbodrahimi/nahan/323a5e7dc4281a422cf650671b580df231cf888f/icon.png">
-<link rel="apple-touch-icon" href="https://mahbodrahimi.ir/Nahan/icon.png">
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
       <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +14,7 @@
       <title>Nahan Gateway</title>
       <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
       <script src="https://cdn.jsdelivr.net/gh/itsyebekhe/nahan@main/tailwindcss.js"></script>
-            <script>
+      <script>
           tailwind.config = {
     darkMode: 'class',
     theme: {
@@ -27,8 +25,6 @@
                 darkbg: 'var(--color-bg)',
                 darkcard: 'var(--color-surface)',
                 darkborder: 'var(--color-border)',
-                
-                // Map hardcoded colors in HTML to CSS vars
                 white: '#ffffff',
                 black: '#000',
                 slate: {
@@ -59,7 +55,6 @@
     --color-bg-alt: var(--slate-100);
     --color-border: var(--slate-200);
 
-    /* Light Mode slate mappings */
     --slate-50: #f8fafc;
     --slate-100: #f1f5f9;
     --slate-200: #e2e8f0;
@@ -80,7 +75,6 @@ html.dark {
     --color-bg-alt: var(--slate-100);
     --color-border: var(--slate-200);
 
-    /* Dark Mode slate mappings */
     --slate-50: #090d16;
     --slate-100: #151b26;
     --slate-200: #222b3c;
@@ -248,7 +242,6 @@ body {
     transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Perfect form styling with excellent contrast for every theme */
 input[type="text"]:not(.login-input), input[type="password"]:not(.login-input), select, textarea {
     background-color: var(--slate-100) !important;
     color: var(--slate-900) !important;
@@ -293,11 +286,9 @@ html.dark select option {
       <!-- Global Controls -->
       <div class="fixed top-4 end-4 md:top-5 md:end-5 flex items-center gap-2 z-50">
           <span id="top-version-badge" class="hidden md:inline-block px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold" style="background: color-mix(in srgb, var(--color-primary) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent); color: var(--color-primary);">v__CURRENT_VERSION__</span>
-          <a href="https://t.me/VortixVpn" id="telegram-link-btn" target="_blank" class="hidden md:inline-flex btn-top-bar p-2 rounded-xl transition-all" style="background: var(--color-surface); border: 1px solid var(--color-border); color: #0088cc;">
-    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-    </svg>
-</a>
+          <a href="https://github.com/itsyebekhe/nahan" id="github-link-btn" target="_blank" class="hidden md:inline-flex btn-top-bar p-2 rounded-xl transition-all" style="background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-muted);">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+          </a>
           <button onclick="toggleLang()" id="lang-toggle" class="btn-top-bar px-3 py-1.5 rounded-xl text-sm font-bold transition-all" style="background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text);">EN</button>
           <button onclick="toggleTheme()" class="btn-top-bar p-2 rounded-xl transition-all" style="background: var(--color-surface); border: 1px solid var(--color-border); color: #f59e0b;">
               <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -359,7 +350,7 @@ html.dark select option {
           <!-- SIDEBAR (Desktop) -->
           <aside class="hidden md:flex w-64 bg-[var(--color-surface)]  border-e border-slate-200 dark:border-darkborder flex-col z-20 shrink-0">
               <div class="flex items-center p-6 border-b border-slate-100 dark:border-darkborder/50">
-                  <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 text-primary flex items-center justify-center me-3 shrink-0"><img src="https://mahbodrahimi.ir/Nahan/icon.png" alt="icon" class="w-6 h-6"></svg></div>
+                  <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 text-primary flex items-center justify-center me-3 shrink-0"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
                   <div class="flex flex-col">
                       <h1 class="font-black text-xl leading-none" data-i18n="title">Nahan</h1>
                       <span id="app-version" class="text-[10px] font-mono text-slate-400 mt-1 font-semibold">v__CURRENT_VERSION__</span>
@@ -371,9 +362,9 @@ html.dark select option {
                       <span class="font-semibold" data-i18n="tab_overview">Dashboard</span>
                   </button>
                   <button onclick="switchTab('info')" id="tab-info" class="nav-item flex items-center w-full px-4 py-3 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 group">
-    <svg class="w-5 h-5 me-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
-    <span class="font-semibold" data-i18n="tab_info">Endpoints</span>
-</button>
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                      <span class="font-semibold" data-i18n="tab_info">Endpoints</span>
+                  </button>
                   <button onclick="switchTab('network')" id="tab-network" class="nav-item flex items-center w-full px-4 py-3 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 group">
                       <svg class="w-6 h-6 me-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                       <span class="font-semibold" data-i18n="tab_status">Metrics</span>
@@ -394,10 +385,9 @@ html.dark select option {
                       <svg class="w-6 h-6 me-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                       <span class="font-semibold" data-i18n="tab_users">Clients</span>
                   </button>
-<button onclick="switchTab('help')" id="tab-help" class="nav-item flex items-center w-full px-4 py-3 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 group hidden">
-    <svg class="w-6 h-6 me-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-    <span class="font-semibold" data-i18n="tab_help">Help & FAQ</span>
-</button>
+                  <button onclick="switchTab('help')" id="tab-help" class="nav-item flex items-center w-full px-4 py-3 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 group">
+                      <svg class="w-6 h-6 me-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                      <span class="font-semibold" data-i18n="tab_help">Help & FAQ</span>
                   </button>
               </nav>
               <div class="p-4 border-t border-slate-100 dark:border-darkborder/50">
@@ -417,6 +407,58 @@ html.dark select option {
               <!-- Scrollable Content -->
               <div class="scroll-content flex-1 overflow-y-auto p-4 md:p-10">
                   <div class="max-w-4xl mx-auto space-y-6 fade-in">
+
+                      <!-- Update Banner -->
+                      <div id="update-alert-banner" class="hidden bg-gradient-to-r from-amber-500/10 to-primary/10 border-2 border-amber-300 dark:border-amber-950/20 rounded-3xl p-6 shadow-md flex-col items-center justify-between gap-4 fade-in">
+                          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                              <div class="flex items-center space-x-4 space-x-reverse text-start w-full">
+                                  <div class="p-3 bg-amber-500/10 text-amber-500 rounded-2xl shrink-0">
+                                      <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z"></path></svg>
+                                  </div>
+                                  <div>
+                                      <h4 class="font-black text-amber-800 dark:text-amber-400 text-base" data-i18n="update_avail">New version available!</h4>
+                                      <p id="update-alert-text" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+                                  </div>
+                              </div>
+                              <div class="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
+                                  <button onclick="dismissUpdate()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors" data-i18n="btn_cancel">Cancel</button>
+                                  <button onclick="doUpdate()" id="update-deploy-btn" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5" data-i18n="deploy_btn">
+                                      🚀 Deploy Now
+                                  </button>
+                              </div>
+                          </div>
+                          <!-- Sub-options for format choice -->
+                          <div class="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-amber-500/5 dark:bg-amber-500/[0.02] p-4 rounded-2xl border border-amber-500/10 mt-2 text-start">
+                              <div class="space-y-1">
+                                  <span class="text-xs font-bold text-amber-800 dark:text-amber-400" data-i18n="lbl_update_format">Update Format &amp; Obfuscation:</span>
+                                  <p class="text-[10px] text-slate-500 dark:text-slate-400" data-i18n="desc_update_format">Deploy clean source code, or encrypt using dynamic XOR byte-shifting to avoid network interception.</p>
+                              </div>
+                              <div class="flex items-center gap-4 shrink-0 font-medium">
+                                  <label class="inline-flex items-center cursor-pointer">
+                                      <input type="radio" name="update-format" value="normal" checked="" class="form-radio text-amber-500 w-4 h-4">
+                                      <span class="ms-1.5 text-xs text-slate-700 dark:text-slate-300 font-bold" data-i18n="format_normal">Normal (_worker.js)</span>
+                                  </label>
+                                  <label class="inline-flex items-center cursor-pointer">
+                                      <input type="radio" name="update-format" value="obfuscated" class="form-radio text-amber-500 w-4 h-4">
+                                      <span class="ms-1.5 text-xs text-slate-700 dark:text-slate-300 font-bold" data-i18n="format_obfuscated">Obfuscated (UTF-8 + XOR)</span>
+                                  </label>
+                              </div>
+                          </div>
+                          <!-- Dynamic Changelog Section -->
+                          <div id="update-changelog-area" class="hidden w-full border-t border-amber-300/30 dark:border-amber-950/20 pt-4 mt-2">
+                              <h5 class="text-xs font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                                  <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                  <span data-i18n="changelog_title">Changelog of New Version:</span>
+                              </h5>
+                              <div id="update-changelog-content" class="text-xs text-slate-600 dark:text-slate-400 bg-amber-500/[0.04] dark:bg-slate-900/40 p-4 rounded-2xl max-h-48 overflow-y-auto font-sans leading-relaxed border border-amber-200/20 max-w-none text-start">
+                                  <p class="animate-pulse">Loading changelog...</p>
+                              </div>
+                          </div>
+                          <div id="update-deploy-status" class="hidden w-full mt-3 p-3 rounded-xl text-sm font-bold text-center"></div>
+                          <div class="w-full mt-2 text-center">
+                              <a id="update-github-link" href="https://github.com/itsyebekhe/nahan" target="_blank" class="text-xs text-slate-400 hover:text-amber-500 transition-colors underline" data-i18n="view_github">View on GitHub</a>
+                          </div>
+                      </div>
 
                       <!-- OVERVIEW / DASHBOARD VIEW -->
                       <div id="view-overview" class="space-y-3 md:space-y-6 block">
@@ -722,15 +764,15 @@ html.dark select option {
                                       <button type="button" onclick="const n=document.getElementById('cfg-pass');n.type=n.type==='password'?'text':'password'" class="absolute inset-y-0 end-0 flex items-center px-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">👁️</button>
                                   </div>
                               </div>
-<div class="space-y-1 md:col-span-2 hidden">
-    <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 ms-1" data-i18n="lbl_github_repo">GitHub Update Repository</label>
-    <input type="text" id="cfg-github-repo" placeholder="itsyebekhe/nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm">
-    <div class="flex justify-start items-center gap-2 mt-2">
-        <button type="button" onclick="triggerManualRedeploy()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors border border-primary/20">
-            🔄 <span data-i18n="btn_redeploy_force">Force Redeploy / Switch Format</span>
-        </button>
-    </div>
-</div>
+                              <div class="space-y-1 md:col-span-2">
+                                  <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 ms-1" data-i18n="lbl_github_repo">GitHub Update Repository</label>
+                                  <input type="text" id="cfg-github-repo" placeholder="itsyebekhe/nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm">
+                                  <div class="flex justify-start items-center gap-2 mt-2">
+                                      <button type="button" onclick="triggerManualRedeploy()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors border border-primary/20">
+                                          🔄 <span data-i18n="btn_redeploy_force">Force Redeploy / Switch Format</span>
+                                      </button>
+                                  </div>
+                              </div>
                               <div class="space-y-1 md:col-span-2">
                                   <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 ms-1" data-i18n="lbl_sub_ua">Custom Subscription User-Agent</label>
                                   <input type="text" id="cfg-sub-ua" placeholder="e.g. MySpecialUABypass" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm">
@@ -758,39 +800,37 @@ html.dark select option {
                                       </div>
                                   </label>
                                </div>
-
-                               <!-- NEW: Auto Update Clean IPs Toggle -->
                                <div class="space-y-3 md:col-span-2">
                                    <label class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/30 cursor-pointer">
                                        <div>
-                                           <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400" data-i18n="lbl_auto_update_clean_ips">🔄 Auto-Update Clean IPs</span>
-                                           <p class="text-[10px] text-emerald-500/70 dark:text-emerald-400/60 mt-0.5" data-i18n="desc_auto_update_clean_ips">Automatically fetch and update Clean IPs list from remote source every hour</p>
+                                           <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400" data-i18n="lbl_auto_update">Auto-Update</span>
+                                           <p class="text-[10px] text-emerald-500/70 dark:text-emerald-400/60 mt-0.5">Automatically deploy when a new version is detected</p>
                                        </div>
                                        <div class="relative inline-flex items-center">
-                                           <input type="checkbox" id="cfg-auto-update-clean-ips" class="sr-only peer">
+                                           <input type="checkbox" id="cfg-auto-update" class="sr-only peer">
                                            <div class="w-11 h-6 bg-slate-300 dark:bg-slate-600 rounded-full peer peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--color-surface)] after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-emerald-500"></div>
                                        </div>
                                    </label>
-                               </div>
-
-                               <!-- ===== NEW: Check for Update Section ===== -->
-                               <div class="md:col-span-2 bg-indigo-50/70 dark:bg-indigo-950/20 rounded-2xl border border-indigo-200 dark:border-indigo-800/40 p-4 space-y-3">
-                                   <div class="flex items-center justify-between flex-wrap gap-3">
-                                       <div>
-                                           <h4 class="text-sm font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-                                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                               <span data-i18n="check_for_update_title">Check for Update</span>
-                                           </h4>
-                                           <p class="text-[10px] text-indigo-500/70 dark:text-indigo-400/60 mt-0.5" data-i18n="check_for_update_desc">Manually check if a new version is available on GitHub</p>
+                                   <div id="auto-update-format-wrap" class="hidden">
+                                       <label class="block text-xs font-bold text-slate-500 mb-2" data-i18n="lbl_auto_update_format">Update Format</label>
+                                       <div class="flex gap-3">
+                                           <label class="flex-1 flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-darkborder cursor-pointer hover:border-emerald-400 transition-colors">
+                                               <input type="radio" name="auto-update-format" value="normal" checked="" class="accent-emerald-500">
+                                               <div>
+                                               <span class="text-xs font-bold text-slate-700 dark:text-slate-300" data-i18n="format_normal_label">Normal</span>
+                                               <p class="text-[10px] text-slate-400" data-i18n="desc_format_normal">Standard _worker.js</p>
+                                               </div>
+                                           </label>
+                                           <label class="flex-1 flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-darkborder cursor-pointer hover:border-emerald-400 transition-colors">
+                                               <input type="radio" name="auto-update-format" value="obfuscated" class="accent-emerald-500">
+                                               <div>
+                                               <span class="text-xs font-bold text-slate-700 dark:text-slate-300" data-i18n="format_obfuscated_label">Obfuscated</span>
+                                               <p class="text-[10px] text-slate-400" data-i18n="desc_format_obfuscated">XOR byte-shifting</p>
+                                               </div>
+                                           </label>
                                        </div>
-                                       <button onclick="checkForUpdate()" id="btn-check-update" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
-                                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                           <span data-i18n="check_btn">Check Now</span>
-                                       </button>
                                    </div>
-                                   <div id="update-status" class="hidden text-sm"></div>
-                                   <div id="update-actions" class="hidden"></div>
-                               </div>
+                                </div>
 
                                 <!-- API Keys Management -->
                                 <div class="bg-[var(--color-surface)]/70 /70 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-white/20 dark:border-white/10 md:col-span-2 space-y-4">
@@ -1113,65 +1153,56 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                           </div>
 
                           <!-- Section: Cloudflare -->
-<!-- Section: Cloudflare -->
-<div class="bg-[var(--color-surface)]  rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden" data-accordion="">
-    <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-        <div class="flex items-center gap-3">
-            <span class="text-lg">☁️</span>
-            <span class="text-sm font-bold text-slate-700 dark:text-white" data-i18n="adv_cloudflare">Cloudflare Account Update</span>
-        </div>
-        <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-200 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-    </button>
-    <div data-accordion-content="" class="transition-all duration-300" style="max-height:0;overflow:hidden;visibility:hidden">
-        <div class="space-y-3 px-5 pb-5 pt-1">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_acc">CF Account ID</label>
-                    <input type="text" id="cfg-cf-acc" placeholder="a1b2c3d4e5f6..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_token">CF API Token</label>
-                    <div class="relative">
-                        <input type="password" id="cfg-cf-token" placeholder="Bearer Token (Read Analytics)" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono pe-12">
-                        <button type="button" onclick="const n=document.getElementById('cfg-cf-token');n.type=n.type==='password'?'text':'password'" class="absolute inset-y-0 end-0 flex items-center px-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">👁️</button>
-                    </div>
-                </div>
-            </div>
-            <div class="space-y-1">
-                <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_worker">CF Worker Script Name</label>
-                <input type="text" id="cfg-cf-worker" placeholder="e.g. nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
-                <p class="text-xs text-slate-400" data-i18n="desc_cf_worker">Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.</p>
-            </div>
-            <p class="text-xs text-slate-400" data-i18n="desc_cf_api">Optional: Monitor Worker free usage limits (100k/day). Needs Account Analytics Read permission.</p>
-            <div class="border-t border-slate-100 dark:border-darkborder pt-3">
-                <button type="button" onclick="document.getElementById('cf-helper-guide').classList.toggle('hidden')" class="w-full text-start px-4 py-3 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold rounded-xl flex items-center justify-between transition-colors">
-                    <span class="flex items-center gap-1.5">
-                        💡 <span data-i18n="cf_help_title">Need help getting these? Beginner's Guide</span>
-                    </span>
-                    <span class="text-[10px] transform transition-transform duration-200">▼</span>
-                </button>
-                <div id="cf-helper-guide" class="hidden mt-3 p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200 dark:border-darkborder rounded-2xl text-[11px] space-y-4 text-start leading-relaxed">
-                    <div class="space-y-1 pb-3 border-b border-dashed border-slate-200 dark:border-darkborder">
-                        <h5 class="font-extrabold text-[var(--color-text)] flex items-center gap-1">🇬🇧 Beginner's Walkthrough:</h5>
-                        <ol class="list-decimal list-inside space-y-1 text-slate-500 dark:text-slate-400">
-                            <li><strong>CF API Token:</strong> Click <a href="https://dash.cloudflare.com/profile/api-tokens?template=edit-workers" target="_blank" class="text-primary hover:underline font-bold">Api Token Template ↗</a>. Click <strong>Use Template</strong>, then <strong>Continue to summary</strong> &gt; <strong>Create Token</strong>. Copy and paste above!</li>
-                            <li><strong>CF Account ID:</strong> Open any Cloudflare Workers page. Copy the 32-char string after <code>dash.cloudflare.com/</code> in the URL.</li>
-                            <li><strong>Worker Script Name:</strong> Go to <strong>Compute &gt; Workers &amp; Pages</strong> in Cloudflare. Copy your worker's name.</li>
-                        </ol>
-                    </div>
-                </div>
-            </div>
-            <!-- Account Update Button -->
-            <div class="border-t border-slate-100 dark:border-darkborder pt-3 mt-2">
-                <button onclick="updateCloudflareAccount()" id="btn-update-cf" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span data-i18n="update_cf_account">Update Cloudflare Account</span>
-                </button>
-                <div id="cf-update-status" class="hidden mt-3 text-sm text-center"></div>
-            </div>
-        </div>
-    </div>
-</div>
+                          <div class="bg-[var(--color-surface)]  rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden" data-accordion="">
+                              <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                  <div class="flex items-center gap-3">
+                                      <span class="text-lg">☁️</span>
+                                      <span class="text-sm font-bold text-slate-700 dark:text-white" data-i18n="adv_cloudflare">Cloudflare</span>
+                                  </div>
+                                  <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-200 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                              </button>
+                              <div data-accordion-content="" class="transition-all duration-300" style="max-height:0;overflow:hidden;visibility:hidden">
+                                  <div class="space-y-3 px-5 pb-5 pt-1">
+                                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          <div class="space-y-1">
+                                              <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_acc">CF Account ID</label>
+                                              <input type="text" id="cfg-cf-acc" placeholder="a1b2c3d4e5f6..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
+                                          </div>
+                                          <div class="space-y-1">
+                                              <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_token">CF API Token</label>
+                                              <div class="relative">
+                                                  <input type="password" id="cfg-cf-token" placeholder="Bearer Token (Read Analytics)" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono pe-12">
+                                                  <button type="button" onclick="const n=document.getElementById('cfg-cf-token');n.type=n.type==='password'?'text':'password'" class="absolute inset-y-0 end-0 flex items-center px-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">👁️</button>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div class="space-y-1">
+                                          <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_worker">CF Worker Script Name</label>
+                                          <input type="text" id="cfg-cf-worker" placeholder="e.g. nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
+                                          <p class="text-xs text-slate-400" data-i18n="desc_cf_worker">Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.</p>
+                                      </div>
+                                      <p class="text-xs text-slate-400" data-i18n="desc_cf_api">Optional: Monitor Worker free usage limits (100k/day). Needs Account Analytics Read permission.</p>
+                                      <div class="border-t border-slate-100 dark:border-darkborder pt-3">
+                                          <button type="button" onclick="document.getElementById('cf-helper-guide').classList.toggle('hidden')" class="w-full text-start px-4 py-3 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold rounded-xl flex items-center justify-between transition-colors">
+                                              <span class="flex items-center gap-1.5">
+                                                  💡 <span data-i18n="cf_help_title">Need help getting these? Beginner's Guide</span>
+                                              </span>
+                                              <span class="text-[10px] transform transition-transform duration-200">▼</span>
+                                          </button>
+                                          <div id="cf-helper-guide" class="hidden mt-3 p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200 dark:border-darkborder rounded-2xl text-[11px] space-y-4 text-start leading-relaxed">
+                                              <div class="space-y-1 pb-3 border-b border-dashed border-slate-200 dark:border-darkborder">
+                                                  <h5 class="font-extrabold text-[var(--color-text)] flex items-center gap-1">🇬🇧 Beginner's Walkthrough:</h5>
+                                                  <ol class="list-decimal list-inside space-y-1 text-slate-500 dark:text-slate-400">
+                                                      <li><strong>CF API Token:</strong> Click <a href="https://dash.cloudflare.com/profile/api-tokens?template=edit-workers" target="_blank" class="text-primary hover:underline font-bold">Api Token Template ↗</a>. Click <strong>Use Template</strong>, then <strong>Continue to summary</strong> &gt; <strong>Create Token</strong>. Copy and paste above!</li>
+                                                      <li><strong>CF Account ID:</strong> Open any Cloudflare Workers page. Copy the 32-char string after <code>dash.cloudflare.com/</code> in the URL.</li>
+                                                      <li><strong>Worker Script Name:</strong> Go to <strong>Compute &gt; Workers &amp; Pages</strong> in Cloudflare. Copy your worker's name.</li>
+                                                  </ol>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
 
                       </div>
 
@@ -1515,13 +1546,13 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                       <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
                                           <span class="flex items-center gap-2">
                                               <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">How does "Auto-Update Clean IPs" work? / قابلیت «بروزرسانی خودکار آی‌پی تمیز» چطور کار می‌کند؟</span>
+                                              <span class="text-sm md:text-base">How does "Auto-Update" work? / قابلیت «آپدیت خودکار» چطور کار می‌کند؟</span>
                                           </span>
                                           <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                       </button>
                                       <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> When Auto-Update Clean IPs is enabled, a background task fetches the latest Clean IPs list from the remote source every hour and automatically updates your panel's Clean IPs configuration, keeping your gateway always connected through non-filtered Cloudflare IPs.</p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> وقتی بروزرسانی خودکار آی‌پی تمیز فعال باشد، یک تسک پس‌زمینه هر ساعت لیست جدید آی‌پی‌های تمیز را از منبع راه‌دور دریافت کرده و به‌طور خودکار تنظیمات آی‌پی تمیز پنل شما را به‌روز می‌کند تا دروازه شما همیشه از طریق آی‌پی‌های بدون فیلتر کلودفلر متصل باشد.</p>
+                                          <p><strong>English:</strong> When Auto-Update is enabled in System settings, a Cron Trigger runs on the background periodically checking the GitHub repository for updates. If a newer version is released, the worker automatically pulls the fresh code, applies the selected format (Normal or Obfuscated), deploys itself directly, and triggers updates across all linked panels/nodes.</p>
+                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> وقتی آپدیت خودکار در تنظیمات فعال باشد، یک کرون جاب به صورت دوره‌ای در پس‌زمینه نسخه مخزن گیت‌هاب را بررسی می‌کند. در صورت وجود نسخه جدیدتر، ورکر به صورت خودکار کد جدید را دریافت کرده، قالب انتخابی (معمولی یا مبهم‌سازی‌شده) را اعمال می‌کند، خود را مستقیماً دپلوی کرده و تمام نودها/پنل‌های متصل را همگام‌سازی می‌کند.</p>
                                       </div>
                                   </div>
 
@@ -1596,29 +1627,6 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                           </p>
                                       </div>
                                   </div>
-
-                                  <!-- Item 7: Check for Update -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">How does "Check for Update" work? / قابلیت «بررسی آپدیت» چطور کار می‌کند؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> 
-                                              • <strong>Check for Update:</strong> Manually checks the GitHub repository for a new version. If a new version is available, it shows you the "What's New" details.<br>
-                                              • <strong>Apply Update:</strong> After confirming, it downloads the new source code from GitHub and deploys it to your Cloudflare Worker automatically.<br>
-                                              • Unlike Auto-Update, this requires your manual confirmation before any changes are made.
-                                          </p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> 
-                                              • <strong>بررسی آپدیت:</strong> به‌صورت دستی مخزن گیت‌هاب را برای نسخه جدید بررسی می‌کند. اگر نسخه جدید موجود باشد، جزئیات «تغییرات جدید» را نمایش می‌دهد.<br>
-                                              • <strong>اعمال آپدیت:</strong> پس از تأیید شما، کد جدید را از گیت‌هاب دانلود کرده و به‌صورت خودکار روی وورکر کلودفلر شما دپلوی می‌کند.<br>
-                                              • برخلاف آپدیت خودکار، این قابلیت نیاز به تأیید دستی شما قبل از هر تغییری دارد.
-                                          </p>
-                                      </div>
-                                  </div>
                               </div>
                           </div>
                       </div>
@@ -1638,10 +1646,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                   <span class="text-[10px] font-bold" data-i18n="tab_overview">Dashboard</span>
               </button>
-<button onclick="switchTab('info')" id="mob-tab-info" class="mobile-tab-item mobile-nav-item flex flex-col items-center justify-center w-full h-full text-slate-400">
-    <svg class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
-    <span class="text-[10px] font-bold" data-i18n="tab_info">Endpoints</span>
-</button>
+              <button onclick="switchTab('info')" id="mob-tab-info" class="mobile-tab-item mobile-nav-item flex flex-col items-center justify-center w-full h-full text-slate-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                  <span class="text-[10px] font-bold" data-i18n="tab_info">Endpoints</span>
+              </button>
               <button onclick="switchTab('network')" id="mob-tab-network" class="mobile-tab-item mobile-nav-item flex flex-col items-center justify-center w-full h-full text-slate-400">
                   <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                   <span class="text-[10px] font-bold" data-i18n="tab_status">Metrics</span>
@@ -1662,10 +1670,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                   <span class="text-[10px] font-bold" data-i18n="tab_users">Clients</span>
               </button>
-              <button onclick="switchTab('help')" id="mob-tab-help" class="mobile-tab-item mobile-nav-item flex flex-col items-center justify-center w-full h-full text-slate-400 hidden">
-    <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-    <span class="text-[10px] font-bold" data-i18n="tab_help">Help</span>
-</button>
+              <button onclick="switchTab('help')" id="mob-tab-help" class="mobile-tab-item mobile-nav-item flex flex-col items-center justify-center w-full h-full text-slate-400">
+                  <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                  <span class="text-[10px] font-bold" data-i18n="tab_help">Help</span>
+              </button>
           </nav>
       </div>
 
@@ -1730,48 +1738,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           </div>
       </div>
 
-      <!-- ===== NEW: Update Confirmation Modal ===== -->
-      <div id="modal-update-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[102] hidden items-center justify-center p-4">
-          <div class="bg-[var(--color-surface)] rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-darkborder relative overflow-hidden">
-              <div class="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
-              <div class="flex items-center justify-between mb-6">
-                  <div class="flex items-center gap-2.5">
-                      <div class="bg-amber-500/10 text-amber-500 p-2.5 rounded-2xl">
-                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                          </svg>
-                      </div>
-                      <div>
-                          <h3 class="text-lg font-black text-slate-800 dark:text-white" id="update-confirm-title">Update Available</h3>
-                          <p class="text-xs text-slate-500 mt-0.5" id="update-confirm-sub">Do you want to apply this update now?</p>
-                      </div>
-                  </div>
-                  <button onclick="closeUpdateConfirmModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-100 dark:border-darkborder transition-colors">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                  </button>
-              </div>
-
-              <div id="update-confirm-content" class="space-y-4 max-h-[50vh] overflow-y-auto pe-2 text-start">
-              </div>
-
-              <div class="mt-6 pt-5 border-t border-slate-100 dark:border-darkborder/50 flex justify-end gap-3">
-                  <button onclick="closeUpdateConfirmModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" data-i18n="btn_cancel">Cancel</button>
-                  <button onclick="applyUpdate()" id="btn-apply-update" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                      <span data-i18n="update_now">Update Now</span>
-                  </button>
-              </div>
-          </div>
-      </div>
-
       <script>
-          // ============================================
-          // UPDATE FUNCTIONS
-          // ============================================
-          let pendingUpdate = null;
-
           function parseImportBindings(importStr) {
               const cleanStr = importStr.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').trim();
               const content = cleanStr
@@ -1916,8 +1883,8 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     add_node_title: "Add External Node", add_node_desc: "Enter the URL and API Key of the external panel.",
                     add_node_url: "Node URL", add_node_apikey: "API Key", add_node_confirm: "Add Node", add_node_invalid: "Please enter both URL and API Key.",
                     node_added: "Node added successfully!", node_removed: "Node removed.",
-                    deploy_btn: "Update Clean IPs", update_deploying: "Updating Clean IPs...",
-                   update_success: "Clean IPs updated successfully! Reloading...", update_error: "Update failed",
+                    deploy_btn: "Deploy Now", update_deploying: "Deploying update...",
+                   update_success: "Update successful! Reloading...", update_error: "Update failed",
                    lbl_cf_worker: "CF Worker Script Name", desc_cf_worker: "Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.",
                    view_github: "View on GitHub",
                     cf_help_title: "Need help getting these? Beginner's Step-by-Step Guide",
@@ -1945,7 +1912,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     lbl_nat64: "NAT64 Prefix", desc_nat64: "Optional. Converts IPv4 Proxy IPs to NAT64 IPv6 addresses. Supports multiple prefixes.",
                     lbl_direct_configs: "Include Direct Configs", desc_direct_configs: "Generate configs without Proxy IP alongside relay configs",
                     lbl_sync_api_key: "Sync API Key (Slave Push)", desc_sync_api_key: "API key from a slave panel. Main uses this to push config. Same key must exist on each slave's Panel API Keys.",
-                    lbl_auto_update_clean_ips: "🔄 Auto-Update Clean IPs", desc_auto_update_clean_ips: "Automatically fetch and update Clean IPs list from remote source every hour",
+                    lbl_auto_update: "Auto-Update", desc_auto_update: "Automatically deploy when a new version is detected",
                     lbl_auto_update_format: "Update Format", format_normal_label: "Normal", format_obfuscated_label: "Obfuscated",
                     desc_format_normal: "Standard _worker.js", desc_format_obfuscated: "XOR byte-shifting",
                     lbl_prefix: "Custom Name Prefix", html_desc_prefix_note: "This prefix is injected where the <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code> tag is used in your naming strategy.", lbl_clean_ips: "Clean IPs", lbl_proxy_ips: "Proxy IPs", lbl_assigned_nodes: "Assigned Nodes",
@@ -1958,26 +1925,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     lbl_conn_limit: "IP Connection Limit", desc_conn_limit: "Max simultaneous connections per user. Leave empty for unlimited.",
                     lbl_user_panel_url: "Main Panel URL (Custom Nodes)", desc_user_panel_url: "Main panel domain for custom nodes. If empty, default panel URL is used.",
                     html_desc_strategy: "<details><summary class='cursor-pointer text-primary'>View supported placeholders...</summary><div class='mt-2'>Supported placeholders: <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{FLAG}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{COUNTRY}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{CITY}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{ISP}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PROTOCOL}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{USER}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PORT}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP_NAME}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{HOST}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{DATE}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{INDEX}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{WORKER}</code>.<br><span class='text-[10px] text-slate-400 dark:text-slate-500 leading-snug'>• <b>{FLAG}</b>: Country flag emoji (e.g. 🇺🇸).<br>• <b>{COUNTRY}</b>: Country name.<br>• <b>{CITY}</b>: City name.<br>• <b>{ISP}</b>: ISP / ASN org.<br>• <b>{PROTOCOL}</b>: Core mode (VLESS / Trojan).<br>• <b>{USER}</b>: Subscriber name.<br>• <b>{PORT}</b>: Active port.<br>• <b>{PREFIX}</b>: Custom prefix.<br>• <b>{IP}</b>: Clean IP address.<br>• <b>{IP_NAME}</b>: Clean IP name.<br>• <b>{HOST}</b>: Hostname.<br>• <b>{DATE}</b>: Current date.<br>• <b>{INDEX}</b>: Config index.<br>• <b>{WORKER}</b>: Worker name.</span><br>Pre-defined strategies: <code>default</code>, <code>type-user-port</code>, <code>user-port</code>, <code>host-port-user</code>, <code>prefix-user-port</code>, <code>ip</code>.</div></details>",
-                   // ===== NEW: Update related strings =====
-                   check_for_update_title: "🔍 Check for Update",
-                   check_for_update_desc: "Manually check if a new version is available on GitHub",
-                   check_btn: "Check Now",
-                   update_now: "Update Now",
-                   update_available: "🎉 Update Available!",
-                   update_not_available: "✅ You are running the latest version.",
-                   update_check_failed: "❌ Failed to check for updates.",
-                   update_applying: "⏳ Applying update... Please wait.",
-                   update_applied: "✅ Update applied successfully! The panel will reload.",
-                   update_failed: "❌ Update failed: {error}",
-                   update_confirmation: "A new version is available! Do you want to update now?",
-                   update_changes: "Changes in this version:",
-                   update_current_version: "Current version: {version}",
-                   update_latest_version: "Latest version: {version}",
-                   update_no_cf: "⚠️ Cloudflare credentials required. Please configure CF Account ID, API Token, and Worker Name in Advanced settings.",
-              },
+               },
               fa: {
                   title: "دروازه نهان", pass_ph: "کلید اصلی", login_btn: "ورود به سیستم", err_pass: "دسترسی مسدود شد", missing_db: "⚠️ فضای پایگاه داده یافت نشد! تنظیمات ذخیره نمی‌شوند.", system_online: "سیستم فعال است",
-                  logout: "خروج", tab_overview: "نمای کلی", tab_info: "نودها", tab_status: "شبکه", tab_settings: "تنظیمات", tab_adv: "پیشرفته", tab_logs: "گزارش", tab_help: "راهنما و سوالات",
+                  logout: "خروج", tab_overview: "نمای کلی", tab_info: "نودها", tab_status: "شبکه", tab_settings: "تنظیمات", tab_adv: "پیشرفته", tab_logs: "گزارش فعالیت", tab_help: "راهنما و سوالات",
                   qr_title: "لینک اتصال مستقیم", badge_multi: "ترکیب ترانزیت پیشرفته دوگانه", copy: "کپی", copied: "در حافظه کپی شد!", sync_link: "لینک ساب (همگام سازی ابری)", active_id: "شناسه سخت‌افزار",
                   stat_ip: "آی‌پی مبدا", stat_dc: "گره لبه", stat_loc: "منطقه داده",
                   lbl_proto: "پروتکل نمایش مستقیم", lbl_port: "پورت داده", lbl_id: "شناسه یکتا (خالی=خودکار)",
@@ -2024,7 +1975,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     lbl_nat64: "پیشوند NAT64", desc_nat64: "اختیاری. آی‌پی‌های پروکسی IPv4 را به آدرس‌های NAT64 IPv6 تبدیل می‌کند. چند پیشوند پشتیبانی می‌شود.",
                     lbl_direct_configs: "شامل کانفیگ‌های مستقیم", desc_direct_configs: "تولید کانفیگ‌ها بدون آی‌پی پروکسی در کنار کانفیگ‌های رله",
                     lbl_sync_api_key: "کلید API همگام‌سازی (ارسال به اسلیو)", desc_sync_api_key: "کلید API از پنل اسلیو. پنل اصلی با این کلید کانفیگ را ارسال می‌کند. این کلید باید در کلیدهای API پنل اسلیو وجود داشته باشد.",
-                    lbl_auto_update_clean_ips: "🔄 بروزرسانی خودکار آی‌پی تمیز", desc_auto_update_clean_ips: "دریافت و بروزرسانی خودکار لیست آی‌پی‌های تمیز از منبع راه‌دور هر ساعت",
+                    lbl_auto_update: "بروزرسانی خودکار", desc_auto_update: "دپلوی خودکار هنگام شناسایی نسخه جدید",
                     lbl_auto_update_format: "قالب بروزرسانی", format_normal_label: "معمولی", format_obfuscated_label: "مبهم‌سازی شده",
                     desc_format_normal: "استاندارد _worker.js", desc_format_obfuscated: "جابجایی بایت XOR",
                     lbl_clean_ips: "آی‌پی‌های تمیز", lbl_proxy_ips: "آی‌پی‌های پروکسی", lbl_assigned_nodes: "نودهای اختصاصی",
@@ -2068,29 +2019,13 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                      add_node_title: "افزودن نود خارجی", add_node_desc: "آدرس URL و کلید API پنل خارجی را وارد کنید.",
                      add_node_url: "آدرس نود", add_node_apikey: "کلید API", add_node_confirm: "افزودن نود", add_node_invalid: "لطفاً URL و کلید API را وارد کنید.",
                      node_added: "نود با موفقیت اضافه شد!", node_removed: "نود حذف شد.",
-                      deploy_btn: "بروزرسانی آی‌پی تمیز", update_deploying: "در حال بروزرسانی آی‌پی تمیز...",
-                      update_success: "آی‌پی تمیز با موفقیت بروزرسانی شد! در حال بارگذاری...", update_error: "خطا در بروزرسانی",
+                      deploy_btn: "هم‌اکنون نصب کن", update_deploying: "در حال نصب بروزرسانی...",
+                      update_success: "بروزرسانی موفق! در حال بارگذاری...", update_error: "خطا در بروزرسانی",
                       lbl_cf_worker: "نام اسکریپت کارگر ابری", desc_cf_worker: "برای بروزرسانی خودکار الزامی است. نام اسکریپت در داشبورد کارگرهای ابری.",
                       view_github: "مشاهده در گیت‌هاب",
                      update_requires_cf: "برای نصب خودکار، شناسه اکانت، توکن API و نام کارگر را تنظیم کنید.",
                      html_desc_strategy: "<details><summary class='cursor-pointer text-primary'>مشاهده متغیرهای پشتیبانی شده...</summary><div class='mt-2'>متغیرهای پشتیبانی شده: <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{FLAG}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{COUNTRY}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{CITY}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{ISP}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PROTOCOL}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{USER}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PORT}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP_NAME}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{HOST}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{DATE}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{INDEX}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{WORKER}</code>.<br><span class='text-[10px] text-slate-400 dark:text-slate-500 leading-snug'>• <b>{FLAG}</b>: ایموجی پرچم.<br>• <b>{COUNTRY}</b>: نام کشور.<br>• <b>{CITY}</b>: نام شهر.<br>• <b>{ISP}</b>: نام ارائه‌دهنده اینترنت.<br>• <b>{PROTOCOL}</b>: پروتکل اصلی.<br>• <b>{USER}</b>: نام مشترک.<br>• <b>{PORT}</b>: پورت فعال.<br>• <b>{PREFIX}</b>: پیشوند دلخواه.<br>• <b>{IP}</b>: آی‌پی تمیز.<br>• <b>{IP_NAME}</b>: نام آی‌پی تمیز.<br>• <b>{HOST}</b>: نام دامنه.<br>• <b>{DATE}</b>: تاریخ.<br>• <b>{INDEX}</b>: شماره ردیف کانفیگ.<br>• <b>{WORKER}</b>: نام اسکریپت.</span><br>طرح‌های پیش‌فرض: <code>default</code>، <code>type-user-port</code>، <code>user-port</code>، <code>host-port-user</code>، <code>prefix-user-port</code>، <code>ip</code>.</div></details>",
-                  // ===== NEW: Update related strings =====
-                  check_for_update_title: "🔍 بررسی آپدیت جدید",
-                  check_for_update_desc: "بررسی دستی وجود نسخه جدید در گیت‌هاب",
-                  check_btn: "بررسی کن",
-                  update_now: "بروزرسانی کن",
-                  update_available: "🎉 آپدیت جدید موجود است!",
-                  update_not_available: "✅ شما آخرین نسخه را دارید.",
-                  update_check_failed: "❌ بررسی آپدیت با خطا مواجه شد.",
-                  update_applying: "⏳ در حال بروزرسانی... لطفاً صبر کنید.",
-                  update_applied: "✅ بروزرسانی با موفقیت انجام شد! پنل دوباره بارگذاری می‌شود.",
-                  update_failed: "❌ بروزرسانی ناموفق: {error}",
-                  update_confirmation: "نسخه جدید موجود است! آیا می‌خواهید بروزرسانی کنید؟",
-                  update_changes: "تغییرات این نسخه:",
-                  update_current_version: "نسخه فعلی: {version}",
-                  update_latest_version: "نسخه جدید: {version}",
-                  update_no_cf: "⚠️ اطلاعات کلودفلر مورد نیاز است. لطفاً شناسه اکانت، توکن API و نام ورکر را در تنظیمات پیشرفته وارد کنید.",
-              }
+                }
           };
 
           const CHANGELOG_DATA = {
@@ -2369,22 +2304,6 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       { en: "User management panel interface", fa: "رابط کاربری پنل مدیریت کاربران" },
                   ],
                   notes: []
-              },
-              "2.9.5": {
-                  headline: { en: "Auto Update Server List & Manual Update Check", fa: "بروزرسانی خودکار لیست سرور و بررسی دستی آپدیت" },
-                  added: [
-                      { en: "Added manual Check for Update button in dashboard to check GitHub for new versions", fa: "افزودن دکمه دستی «بررسی آپدیت» در داشبورد برای بررسی نسخه‌های جدید در گیت‌هاب" },
-                      { en: "Added What's New display showing changes before applying update", fa: "افزودن نمایش تغییرات جدید قبل از اعمال آپدیت" },
-                      { en: "Update confirmation modal requiring user approval before deployment", fa: "پنجره تأیید آپدیت که نیاز به تأیید کاربر قبل از دپلوی دارد" },
-                      { en: "Last update check status displayed in dashboard", fa: "نمایش وضعیت آخرین بررسی آپدیت در داشبورد" }
-                  ],
-                  fixed: [],
-                  improved: [
-                      { en: "Removed automatic source code update - now requires manual confirmation", fa: "حذف بروزرسانی خودکار سورس کد - اکنون نیاز به تأیید دستی دارد" }
-                  ],
-                  notes: [
-                      { en: "To update: Go to Settings → Click 'Check for Update' → Review changes → Click 'Update Now'", fa: "برای بروزرسانی: به تنظیمات بروید → روی «بررسی آپدیت» کلیک کنید → تغییرات را بررسی کنید → روی «بروزرسانی کن» کلیک کنید" }
-                  ]
               }
           };
 
@@ -2510,195 +2429,6 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           function toggleTheme() {
               document.documentElement.classList.toggle('dark');
               localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-          }
-
-          // ============================================
-          // CHECK FOR UPDATE FUNCTION
-          // ============================================
-          async function checkForUpdate() {
-              const btn = document.getElementById('btn-check-update');
-              const statusDiv = document.getElementById('update-status');
-              const actionsDiv = document.getElementById('update-actions');
-              
-              if (!btn) return;
-              
-              const origText = btn.innerHTML;
-              btn.disabled = true;
-              btn.innerHTML = '⏳ Checking...';
-              
-              statusDiv.classList.remove('hidden');
-              statusDiv.className = 'text-sm text-slate-500 animate-pulse';
-              statusDiv.innerHTML = '<span data-i18n="checking_update">Checking for updates...</span>';
-              applyLang();
-              
-              try {
-                  const res = await fetch(baseRoute + '/api/update', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: sessionKey, action: 'check_for_update' })
-                  });
-                  const data = await res.json();
-                  
-                  if (data.checked) {
-                      if (data.updateAvailable) {
-                          // Show update available
-                          const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-                          statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
-                          statusDiv.innerHTML = `🎉 ${t('update_available')} (${data.latest})`;
-                          
-                          // Store pending update info
-                          pendingUpdate = {
-                              current: data.current,
-                              latest: data.latest,
-                              whatsNew: data.whatsNew
-                          };
-                          
-                          // Show update button
-                          actionsDiv.classList.remove('hidden');
-                          actionsDiv.innerHTML = `
-                              <button onclick="showUpdateConfirmModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
-                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                  <span>${t('update_now')}</span>
-                              </button>
-                          `;
-                      } else {
-                          statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-                          statusDiv.innerHTML = `✅ ${i18n[lang]?.update_not_available || 'You are running the latest version.'}`;
-                          actionsDiv.classList.add('hidden');
-                      }
-                  } else if (data.error) {
-                      statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                      statusDiv.innerHTML = `❌ ${data.error}`;
-                      actionsDiv.classList.add('hidden');
-                  }
-                  
-                  applyLang();
-                  
-              } catch (e) {
-                  statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                  statusDiv.innerHTML = `❌ ${i18n[lang]?.update_check_failed || 'Failed to check for updates.'}`;
-                  actionsDiv.classList.add('hidden');
-              } finally {
-                  btn.disabled = false;
-                  btn.innerHTML = origText;
-              }
-          }
-
-          // ============================================
-          // UPDATE CONFIRMATION MODAL
-          // ============================================
-          function showUpdateConfirmModal() {
-              if (!pendingUpdate) return;
-              
-              const modal = document.getElementById('modal-update-confirm');
-              const content = document.getElementById('update-confirm-content');
-              const title = document.getElementById('update-confirm-title');
-              const sub = document.getElementById('update-confirm-sub');
-              
-              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-              
-              title.textContent = t('update_available');
-              sub.textContent = t('update_confirmation');
-              
-              // Parse and render what's new content
-              let whatsNewHtml = '';
-              if (pendingUpdate.whatsNew) {
-                  const lines = pendingUpdate.whatsNew.split('\n').filter(line => line.trim());
-                  // First line is version
-                  const versionLine = lines.shift() || pendingUpdate.latest;
-                  
-                  whatsNewHtml = `
-                      <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-darkborder/50">
-                          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${t('update_changes')}</p>
-                          <div class="mt-2 space-y-1">
-                              ${lines.map(line => {
-                                  const trimmed = line.trim();
-                                  const isImportant = trimmed.includes('⚠️') || trimmed.includes('🔴');
-                                  const icon = isImportant ? '⚠️' : '•';
-                                  return `<p class="text-xs text-slate-600 dark:text-slate-300 ${isImportant ? 'font-semibold text-amber-600 dark:text-amber-400' : ''}">${icon} ${trimmed}</p>`;
-                              }).join('')}
-                          </div>
-                      </div>
-                  `;
-              }
-              
-              content.innerHTML = `
-                  <div class="space-y-3">
-                      <div class="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
-                          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">${t('update_current_version').replace('{version}', pendingUpdate.current)}</span>
-                          <span class="text-xs font-bold text-emerald-500">→</span>
-                          <span class="text-xs font-bold text-amber-600 dark:text-amber-400">${t('update_latest_version').replace('{version}', pendingUpdate.latest)}</span>
-                      </div>
-                      ${whatsNewHtml}
-                      <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/30">
-                          <p class="text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
-                              <span>⚠️</span>
-                              <span>${t('update_warning') || 'The panel will be updated to the new version. This process may take a few moments.'}</span>
-                          </p>
-                      </div>
-                  </div>
-              `;
-              
-              modal.classList.remove('hidden');
-              modal.classList.add('flex');
-              applyLang();
-          }
-
-          function closeUpdateConfirmModal() {
-              const modal = document.getElementById('modal-update-confirm');
-              modal.classList.add('hidden');
-              modal.classList.remove('flex');
-          }
-
-          // ============================================
-          // APPLY UPDATE FUNCTION
-          // ============================================
-          async function applyUpdate() {
-              if (!pendingUpdate) return;
-              
-              const btn = document.getElementById('btn-apply-update');
-              const originalText = btn.innerHTML;
-              btn.disabled = true;
-              btn.innerHTML = '⏳ Applying...';
-              
-              closeUpdateConfirmModal();
-              
-              const statusDiv = document.getElementById('update-status');
-              const actionsDiv = document.getElementById('update-actions');
-              
-              statusDiv.classList.remove('hidden');
-              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400 animate-pulse';
-              statusDiv.innerHTML = '⏳ ' + (i18n[lang]?.update_applying || 'Applying update... Please wait.');
-              
-              try {
-                  const res = await fetch(baseRoute + '/api/update', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: sessionKey, action: 'apply_update' })
-                  });
-                  const data = await res.json();
-                  
-                  if (data.success) {
-                      statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-                      statusDiv.innerHTML = '✅ ' + (i18n[lang]?.update_applied || 'Update applied successfully! The panel will reload.');
-                      actionsDiv.classList.add('hidden');
-                      
-                      // Reload after 3 seconds
-                      setTimeout(() => {
-                          window.location.reload();
-                      }, 3000);
-                  } else {
-                      statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                      statusDiv.innerHTML = (i18n[lang]?.update_failed || 'Update failed: {error}').replace('{error}', data.error || 'Unknown error');
-                  }
-              } catch (e) {
-                  statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                  statusDiv.innerHTML = (i18n[lang]?.update_failed || 'Update failed: {error}').replace('{error}', e.message);
-              } finally {
-                  btn.disabled = false;
-                  btn.innerHTML = originalText;
-              }
-              applyLang();
           }
 
           function checkVersionPopup() {
@@ -2870,7 +2600,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     let actHtml = '';
                     logsData.logs.slice(0, 8).forEach(log => {
                         const dateStr = new Date(log.ts).toLocaleString('en-US', {hour12: false});
-                        const typeColors = { 'Auth Success': 'bg-emerald-500', 'Auth Failed': 'bg-red-500', 'User Created': 'bg-blue-500', 'User Deleted': 'bg-red-500', 'User Toggled': 'bg-amber-500', 'User Updated': 'bg-indigo-500', 'User Auto-Disabled': 'bg-red-500', 'Traffic Reset': 'bg-cyan-500', 'Config Changed': 'bg-violet-500', 'Update Available': 'bg-amber-500', 'Source Updated': 'bg-indigo-500', 'Update Check': 'bg-slate-400' };
+                        const typeColors = { 'Auth Success': 'bg-emerald-500', 'Auth Failed': 'bg-red-500', 'User Created': 'bg-blue-500', 'User Deleted': 'bg-red-500', 'User Toggled': 'bg-amber-500', 'User Updated': 'bg-indigo-500', 'User Auto-Disabled': 'bg-red-500', 'Traffic Reset': 'bg-cyan-500', 'Config Changed': 'bg-violet-500' };
                         const dotColor = typeColors[log.type] || 'bg-slate-400';
                         actHtml += '<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div class="w-2 h-2 rounded-full shrink-0 ' + dotColor + '"></div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">' + log.type + '</p><p class="text-[11px] text-slate-400 truncate">' + log.detail + '</p></div><span class="text-[10px] font-mono text-slate-400 shrink-0">' + dateStr + '</span></div>';
                     });
@@ -3103,7 +2833,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
               const payload = {
                   mode: el('cfg-proto').value, socketPorts: Array.from(el('cfg-port').selectedOptions).map(o=>o.value).join(','), deviceId: el('cfg-uuid').value,
                   apiRoute: el('cfg-path').value, masterKey: el('cfg-pass').value, agent: el('cfg-fp').value,
-                   resolveIp: el('cfg-dns').value, customDns: el('cfg-custom-dns').value ? el('cfg-custom-dns').value : 'https://cloudflare-dns.com/dns-query', cleanIps: el('cfg-ips').value, maintenanceHost: el('cfg-fake') ? el('cfg-fake').value : '', backupRelay: el('cfg-relay').value, customRouting: el('cfg-custom-routing') ? el('cfg-custom-routing').value : '',  nat64Prefix: el('cfg-nat64') ? el('cfg-nat64').value : '', enableDirectConfigs: el('cfg-direct-configs') ? el('cfg-direct-configs').checked : false, syncApiKey: el('cfg-sync-api-key') ? el('cfg-sync-api-key').value.trim() : '', autoUpdateCleanIps: el('cfg-auto-update-clean-ips') ? el('cfg-auto-update-clean-ips').checked : false,
+                   resolveIp: el('cfg-dns').value, customDns: el('cfg-custom-dns').value ? el('cfg-custom-dns').value : 'https://cloudflare-dns.com/dns-query', cleanIps: el('cfg-ips').value, maintenanceHost: el('cfg-fake') ? el('cfg-fake').value : '', backupRelay: el('cfg-relay').value, customRouting: el('cfg-custom-routing') ? el('cfg-custom-routing').value : '',  nat64Prefix: el('cfg-nat64') ? el('cfg-nat64').value : '', enableDirectConfigs: el('cfg-direct-configs') ? el('cfg-direct-configs').checked : false, syncApiKey: el('cfg-sync-api-key') ? el('cfg-sync-api-key').value.trim() : '', autoUpdate: el('cfg-auto-update') ? el('cfg-auto-update').checked : false, autoUpdateFormat: document.querySelector('input[name="auto-update-format"]:checked')?.value || 'normal',
                    enableOpt1: el('cfg-tfo').checked, enableOpt2: el('cfg-ech').checked,
                    tgToken: el('cfg-tg-token').value, tgChatId: el('cfg-tg-chat').value, tgAdminId: el('cfg-tg-admin').value,
                   cfAccountId: el('cfg-cf-acc').value, cfApiToken: el('cfg-cf-token').value,
@@ -3164,8 +2894,14 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       mapId('cfg-nat64', conf.nat64Prefix);
                       if (conf.enableDirectConfigs !== undefined && document.getElementById('cfg-direct-configs')) document.getElementById('cfg-direct-configs').checked = conf.enableDirectConfigs;
                       if (document.getElementById('cfg-sync-api-key')) document.getElementById('cfg-sync-api-key').value = conf.syncApiKey || '';
-                      if (conf.autoUpdateCleanIps !== undefined && document.getElementById('cfg-auto-update-clean-ips')) {
-                          document.getElementById('cfg-auto-update-clean-ips').checked = conf.autoUpdateCleanIps;
+                      if (conf.autoUpdate !== undefined && document.getElementById('cfg-auto-update')) {
+                          document.getElementById('cfg-auto-update').checked = conf.autoUpdate;
+                          const wrap = document.getElementById('auto-update-format-wrap');
+                          if (wrap) wrap.classList.toggle('hidden', !conf.autoUpdate);
+                      }
+                      if (conf.autoUpdateFormat) {
+                          const radio = document.querySelector(`input[name="auto-update-format"][value="${conf.autoUpdateFormat}"]`);
+                          if (radio) radio.checked = true;
                       }
 
                       if (conf.fakeConfigs) renderFakeConfigs(conf.fakeConfigs);
@@ -3293,8 +3029,14 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                        if (document.getElementById('cfg-nat64')) document.getElementById('cfg-nat64').value = conf.nat64Prefix || '';
                        if (document.getElementById('cfg-direct-configs')) document.getElementById('cfg-direct-configs').checked = conf.enableDirectConfigs || false;
                        if (document.getElementById('cfg-sync-api-key')) document.getElementById('cfg-sync-api-key').value = conf.syncApiKey || '';
-                       if (document.getElementById('cfg-auto-update-clean-ips')) {
-                           document.getElementById('cfg-auto-update-clean-ips').checked = conf.autoUpdateCleanIps || false;
+                       if (document.getElementById('cfg-auto-update')) {
+                           document.getElementById('cfg-auto-update').checked = conf.autoUpdate || false;
+                           const wrap = document.getElementById('auto-update-format-wrap');
+                           if (wrap) wrap.classList.toggle('hidden', !conf.autoUpdate);
+                       }
+                       if (conf.autoUpdateFormat) {
+                           const radio = document.querySelector(`input[name="auto-update-format"][value="${conf.autoUpdateFormat}"]`);
+                           if (radio) radio.checked = true;
                        }
                       document.getElementById('cfg-tfo').checked = conf.enableOpt1 || false;
                       document.getElementById('cfg-ech').checked = conf.enableOpt2 || false;
@@ -3322,6 +3064,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       window.nahanProfiles = data.profiles || [];
                       renderUsersTable();
                       renderLinkedNodes();
+                      try { checkUpdate(); } catch(ue) { console.error(ue); }
                        if (!silent) switchTab('overview');
 
                       ['cfg-proto','cfg-port','cfg-fp','cfg-ips','cfg-path', 'cfg-relay', 'cfg-custom-routing', 'cfg-name-strategy', 'cfg-name-prefix', 'cfg-sub-ua', 'cfg-custom-panel-url'].forEach(id => {
@@ -3332,6 +3075,13 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                           const el = document.getElementById(id);
                           if(el) el.addEventListener('change', updateUI);
                       });
+                      const autoUpdateEl = document.getElementById('cfg-auto-update');
+                      if (autoUpdateEl) {
+                          autoUpdateEl.addEventListener('change', () => {
+                              const wrap = document.getElementById('auto-update-format-wrap');
+                              if (wrap) wrap.classList.toggle('hidden', !autoUpdateEl.checked);
+                          });
+                      }
                 const pCont = document.getElementById('dyn-profiles-container');
                 let profilesHtml = '';
                 data.profiles.forEach(p => {
@@ -3411,7 +3161,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   config: {
                       mode: el('cfg-proto').value, socketPorts: Array.from(el('cfg-port').selectedOptions).map(o=>o.value).join(','), deviceId: el('cfg-uuid').value,
                       apiRoute: el('cfg-path').value, masterKey: el('cfg-pass').value, agent: el('cfg-fp').value,
-                      resolveIp: el('cfg-dns').value, customDns: el('cfg-custom-dns').value ? el('cfg-custom-dns').value : 'https://cloudflare-dns.com/dns-query', cleanIps: el('cfg-ips').value, maintenanceHost: el('cfg-fake') ? el('cfg-fake').value : '', backupRelay: el('cfg-relay').value, customRouting: el('cfg-custom-routing') ? el('cfg-custom-routing').value : '',  nat64Prefix: el('cfg-nat64') ? el('cfg-nat64').value : '', enableDirectConfigs: el('cfg-direct-configs') ? el('cfg-direct-configs').checked : false, syncApiKey: el('cfg-sync-api-key') ? el('cfg-sync-api-key').value.trim() : '', autoUpdateCleanIps: el('cfg-auto-update-clean-ips') ? el('cfg-auto-update-clean-ips').checked : false,
+                      resolveIp: el('cfg-dns').value, customDns: el('cfg-custom-dns').value ? el('cfg-custom-dns').value : 'https://cloudflare-dns.com/dns-query', cleanIps: el('cfg-ips').value, maintenanceHost: el('cfg-fake') ? el('cfg-fake').value : '', backupRelay: el('cfg-relay').value, customRouting: el('cfg-custom-routing') ? el('cfg-custom-routing').value : '',  nat64Prefix: el('cfg-nat64') ? el('cfg-nat64').value : '', enableDirectConfigs: el('cfg-direct-configs') ? el('cfg-direct-configs').checked : false, syncApiKey: el('cfg-sync-api-key') ? el('cfg-sync-api-key').value.trim() : '', autoUpdate: el('cfg-auto-update') ? el('cfg-auto-update').checked : false, autoUpdateFormat: document.querySelector('input[name="auto-update-format"]:checked')?.value || 'normal',
                       enableOpt1: el('cfg-tfo').checked, enableOpt2: el('cfg-ech').checked,
                       tgToken: el('cfg-tg-token').value, tgChatId: el('cfg-tg-chat').value, tgAdminId: el('cfg-tg-admin').value,
                       cfAccountId: el('cfg-cf-acc').value, cfApiToken: el('cfg-cf-token').value,
@@ -3948,7 +3698,7 @@ function buildPortCheckboxes(wrapId, selectedPorts) {
                if (nodesCheckbox) nodesArray.push(...nodesCheckbox.split(','));
                if (nodesCustom) nodesArray.push(...nodesCustom.split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean));
                const userNodes = nodesArray.length ? nodesArray.join(',') : null;
-               const nat64 = document.getElementById('add-user-nat64').value.trim() || null;
+               const nat64 = document.getElementById('edit-user-nat64').value.trim() || null;
 
                if(!name) {
                    alert(lang === 'fa' ? 'لطفاً نام را وارد کنید' : 'Please enter a name');
@@ -4129,7 +3879,7 @@ function buildPortCheckboxes(wrapId, selectedPorts) {
                if (nodesCheckbox) nodesArray.push(...nodesCheckbox.split(','));
                if (nodesCustom) nodesArray.push(...nodesCustom.split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean));
                const userNodes = nodesArray.length ? nodesArray.join(',') : null;
-                const nat64 = document.getElementById('edit-user-nat64').value.trim() || null;
+                const nat64 = document.getElementById('add-user-nat64').value.trim() || null;
                 let connLimit = document.getElementById('edit-user-conn-limit').value;
                 connLimit = connLimit ? parseInt(connLimit) : null;
                 const userPanelUrl = document.getElementById('edit-user-panel-url').value.trim() || null;
@@ -4341,6 +4091,345 @@ function buildPortCheckboxes(wrapId, selectedPorts) {
               btn.innerHTML = origText;
           }
 
+          async function checkUpdate() {
+              try {
+                  const res = await fetch(baseRoute + '/api/update', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ key: sessionKey, action: 'check' })
+                  });
+                  const data = await res.json();
+                  if (data.success && data.updateAvailable) {
+                      window._updateData = data;
+                      if (window.nahanConfig?.autoUpdate && data.canDeploy) {
+                          const format = window.nahanConfig.autoUpdateFormat || 'normal';
+                          const formatEl = document.querySelector(`input[name="auto-update-format"][value="${format}"]`);
+                          if (formatEl) formatEl.checked = true;
+                          const autoRadio = document.querySelector(`input[name="auto-update-format"][value="${format}"]`);
+                          if (autoRadio) autoRadio.checked = true;
+                          doUpdate();
+                      } else {
+                          showUpdateBanner((document.getElementById('cfg-github-repo')?.value || window.nahanConfig?.githubRepo || 'itsyebekhe/nahan').replace('https://github.com/', '').replace('http://github.com/', '').trim(), data.latest);
+                      }
+                  }
+                  if (data.success && !data.canDeploy) {
+                      const statusEl = document.getElementById('update-deploy-status');
+                      if (statusEl) {
+                          statusEl.classList.remove('hidden');
+                          statusEl.className = 'w-full mt-3 p-3 rounded-xl text-sm font-bold text-center text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400';
+                          statusEl.textContent = i18n[lang].update_requires_cf || 'Configure CF credentials to enable auto-deploy.';
+                      }
+                  }
+              } catch(err) {
+                  console.error("Update check failed:", err);
+              }
+          }
+
+          async function doUpdate() {
+              const btn = document.getElementById('update-deploy-btn');
+              const statusEl = document.getElementById('update-deploy-status');
+              if (!btn) return;
+              if (!confirm(lang === 'fa' ? 'آیا از دپلوی نسخه فعلی/جدید اطمینان دارید؟' : 'Deploy the selected version now?')) return;
+
+              const formatEl = document.querySelector('input[name="update-format"]:checked');
+              const format = formatEl ? formatEl.value : 'normal';
+              const forceDeploy = !window._updateData?.updateAvailable;
+
+              const origText = btn.innerHTML;
+              btn.innerHTML = '⏳ ' + (i18n[lang].update_deploying || 'Deploying...');
+              btn.disabled = true;
+              if (statusEl) {
+                  statusEl.classList.remove('hidden');
+                  statusEl.className = 'w-full mt-3 p-3 rounded-xl text-sm font-bold text-center text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 animate-pulse';
+                  statusEl.textContent = i18n[lang].update_deploying || 'Deploying update (processing on server)...';
+              }
+
+              try {
+                  const res = await fetch(baseRoute + '/api/update', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          key: sessionKey,
+                          action: 'deploy',
+                          format: format,
+                          force: forceDeploy
+                      })
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                      if (statusEl) {
+                          statusEl.className = 'w-full mt-3 p-3 rounded-xl text-sm font-bold text-center text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400';
+                          statusEl.textContent = (i18n[lang].update_success || 'Update successful!') + ' v' + data.newVersion;
+                      }
+                      btn.innerHTML = '✅ ' + (i18n[lang].update_success || 'Done!');
+                      setTimeout(() => window.location.reload(), 3000);
+                  } else {
+                      if (statusEl) {
+                          statusEl.className = 'w-full mt-3 p-3 rounded-xl text-sm font-bold text-center text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400';
+                          statusEl.textContent = (i18n[lang].update_error || 'Update failed') + ': ' + (data.error || 'Unknown error');
+                      }
+                      btn.innerHTML = origText;
+                      btn.disabled = false;
+                  }
+              } catch(e) {
+                  if (statusEl) {
+                      statusEl.className = 'w-full mt-3 p-3 rounded-xl text-sm font-bold text-center text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400';
+                      statusEl.textContent = 'Error: ' + e.message;
+                  }
+                  btn.innerHTML = origText;
+                  btn.disabled = false;
+              }
+          }
+
+          async function triggerManualRedeploy() {
+              const banner = document.getElementById('update-alert-banner');
+              if (!banner) return;
+
+              document.getElementById('update-alert-text').textContent = lang === 'fa'
+                  ? 'می‌توانید آخرین نسخه فعال را مجدداً دپلوی نموده یا بین نسخه معمولی و مبهم‌سازی شده جابجا شوید.'
+                  : 'You can redeploy the latest code or switch between Normal/Obfuscated version on the fly.';
+
+              banner.classList.remove('hidden');
+              banner.classList.add('flex');
+
+              if (!window._updateData) {
+                  window._updateData = { latest: CURRENT_VERSION, updateAvailable: false };
+              }
+
+              const repo = (document.getElementById('cfg-github-repo')?.value || window.nahanConfig?.githubRepo || 'itsyebekhe/nahan').replace('https://github.com/', '').replace('http://github.com/', '').trim();
+
+              showUpdateBanner(repo, CURRENT_VERSION);
+
+              switchTab('overview');
+              document.getElementById('update-alert-banner').scrollIntoView({ behavior: 'smooth' });
+          }
+
+          function parseMarkdown(md) {
+              if (!md) return '';
+              let lines = md.split(/\r?\n/);
+              let htmlLines = [];
+              let inCodeBlock = false;
+              let codeContent = [];
+              let activeBlockLang = null;
+
+              for (let line of lines) {
+                  let trimmed = line.trim();
+
+                  if (trimmed === '<!-- LANG:EN -->' || trimmed === '<!--LANG:EN-->') {
+                      if (activeBlockLang === 'en') {
+                          activeBlockLang = null;
+                      } else {
+                          activeBlockLang = 'en';
+                      }
+                      continue;
+                  }
+                  if (trimmed === '<!-- LANG:FA -->' || trimmed === '<!--LANG:FA-->') {
+                      if (activeBlockLang === 'fa') {
+                          activeBlockLang = null;
+                      } else {
+                          activeBlockLang = 'fa';
+                      }
+                      continue;
+                  }
+
+                  if (activeBlockLang !== null && activeBlockLang !== lang) {
+                      continue;
+                  }
+
+                  // Toggle code block
+                  if (trimmed.startsWith('\x60\x60\x60')) {
+                      if (inCodeBlock) {
+                          // Close code block
+                          let codeText = codeContent.join('\n')
+                              .replace(/&/g, "&amp;")
+                              .replace(/</g, "&lt;")
+                              .replace(/>/g, "&gt;");
+                          htmlLines.push('<pre class="bg-slate-900/90 text-slate-100 p-3 rounded-xl my-2 font-mono text-[10px] overflow-x-auto border border-slate-800 max-h-40">' + codeText + '</pre>');
+                          codeContent = [];
+                          inCodeBlock = false;
+                      } else {
+                          inCodeBlock = true;
+                      }
+                      continue;
+                  }
+
+                  if (inCodeBlock) {
+                      codeContent.push(line);
+                      continue;
+                  }
+
+                  if (!trimmed) {
+                      continue;
+                  }
+
+                  // Process headers
+                  if (trimmed.startsWith('### ')) {
+                      let text = trimmed.slice(4);
+                      htmlLines.push('<h5 class="text-sm font-bold text-amber-800 dark:text-amber-400 mt-3 mb-1">' + parseInlineMarkdown(text) + '</h5>');
+                      continue;
+                  }
+                  if (trimmed.startsWith('## ')) {
+                      let text = trimmed.slice(3);
+                      htmlLines.push('<h4 class="text-sm font-extrabold text-amber-800 dark:text-amber-400 mt-4 mb-2">' + parseInlineMarkdown(text) + '</h4>');
+                      continue;
+                  }
+                  if (trimmed.startsWith('# ')) {
+                      let text = trimmed.slice(2);
+                      htmlLines.push('<h3 class="text-base font-black text-amber-900 dark:text-amber-300 mt-4 mb-2">' + parseInlineMarkdown(text) + '</h3>');
+                      continue;
+                  }
+
+                  // Process lists
+                  let listMatch = line.match(/^(\s*)([-*+])\s+(.*)$/);
+                  if (listMatch) {
+                      let text = listMatch[3];
+                      htmlLines.push('<div class="flex items-start gap-2 my-1"><span class="text-amber-500 mt-0.5">▪</span><span class="flex-1">' + parseInlineMarkdown(text) + '</span></div>');
+                      continue;
+                  }
+
+                  // Standard line
+                  htmlLines.push('<p class="my-1">' + parseInlineMarkdown(line) + '</p>');
+              }
+
+              // Guard for unclosed code block
+              if (inCodeBlock && codeContent.length > 0) {
+                  let codeText = codeContent.join('\n')
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                  htmlLines.push('<pre class="bg-slate-900/90 text-slate-100 p-3 rounded-xl my-2 font-mono text-[10px] overflow-x-auto border border-slate-800 max-h-40">' + codeText + '</pre>');
+              }
+
+              return htmlLines.join('\n');
+
+              function parseInlineMarkdown(text) {
+                  let safe = text
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                  // Bold
+                  safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-[var(--color-text)]">$1</strong>');
+                  // Italic
+                  safe = safe.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+                  // Inline code
+                  safe = safe.replace(/[\x60](.*?)[\x60]/g, '<code class="bg-amber-500/10 dark:bg-slate-800 px-1.5 py-0.5 rounded text-rose-500 font-mono text-[11px]">$1</code>');
+                  return safe;
+              }
+          }
+
+          async function showUpdateBanner(repo, version) {
+              const banner = document.getElementById('update-alert-banner');
+              if (!banner) return;
+
+              const msg = lang === 'fa'
+                  ? 'نسخه جدیدتر (v' + version + ') در مخزن گیت‌هاب شما (' + repo + ') در دسترس است.'
+                  : 'A newer version (v' + version + ') is available in your GitHub repository (' + repo + ').';
+
+              document.getElementById('update-alert-text').textContent = msg;
+              const ghLink = document.getElementById('update-github-link');
+              if (ghLink) ghLink.href = 'https://github.com/' + repo;
+              banner.classList.remove('hidden');
+              banner.classList.add('flex');
+
+              const changelogArea = document.getElementById('update-changelog-area');
+              const changelogContent = document.getElementById('update-changelog-content');
+              if (changelogArea && changelogContent) {
+                  changelogArea.classList.remove('hidden');
+                  changelogContent.innerHTML = lang === 'fa'
+                      ? '<p class="animate-pulse">در حال دریافت گزارش تغییرات...</p>'
+                      : '<p class="animate-pulse">Loading changelog...</p>';
+
+                  try {
+                      let changelogText = '';
+                      try {
+                          const res = await fetch('https://api.github.com/repos/' + repo + '/releases/tags/v' + version);
+                          if (res.ok) {
+                              const rel = await res.json();
+                              if (rel && rel.body) {
+                                  changelogText = rel.body;
+                              }
+                          } else {
+                              const resNoV = await fetch('https://api.github.com/repos/' + repo + '/releases/tags/' + version);
+                              if (resNoV.ok) {
+                                  const relNoV = await resNoV.json();
+                                  if (relNoV && relNoV.body) {
+                                      changelogText = relNoV.body;
+                                  }
+                              }
+                          }
+                      } catch(e) {}
+
+                      if (!changelogText) {
+                          try {
+                              const resLatest = await fetch('https://api.github.com/repos/' + repo + '/releases/latest');
+                              if (resLatest.ok) {
+                                  const relLatest = await resLatest.json();
+                                  if (relLatest && relLatest.body) {
+                                      changelogText = relLatest.body;
+                                  }
+                              }
+                          } catch(e) {}
+                      }
+
+                      if (!changelogText) {
+                          try {
+                              const resFile = await fetch('https://raw.githubusercontent.com/' + repo + '/main/CHANGELOG.md');
+                              if (resFile.ok) {
+                                  changelogText = await resFile.text();
+                              }
+                          } catch(e) {}
+                      }
+
+                      if (changelogText) {
+                          changelogContent.innerHTML = parseMarkdown(changelogText);
+                      } else {
+                          changelogContent.innerHTML = lang === 'fa'
+                              ? '<div class="space-y-2">' +
+                                '<p class="font-bold">✨ اضافه شده:</p>' +
+                                '<ul class="list-disc list-inside text-xs space-y-1">' +
+                                '<li>صفحه اشتراک چندزبانه با حالت تاریک/روشن</li>' +
+                                '<li>پشتیبانی NAT64 و نودهای اختصاصی کاربر</li>' +
+                                '<li>کانفیگ‌های مستقیم و بروزرسانی خودکار</li>' +
+                                '<li>مدیریت کامل دروازه از ربات تلگرام</li>' +
+                                '</ul>' +
+                                '<p class="font-bold mt-2">⚡ بهبود یافته:</p>' +
+                                '<ul class="list-disc list-inside text-xs space-y-1">' +
+                                '<li>عملکرد داشبورد و سرعت اسکرول</li>' +
+                                '<li>بازنویسی کامل تولید کانفیگ‌ها</li>' +
+                                '<li>نام‌گذاری هوشمند با تگ‌های جدید</li>' +
+                                '</ul>' +
+                                '<p class="font-bold mt-2">🔧 رفع شده:</p>' +
+                                '<ul class="list-disc list-inside text-xs space-y-1">' +
+                                '<li>ترجمه‌های فارسی معیوب</li>' +
+                                '<li>خطای صفحه اشتراک</li>' +
+                                '</ul></div>'
+                              : '<div class="space-y-2">' +
+                                '<p class="font-bold">✨ Added:</p>' +
+                                '<ul class="list-disc list-inside text-xs space-y-1">' +
+                                '<li>Bilingual subscription page with dark/light mode</li>' +
+                                '<li>NAT64 support and per-user custom nodes</li>' +
+                                '<li>Direct configs and auto update</li>' +
+                                '<li>Full gateway management via Telegram bot</li>' +
+                                '</ul>' +
+                                '<p class="font-bold mt-2">⚡ Improved:</p>' +
+                                '<ul class="list-disc list-inside text-xs space-y-1">' +
+                                '<li>Dashboard performance and scroll speed</li>' +
+                                '<li>Complete rewrite of all config generators</li>' +
+                                '<li>Smart config naming with new tags</li>' +
+                                '</ul>' +
+                                '<p class="font-bold mt-2">🔧 Fixed:</p>' +
+                                '<ul class="list-disc list-inside text-xs space-y-1">' +
+                                '<li>Garbled Persian translations</li>' +
+                                '<li>Subscription page display error</li>' +
+                                '</ul></div>';
+                      }
+                  } catch(err) {
+                      changelogContent.innerHTML = lang === 'fa'
+                          ? '<p class="text-rose-500">خطا در دریافت گزارش تغییرات.</p>'
+                          : '<p class="text-rose-500">Failed to load changelog.</p>';
+                  }
+              }
+          }
           //DateTime Function
             const _dtFormatter = new Intl.DateTimeFormat('fa-IR', {
         year: 'numeric',
@@ -4370,69 +4459,79 @@ function buildPortCheckboxes(wrapId, selectedPorts) {
                 updatePersianDateTime();
                 setInterval(updatePersianDateTime, 1000);
 
-          window.addHelperIpToTextarea = function(ipId, nameId, targetId) {
-              const ipInput = document.getElementById(ipId);
-              const nameInput = document.getElementById(nameId);
-              if (!ipInput || !nameInput) return;
-              const ip = ipInput.value.trim();
-              const name = nameInput.value.trim();
-              if (!ip) return;
-              
-              const textarea = document.getElementById(targetId);
-              if (!textarea) return;
-              
-              let val = textarea.value;
-              if (val && !val.endsWith('\n')) val += '\n';
-              val += name ? `${ip}#${name}` : ip;
-              
-              textarea.value = val;
-              
-              ipInput.value = '';
-              nameInput.value = '';
-              
-              textarea.dispatchEvent(new Event('input', { bubbles: true }));
-              textarea.dispatchEvent(new Event('change', { bubbles: true }));
-          };
 
-          window.changeThemeVariant = function(val) {
-              document.documentElement.setAttribute('data-theme', val);
-              localStorage.setItem('theme_variant', val);
-          };
 
-          document.addEventListener('DOMContentLoaded', () => {
-              const savedVariant = localStorage.getItem('theme_variant') || 'system';
-              document.documentElement.setAttribute('data-theme', savedVariant);
-              const sel = document.getElementById('theme-selector');
-              if(sel) sel.value = savedVariant;
+          function dismissUpdate() {
+              const b = document.getElementById('update-alert-banner');
+              if (b) {
+                  b.classList.remove('flex');
+                  b.classList.add('hidden');
+              }
+          }
 
-              const strategyInput = document.getElementById('cfg-name-strategy');
-              const suggestionsBox = document.getElementById('cfg-strategy-suggestions');
-              if (strategyInput && suggestionsBox) {
-                  strategyInput.addEventListener('focus', () => {
-                      suggestionsBox.classList.remove('hidden');
-                  });
+  window.addHelperIpToTextarea = function(ipId, nameId, targetId) {
+      const ipInput = document.getElementById(ipId);
+      const nameInput = document.getElementById(nameId);
+      if (!ipInput || !nameInput) return;
+      const ip = ipInput.value.trim();
+      const name = nameInput.value.trim();
+      if (!ip) return;
+      
+      const textarea = document.getElementById(targetId);
+      if (!textarea) return;
+      
+      let val = textarea.value;
+      if (val && !val.endsWith('\n')) val += '\n';
+      val += name ? `${ip}#${name}` : ip;
+      
+      textarea.value = val;
+      
+      ipInput.value = '';
+      nameInput.value = '';
+      
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+  };
 
-                  document.addEventListener('click', (e) => {
-                      if (!strategyInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                          suggestionsBox.classList.add('hidden');
-                      }
-                  });
+  window.changeThemeVariant = function(val) {
+      document.documentElement.setAttribute('data-theme', val);
+      localStorage.setItem('theme_variant', val);
+  };
 
-                  const tagBtns = suggestionsBox.querySelectorAll('.tag-btn');
-                  tagBtns.forEach(btn => {
-                      btn.addEventListener('click', () => {
-                          const tag = btn.textContent;
-                          const startPos = strategyInput.selectionStart;
-                          const endPos = strategyInput.selectionEnd;
-                          const text = strategyInput.value;
-                          strategyInput.value = text.substring(0, startPos) + tag + text.substring(endPos);
-                          strategyInput.focus();
-                          const newPos = startPos + tag.length;
-                          strategyInput.setSelectionRange(newPos, newPos);
-                      });
-                  });
+  document.addEventListener('DOMContentLoaded', () => {
+      const savedVariant = localStorage.getItem('theme_variant') || 'system';
+      document.documentElement.setAttribute('data-theme', savedVariant);
+      const sel = document.getElementById('theme-selector');
+      if(sel) sel.value = savedVariant;
+
+      const strategyInput = document.getElementById('cfg-name-strategy');
+      const suggestionsBox = document.getElementById('cfg-strategy-suggestions');
+      if (strategyInput && suggestionsBox) {
+          strategyInput.addEventListener('focus', () => {
+              suggestionsBox.classList.remove('hidden');
+          });
+
+          document.addEventListener('click', (e) => {
+              if (!strategyInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                  suggestionsBox.classList.add('hidden');
               }
           });
-  </script>
+
+          const tagBtns = suggestionsBox.querySelectorAll('.tag-btn');
+          tagBtns.forEach(btn => {
+              btn.addEventListener('click', () => {
+                  const tag = btn.textContent;
+                  const startPos = strategyInput.selectionStart;
+                  const endPos = strategyInput.selectionEnd;
+                  const text = strategyInput.value;
+                  strategyInput.value = text.substring(0, startPos) + tag + text.substring(endPos);
+                  strategyInput.focus();
+                  const newPos = startPos + tag.length;
+                  strategyInput.setSelectionRange(newPos, newPos);
+              });
+          });
+      }
+  });
+</script>
 </body>
 </html>
