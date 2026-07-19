@@ -6,14 +6,15 @@ import { connect } from "cloudflare:sockets";
  */
 
 const CURRENT_VERSION = "2.9.7";
-const SOURCE_REPO = "mahbodrahimi/nahan";
-const WHATNEW_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/whatnew`;
-const VERSION_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/version`;
-const SOURCE_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/_worker.js`;
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
 const getGamma = () => String.fromCharCode(99, 108, 97, 115, 104);
+
+// ============================================
+// ===== UPDATER CONFIG =====
+// ============================================
+const UPDATER_URL = "https://updater.vortix.ir";
 
 const safeBtoa = (str) => {
     try {
@@ -32,10 +33,6 @@ const safeBtoa = (str) => {
 const CLEAN_IPS_URL = "https://mahbodrahimi.ir/Nahan/iplist.txt";
 const CLEAN_IPS_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
 let lastCleanIpsUpdate = 0;
-
-// ===== LAST UPDATE CHECK =====
-let lastUpdateCheck = 0;
-const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
 
 const SYSTEM_DEFAULTS = {
     name: "",
@@ -107,47 +104,24 @@ let sysUsageCacheTime = 0;
 let backupIpCache = null;
 let backupIpCacheTime = 0;
 
-async function deployWorkerToCloudflare(accountId, apiToken, workerName, code) {
-    let currentBindings = [];
-    try {
-        const settingsRes = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodeURIComponent(workerName)}/settings`,
-            { headers: { Authorization: `Bearer ${apiToken}` } },
-        );
-        const settingsJson = await settingsRes.json();
-        if (settingsJson.success && settingsJson.result?.bindings) {
-            currentBindings = settingsJson.result.bindings;
-        }
-    } catch (e) {}
+let sysConfigLoading = null;
+let sysUsageLoading = null;
+let backupIpLoading = null;
 
-    const metadata = {
-        main_module: "_worker.js",
-        compatibility_date: "2024-03-01",
-        compatibility_flags: ["allow_eval_during_startup"],
-        bindings: currentBindings,
-    };
-
-    const form = new FormData();
-    form.append(
-        "metadata",
-        new Blob([JSON.stringify(metadata)], { type: "application/json" }),
-    );
-    form.append(
-        "_worker.js",
-        new Blob([code], { type: "application/javascript+module" }),
-        "_worker.js",
-    );
-
-    return await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodeURIComponent(workerName)}`,
-        {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${apiToken}` },
-            body: form,
-        },
-    );
+// ============================================
+// ===== EXTRACT AUTH KEY =====
+// ============================================
+function extractAuthKey(request, data) {
+    const authHeader = request.headers.get("Authorization") || "";
+    const authKey = authHeader.replace("Bearer ", "") || "";
+    let bodyKey = "";
+    if (data && typeof data === "object") bodyKey = data.key || data.masterKey || "";
+    return authKey || bodyKey;
 }
 
+// ============================================
+// ===== D1 FUNCTIONS =====
+// ============================================
 async function d1Init(env) {
     if (env.IOT_DB && !env.IOT_DB_INITIALIZED) {
         try {
@@ -160,6 +134,7 @@ async function d1Init(env) {
         }
     }
 }
+
 async function d1Get(env, key) {
     if (!env.IOT_DB) return null;
     await d1Init(env);
@@ -173,6 +148,7 @@ async function d1Get(env, key) {
     } catch (e) {}
     return null;
 }
+
 async function d1Put(env, key, value) {
     if (!env.IOT_DB) return;
     await d1Init(env);
@@ -192,6 +168,9 @@ async function cachedD1Put(env, key, value) {
     else if (key === "backup_ip") backupIpCacheTime = 0;
 }
 
+// ============================================
+// ===== SHA224 HASH =====
+// ============================================
 function sha224Hex(m) {
     const msg = new TextEncoder().encode(m);
     const K = [
@@ -270,7 +249,9 @@ function sha224Hex(m) {
         .map((v) => v.toString(16).padStart(8, "0"))
         .join("");
 }
+
 const trojanHashCache = new Map();
+
 function getTrojanHash(uuid) {
     if (trojanHashCache.has(uuid)) return trojanHashCache.get(uuid);
     const hash = sha224Hex(uuid);
@@ -313,14 +294,6 @@ function isPanelApiKey(key) {
     )
         return false;
     return sysConfig.panelApiKeys.some((k) => k.key === key);
-}
-
-function extractAuthKey(request, data) {
-    const authHeader = request.headers.get("Authorization") || "";
-    const authKey = authHeader.replace("Bearer ", "") || "";
-    let bodyKey = "";
-    if (data && typeof data === "object") bodyKey = data.key || "";
-    return authKey || bodyKey;
 }
 
 function isAuthorized(request, data) {
@@ -449,761 +422,91 @@ function trackUsage(uuid, bytes, env, ctx) {
     }
 }
 
-// ===== FETCH WHATS NEW FROM GITHUB =====
-async function fetchWhatsNew() {
+// ============================================
+// ===== LOG ACTIVITY =====
+// ============================================
+async function logActivity(env, type, detail) {
+    if (!env || !env.IOT_DB) return;
     try {
-        const response = await fetch(WHATNEW_URL, {
+        const ts = new Date().toISOString();
+        let logs = [];
+        const stored = await d1Get(env, "sys_logs");
+        if (stored) logs = JSON.parse(stored);
+        logs.unshift({ ts, type, detail });
+        if (logs.length > 50) logs = logs.slice(0, 50);
+        await d1Put(env, "sys_logs", JSON.stringify(logs));
+    } catch (e) {}
+}
+
+// ============================================
+// ===== FETCH REMOTE CLEAN IPS =====
+// ============================================
+async function fetchRemoteCleanIps() {
+    try {
+        const response = await fetch(CLEAN_IPS_URL, {
             headers: { 'Cache-Control': 'no-cache' },
             signal: AbortSignal.timeout(10000)
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.text();
+        const text = await response.text();
+        const ips = text
+            .split(/[\r\n,;]+/)
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#'))
+            .join('\n');
+        return ips || null;
     } catch (e) {
-        console.error('Failed to fetch what\'s new:', e.message);
+        console.error('Failed to fetch remote clean IPs:', e.message);
         return null;
     }
 }
 
-// ===== FETCH LATEST VERSION FROM GITHUB =====
-async function fetchLatestVersion() {
-    try {
-        const response = await fetch(VERSION_URL, {
-            headers: { 'Cache-Control': 'no-cache' },
-            signal: AbortSignal.timeout(10000)
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return (await response.text()).trim();
-    } catch (e) {
-        console.error('Failed to fetch latest version:', e.message);
-        return null;
+async function applyRemoteCleanIps(env, ctx) {
+    if (sysConfig.autoUpdateCleanIps !== true) {
+        return;
     }
-}
-
-// ===== FETCH LATEST SOURCE FROM GITHUB =====
-async function fetchLatestSource() {
-    try {
-        const response = await fetch(SOURCE_URL, {
-            headers: { 'Cache-Control': 'no-cache' },
-            signal: AbortSignal.timeout(15000)
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.text();
-    } catch (e) {
-        console.error('Failed to fetch source:', e.message);
-        return null;
-    }
-}
-
-// ===== COMPARE VERSIONS =====
-function compareVersions(v1, v2) {
-    const strip = (v) => String(v).replace(/^v/, '').trim();
-    const p1 = strip(v1).split('.').map(Number);
-    const p2 = strip(v2).split('.').map(Number);
-    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
-        const n1 = p1[i] || 0;
-        const n2 = p2[i] || 0;
-        if (n1 > n2) return 1;
-        if (n2 > n1) return -1;
-    }
-    return 0;
-}
-
-// ===== CHECK FOR UPDATE =====
-async function checkForUpdate(env, ctx) {
+    
     const now = Date.now();
-    // Only check every 6 hours
-    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
-        return {
-            checked: false,
-            message: "Last check was less than 6 hours ago"
-        };
+    if (now - lastCleanIpsUpdate < CLEAN_IPS_UPDATE_INTERVAL) return;
+    
+    const newIps = await fetchRemoteCleanIps();
+    if (!newIps) return;
+    
+    await loadSysConfig(env);
+    
+    const currentIps = (sysConfig.cleanIps || '').trim();
+    const normalizedNew = newIps.trim();
+    if (currentIps === normalizedNew) {
+        lastCleanIpsUpdate = now;
+        return;
     }
     
-    lastUpdateCheck = now;
-    const latestVersion = await fetchLatestVersion();
-    const whatsNew = await fetchWhatsNew();
+    sysConfig.cleanIps = normalizedNew;
+    await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
+    lastCleanIpsUpdate = now;
     
-    if (!latestVersion) {
-        return {
-            checked: true,
-            error: "Failed to fetch latest version"
-        };
-    }
+    await logActivity(env, 'Clean IPs Auto-Updated', `Clean IPs list updated from remote source (${newIps.split('\n').length} entries)`);
     
-    const currentVersion = CURRENT_VERSION || "0.0.0";
-    const isNewer = compareVersions(latestVersion, currentVersion) > 0;
-    
-    // Log the check
-    await logActivity(env, 'Update Check', `Checked for updates: current=${currentVersion}, latest=${latestVersion}, available=${isNewer}`);
-    
-    return {
-        checked: true,
-        current: currentVersion,
-        latest: latestVersion,
-        updateAvailable: isNewer,
-        whatsNew: whatsNew,
-        repo: SOURCE_REPO
-    };
-}
-
-// ===== APPLY SOURCE UPDATE =====
-async function applySourceUpdate(env, ctx) {
-    const latestVersion = await fetchLatestVersion();
-    const sourceCode = await fetchLatestSource();
-    
-    if (!latestVersion || !sourceCode) {
-        return {
-            success: false,
-            error: "Failed to fetch latest version or source code"
-        };
-    }
-    
-    const currentVersion = CURRENT_VERSION || "0.0.0";
-    const isNewer = compareVersions(latestVersion, currentVersion) > 0;
-    
-    if (!isNewer) {
-        return {
-            success: false,
-            error: "No new version available",
-            current: currentVersion,
-            latest: latestVersion
-        };
-    }
-    
-    // Deploy the new code
-    const accountId = sysConfig.cfAccountId;
-    const apiToken = sysConfig.cfApiToken;
-    const workerName = sysConfig.cfWorkerName;
-    
-    if (!accountId || !apiToken || !workerName) {
-        return {
-            success: false,
-            error: "CF credentials not configured"
-        };
-    }
-    
-    const format = sysConfig.autoUpdateFormat || "normal";
-    let codeToDeploy = sourceCode;
-    
-    if (format === "obfuscated") {
-        try {
-            codeToDeploy = obfuscateCode(sourceCode);
-        } catch (e) {
-            codeToDeploy = sourceCode;
-        }
-    }
-    
-    const deployRes = await deployWorkerToCloudflare(
-        accountId,
-        apiToken,
-        workerName,
-        codeToDeploy
-    );
-    
-    const deployResult = await deployRes.json();
-    
-    if (deployResult.success) {
-        await logActivity(env, 'Source Updated', `Updated to v${latestVersion} (${format})`);
-        
-        // Notify Telegram
-        if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-            const tgMsg = `🔄 <b>Source Code Updated</b>\n\n📦 <b>Version:</b> ${currentVersion} → ${latestVersion}\n🌐 <b>Repo:</b> ${SOURCE_REPO}\n🔧 <b>Format:</b> ${format}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
-            const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
-            ctx?.waitUntil(
-                fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: notifyChatId,
-                        text: tgMsg,
-                        parse_mode: 'HTML'
-                    })
-                }).catch(() => {})
-            );
-        }
-        
-        return {
-            success: true,
-            message: `Updated to v${latestVersion}`,
-            current: currentVersion,
-            latest: latestVersion,
-            format: format
-        };
-    } else {
-        const errMsg = deployResult.errors?.[0]?.message || 'Unknown API error';
-        return {
-            success: false,
-            error: "Cloudflare API: " + errMsg
-        };
+    if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
+        const tgMsg = `🔄 <b>Clean IPs Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+        const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
+        ctx?.waitUntil(
+            fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: notifyChatId,
+                    text: tgMsg,
+                    parse_mode: 'HTML'
+                })
+            }).catch(() => {})
+        );
     }
 }
 
-export default {
-    async fetch(request, env, ctx) {
-        try {
-            if (!isolateStartTime) isolateStartTime = Date.now();
-            if (configRegistry.size > 10000) { configRegistry.clear(); trojanHashCache.clear(); }
-            await loadSysConfig(env, ctx);
-            
-            // ===== TRIGGER CLEAN IPS UPDATE IN BACKGROUND - ONLY IF ENABLED =====
-            if (sysConfig.autoUpdateCleanIps === true && ctx && typeof ctx.waitUntil === 'function') {
-                ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
-            }
-            
-            activeDeviceId =
-                sysConfig.deviceId || generateHardwareId(sysConfig.apiRoute);
-
-            const url = new URL(request.url);
-            const upgradeHeader = request.headers.get("Upgrade");
-            const isTelemetryStream =
-                upgradeHeader && upgradeHeader.toLowerCase() === "websocket";
-
-            let reqPath = url.pathname;
-            if (reqPath.endsWith("/") && reqPath.length > 1)
-                reqPath = reqPath.slice(0, -1);
-
-            const routes = {
-                data: `/${encodeURI(sysConfig.apiRoute)}`,
-                dash: `/${encodeURI(sysConfig.apiRoute)}/dash`,
-                auth: `/${encodeURI(sysConfig.apiRoute)}/api/auth`,
-                sync: `/${encodeURI(sysConfig.apiRoute)}/api/sync`,
-                tg: `/${encodeURI(sysConfig.apiRoute)}/tg`,
-                syncPanel: `/${encodeURI(sysConfig.apiRoute)}/tg/sync_panel`,
-                logs: `/${encodeURI(sysConfig.apiRoute)}/api/logs`,
-                users: `/${encodeURI(sysConfig.apiRoute)}/api/users`,
-                stats: `/${encodeURI(sysConfig.apiRoute)}/api/stats`,
-                update: `/${encodeURI(sysConfig.apiRoute)}/api/update`,
-                apiKeys: `/${encodeURI(sysConfig.apiRoute)}/api/keys`,
-            };
-
-            const isSyncRoute = reqPath.endsWith("/api/sync");
-            const isUsersRoute =
-                reqPath === routes.users || reqPath.endsWith("/api/users");
-            const isStatsRoute =
-                reqPath === routes.stats || reqPath.endsWith("/api/stats");
-            const isUpdateRoute =
-                reqPath === routes.update || reqPath.endsWith("/api/update");
-            const isApiKeysRoute =
-                reqPath === routes.apiKeys || reqPath.endsWith("/api/keys");
-            const isAuthorizedRoute =
-                reqPath === routes.data ||
-                reqPath === routes.dash ||
-                reqPath === routes.auth ||
-                reqPath === routes.sync ||
-                reqPath === routes.tg ||
-                reqPath === routes.syncPanel ||
-                reqPath === routes.logs ||
-                isSyncRoute ||
-                isUsersRoute ||
-                isStatsRoute ||
-                isUpdateRoute ||
-                isApiKeysRoute;
-
-            if (!isTelemetryStream && !isAuthorizedRoute) {
-                return serveMaintenancePage(request, url);
-            }
-
-            if (!isTelemetryStream) {
-                if (reqPath === routes.dash) {
-                    const dashboardUrl = env.DASHBOARD_URL || 'https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/dashboard.html';
-                    try {
-                        const resp = await fetch(dashboardUrl);
-                        let html = await resp.text();
-                        html = html.replace(/__CURRENT_VERSION__/g, CURRENT_VERSION);
-                        if (env.IOT_DB !== undefined) {
-                            html = html.replace('__HAS_DB_WARNING__', '');
-                        } else {
-                            html = html.replace('__HAS_DB_WARNING__', '<div class="mb-5 p-4 rounded-2xl flex items-start gap-3" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);"><span style="color:#f87171;">&#9888;&#65039;</span><span class="text-sm" style="color:#fca5a5;" data-i18n="missing_db">Database not connected. Settings won\'t be saved.</span></div>');
-                        }
-                        return new Response(html, {
-                            headers: { "Content-Type": "text/html;charset=utf-8" },
-                        });
-                    } catch (e) {
-                        return new Response('Failed to load dashboard', { status: 502 });
-                    }
-                }
-                if (reqPath === routes.auth) {
-                    if (request.method !== "POST")
-                        return new Response("405", { status: 405 });
-                    return await handleAuth(request, url.hostname, ctx, env);
-                }
-                if (reqPath === routes.sync || isSyncRoute) {
-                    if (request.method === "OPTIONS") {
-                        return new Response(null, {
-                            status: 204,
-                            headers: {
-                                "Access-Control-Allow-Origin": "*",
-                                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                                "Access-Control-Allow-Headers":
-                                    "Content-Type, Authorization",
-                                "Access-Control-Max-Age": "86400",
-                            },
-                        });
-                    }
-                    if (request.method !== "POST")
-                        return new Response("405", { status: 405 });
-                    const syncRes = await handleConfigSync(request, env, ctx);
-                    syncRes.headers.set("Access-Control-Allow-Origin", "*");
-                    syncRes.headers.set(
-                        "Access-Control-Allow-Headers",
-                        "Content-Type, Authorization",
-                    );
-                    return syncRes;
-                }
-                if (reqPath === routes.logs) {
-                    if (request.method !== "POST" && request.method !== "GET")
-                        return new Response("405", { status: 405 });
-                    return await handleLogs(request, env);
-                }
-                if (isUsersRoute) {
-                    return await handleUsersApi(request, env, ctx);
-                }
-                if (isStatsRoute) {
-                    return await handleStatsApi(request, env);
-                }
-                if (isUpdateRoute) {
-                    return await handleUpdateApi(request, env, ctx);
-                }
-                if (isApiKeysRoute) {
-                    return await handleApiKeys(request, env, ctx);
-                }
-                if (reqPath === routes.syncPanel) {
-                    if (request.method !== "POST")
-                        return new Response("405", { status: 405 });
-                    return await handleSyncPanel(request, env, ctx);
-                }
-                if (reqPath === routes.tg) {
-                    if (request.method !== "POST")
-                        return new Response("405", { status: 405 });
-                    return await handleTelegramWebhook(
-                        request,
-                        env,
-                        url.hostname,
-                        ctx,
-                    );
-                }
-                if (reqPath === routes.data) {
-                    const ua = (
-                        request.headers.get("User-Agent") || ""
-                    ).toLowerCase();
-                    const isCustomUaAllowed =
-                        sysConfig.subUserAgent &&
-                        sysConfig.subUserAgent.trim().length > 0 &&
-                        ua.includes(
-                            sysConfig.subUserAgent.trim().toLowerCase(),
-                        );
-                    const clientHost =
-                        request.headers.get("Host") || url.hostname;
-                    let targetSub = url.searchParams.get("sub");
-                    let hasMultiUser =
-                        sysConfig.users && sysConfig.users.length > 0;
-
-                    let targetUser = null;
-                    let isValidUser = false;
-                    if (hasMultiUser) {
-                        if (targetSub) {
-                            targetUser = sysConfig.users.find(
-                                (u) =>
-                                    u.name.toLowerCase() ===
-                                        targetSub.toLowerCase() ||
-                                    u.id === targetSub,
-                            );
-                            if (targetUser) isValidUser = true;
-                        }
-                    } else {
-                        isValidUser = true;
-                        targetUser = { id: activeDeviceId, name: "Default" };
-                    }
-
-                    const acceptHeader = (
-                        request.headers.get("Accept") || ""
-                    ).toLowerCase();
-                    const secFetchDest = (
-                        request.headers.get("Sec-Fetch-Dest") || ""
-                    ).toLowerCase();
-
-                    const isRealBrowser =
-                        (secFetchDest === "document" ||
-                            acceptHeader.includes("text/html")) &&
-                        (ua.includes("mozilla") ||
-                            ua.includes("chrome") ||
-                            ua.includes("safari") ||
-                            ua.includes("applewebkit") ||
-                            ua.includes("gecko") ||
-                            ua.includes("opera") ||
-                            ua.includes("edge")) &&
-                        !ua.includes("cla" + "sh") &&
-                        !ua.includes("si" + "ng-box") &&
-                        !ua.includes("v" + "2r" + "ay") &&
-                        !ua.includes("shadow" + "rocket") &&
-                        !ua.includes("quantum" + "ult") &&
-                        !ua.includes("surf" + "board") &&
-                        !ua.includes("sta" + "sh");
-
-                    if (isRealBrowser && !isCustomUaAllowed) {
-                        if (isValidUser) {
-                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/subscription.html';
-                            try {
-                                const resp = await fetch(subscriptionUrl);
-                                let html = await resp.text();
-                                // Compute dynamic values
-                                const idClean = targetUser.id.replace(/-/g, '').toLowerCase();
-                                const sysU = sysUsageCache?.users?.[idClean] || { reqs: 0, dReqs: 0, lastDay: '' };
-                                const totalReqs = sysU.reqs || 0;
-                                const todayDate = new Date().toISOString().split('T')[0];
-                                const dailyReqs = sysU.lastDay === todayDate ? (sysU.dReqs || 0) : 0;
-                                const limitTotal = targetUser.limitTotalReq || 0;
-                                const limitDaily = targetUser.limitDailyReq || 0;
-                                const totalGb = (totalReqs / 6000).toFixed(2);
-                                const limitTotalGb = limitTotal ? (limitTotal / 6000).toFixed(2) : '9999';
-                                const dailyGb = (dailyReqs / 6000).toFixed(2);
-                                const limitDailyGb = limitDaily ? (limitDaily / 6000).toFixed(2) : '9999';
-                                const totalPercent = limitTotal ? Math.min(100, (totalReqs / limitTotal) * 100).toFixed(1) : '0';
-                                const dailyPercent = limitDaily ? Math.min(100, (dailyReqs / limitDaily) * 100).toFixed(1) : '0';
-                                let expiryDateTxt = '2099-01-01';
-                                let isExpired = false;
-                                if (targetUser.expiryMs) {
-                                    expiryDateTxt = new Date(targetUser.expiryMs).toISOString().split('T')[0];
-                                    if (Date.now() > targetUser.expiryMs) isExpired = true;
-                                }
-                                let statusCode = 'active';
-                                if (targetUser.isPaused) statusCode = 'paused';
-                                else if (isExpired) statusCode = 'expired';
-                                else if (limitTotal && totalReqs >= limitTotal) statusCode = 'limit';
-                                else if (limitDaily && dailyReqs >= limitDaily) statusCode = 'dailyLimit';
-                                let cleanUrl = new URL(url.href);
-                                let panelUrlToUse = sysConfig.customPanelUrl;
-                                if (targetUser.userPanelUrl && targetUser.userPanelUrl.trim()) panelUrlToUse = targetUser.userPanelUrl.trim();
-                                if (panelUrlToUse) {
-                                    let customUrlStr = panelUrlToUse;
-                                    if (!customUrlStr.startsWith('http://') && !customUrlStr.startsWith('https://')) customUrlStr = 'https://' + customUrlStr;
-                                    try { const customUrl = new URL(customUrlStr); cleanUrl.protocol = customUrl.protocol; cleanUrl.host = customUrl.host; } catch(e) {}
-                                }
-                                cleanUrl.searchParams.delete('flag'); cleanUrl.searchParams.delete('format');
-                                cleanUrl.searchParams.delete('type'); cleanUrl.searchParams.delete('output'); cleanUrl.searchParams.delete('raw');
-                                const syncNormal = cleanUrl.href;
-                                const syncRaw = cleanUrl.href + (cleanUrl.href.includes('?') ? '&flag=a' : '?flag=a');
-                                // Total progress bar
-                                let totalProgress = '';
-                                if (limitTotal) {
-                                    totalProgress = `<div class="w-full rounded-full h-1.5 mt-3 overflow-hidden progress-bar-bg"><div class="h-1.5 rounded-full" style="background: var(--accent); width: ${totalPercent}%;"></div></div><p class="text-[10px] text-muted text-right mt-1.5" data-i18n="used">${totalPercent}% Used</p>`;
-                                } else {
-                                    totalProgress = '<p class="text-[10px] text-muted mt-2" data-i18n="unlimitedPlan">Unlimited Plan</p>';
-                                }
-                                // Daily progress bar
-                                let dailyProgress = '';
-                                if (limitDaily) {
-                                    dailyProgress = `<div class="w-full rounded-full h-1.5 mt-3 overflow-hidden progress-bar-bg"><div class="h-1.5 rounded-full" style="background: var(--amber-text); width: ${dailyPercent}%;"></div></div><p class="text-[10px] text-muted text-right mt-1.5" data-i18n="used">${dailyPercent}% Used</p>`;
-                                } else {
-                                    dailyProgress = '<p class="text-[10px] text-muted mt-2" data-i18n="noDailyLimit">No Daily Limit</p>';
-                                }
-                                // Replace placeholders
-                                html = html.replace(/__USER_NAME__/g, targetUser.name);
-                                html = html.replace(/__USER_ID__/g, targetUser.id);
-                                html = html.replace(/__STATUS_CODE__/g, statusCode);
-                                html = html.replace(/__TOTAL_GB__/g, totalGb);
-                                html = html.replace(/__LIMIT_TOTAL_GB__/g, limitTotalGb);
-                                html = html.replace(/__TOTAL_PERCENT__/g, totalPercent);
-                                html = html.replace(/__DAILY_GB__/g, dailyGb);
-                                html = html.replace(/__LIMIT_DAILY_GB__/g, limitDailyGb);
-                                html = html.replace(/__DAILY_PERCENT__/g, dailyPercent);
-                                html = html.replace(/__EXPIRY_DATE__/g, expiryDateTxt);
-                                html = html.replace(/__SYNC_NORMAL__/g, syncNormal);
-                                html = html.replace(/__SYNC_RAW__/g, syncRaw);
-                                html = html.replace(/__TOTAL_PROGRESS__/g, totalProgress);
-                                html = html.replace(/__DAILY_PROGRESS__/g, dailyProgress);
-                                return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
-                            } catch (e) {
-                                return new Response('Failed to load subscription page', { status: 502 });
-                            }
-                        } else {
-                            return serveMaintenancePage(request, url);
-                        }
-                    }
-
-                    if (hasMultiUser && !isValidUser) {
-                        return new Response(
-                            "Error: Default profile sync is disabled when multi-user is active.",
-                            { status: 403 },
-                        );
-                    }
-
-                    const allowInsecure =
-                        url.searchParams.get("insecure") === "true" ||
-                        url.searchParams.get("allowInsecure") === "true" ||
-                        url.searchParams.get("allow_insecure") === "1" ||
-                        url.searchParams.get("allowInsecure") === "1";
-
-                    const resHeaders = new Headers();
-                    resHeaders.set("Cache-Control", "no-store");
-                    resHeaders.set("Access-Control-Allow-Origin", "*");
-
-                    let flag = (
-                        url.searchParams.get("flag") ||
-                        url.searchParams.get("format") ||
-                        url.searchParams.get("type") ||
-                        url.searchParams.get("output") ||
-                        ""
-                    ).toLowerCase();
-
-                    if (isValidUser && targetUser) {
-                        let idClean = targetUser.id
-                            .replace(/-/g, "")
-                            .toLowerCase();
-                        let sysU = sysUsageCache?.users?.[idClean] || {
-                            reqs: 0,
-                            dReqs: 0,
-                        };
-                        let totalReqs = sysU.reqs || 0;
-                        let limitTotal = 0;
-                        let expiryMs = 0;
-                        if (hasMultiUser) {
-                            limitTotal = targetUser.limitTotalReq || 0;
-                            expiryMs = targetUser.expiryMs || 0;
-                        } else {
-                            limitTotal = sysConfig.limitTotalReq || 0;
-                            expiryMs = sysConfig.expiryMs || 0;
-                        }
-
-                        let usedBytes = Math.floor(
-                            totalReqs * (1073741824 / 6000),
-                        );
-                        let limitBytes = Math.floor(
-                            limitTotal * (1073741824 / 6000),
-                        );
-                        let expireSec = expiryMs
-                            ? Math.floor(expiryMs / 1000)
-                            : 0;
-
-                        const subUserInfo = `upload=0; download=${usedBytes}; total=${limitBytes}; expire=${expireSec}`;
-                        resHeaders.set("Subscription-UserInfo", subUserInfo);
-                        resHeaders.set("subscription-userinfo", subUserInfo);
-                        resHeaders.set("Profile-Update-Interval", "12");
-                        resHeaders.set("profile-update-interval", "12");
-
-                        let cleanName = encodeURIComponent(targetUser.name);
-                        resHeaders.set(
-                            "Content-Disposition",
-                            `attachment; filename="${cleanName}"; filename*=UTF-8''${cleanName}`,
-                        );
-                    }
-
-                    // Determine subscription format
-                    let isClashYaml = false;
-                    let isSingboxJson = false;
-                    let isClashJson = false;
-                    let isVJson = false;
-
-                    if (
-                        flag === "clash" ||
-                        flag === "yaml" ||
-                        flag === "meta" ||
-                        flag === "stash" ||
-                        flag === "clash-meta" ||
-                        flag === "y"
-                    ) {
-                        isClashYaml = true;
-                    } else if (flag === "b" || flag === "c_legacy") {
-                        isClashJson = true;
-                    } else if (
-                        flag === "sing" ||
-                        flag === "singbox" ||
-                        flag === "sing-box" ||
-                        flag === "sb" ||
-                        flag === "s" ||
-                        flag === "c" ||
-                        flag === "g"
-                    ) {
-                        isSingboxJson = true;
-                    } else if (flag === "vjson" || flag === "v") {
-                        isVJson = true;
-                    } else if (flag === "base64") {
-                        // Skip auto-detect to default to base64 plain-text subscription format
-                    } else if (flag === "a" || flag === "raw" || flag === "") {
-                        if (
-                            ua.includes(getGamma()) ||
-                            ua.includes("meta") ||
-                            ua.includes("sta" + "sh") ||
-                            ua.includes("verge") ||
-                            ua.includes("mihomo") ||
-                            ua.includes("cfw") ||
-                            ua.includes("stash") ||
-                            ua.includes("clash")
-                        ) {
-                            isClashYaml = true;
-                        } else if (
-                            ua.includes("sing-box") ||
-                            ua.includes("singbox") ||
-                            ua.includes("hiddify") ||
-                            ua.includes("nekobox") ||
-                            ua.includes("sfa") ||
-                            ua.includes("karing")
-                        ) {
-                            isSingboxJson = true;
-                        }
-                    }
-
-                    if (isClashYaml) {
-                        resHeaders.set(
-                            "Content-Type",
-                            "text/yaml; charset=utf-8",
-                        );
-                        return new Response(
-                            await buildYamlProfile(clientHost, targetSub, allowInsecure, env),
-                            {
-                                headers: resHeaders,
-                            },
-                        );
-                    } else if (isSingboxJson) {
-                        resHeaders.set(
-                            "Content-Type",
-                            "application/json; charset=utf-8",
-                        );
-                        return new Response(
-                            JSON.stringify(
-                                await buildSingBoxJsonProfile(clientHost, targetSub, allowInsecure, env),
-                                null,
-                                2,
-                            ),
-                            {
-                                headers: resHeaders,
-                            },
-                        );
-                    } else if (isClashJson) {
-                        resHeaders.set(
-                            "Content-Type",
-                            "application/json; charset=utf-8",
-                        );
-                        return new Response(
-                            JSON.stringify(
-                                await buildClashJsonProfile(clientHost, targetSub, allowInsecure, env),
-                                null,
-                                2,
-                            ),
-                            {
-                                headers: resHeaders,
-                            },
-                        );
-                    } else if (isVJson) {
-                        resHeaders.set("Content-Type", "application/json; charset=utf-8");
-                        return new Response(JSON.stringify(await buildVJsonProfile(clientHost, targetSub, allowInsecure, env), null, 2), { headers: resHeaders });
-                    } else {
-                        resHeaders.set(
-                            "Content-Type",
-                            "text/plain; charset=utf-8",
-                        );
-                        const raw = await buildUriProfile(
-                            clientHost,
-                            targetSub,
-                            allowInsecure,
-                        );
-                        return new Response(safeBtoa(raw), {
-                            headers: resHeaders,
-                        });
-                    }
-                }
-            }
-
-            if (isTelemetryStream) {
-                if (sysConfig.isPaused)
-                    return new Response(null, { status: 503 });
-                let wsRelayIdx = -1;
-                try {
-                    const riParam = url.searchParams.get("ri");
-                    if (riParam !== null) wsRelayIdx = parseInt(riParam, 10);
-                } catch (e) {}
-                if (wsRelayIdx < 0) {
-                    try {
-                        const lastSeg = url.pathname.split("/").pop();
-                        if (lastSeg) {
-                            const num = parseInt(lastSeg, 10);
-                            if (!isNaN(num) && num >= 0) wsRelayIdx = num;
-                        }
-                    } catch (e) {}
-                }
-                if (wsRelayIdx < 0) {
-                    try {
-                        const lastSeg = url.pathname.split("/").pop();
-                        if (lastSeg) {
-                            const decoded = JSON.parse(atob(lastSeg));
-                            if (typeof decoded.relayIdx === "number")
-                                wsRelayIdx = decoded.relayIdx;
-                        }
-                    } catch (e) {}
-                }
-                return await processTelemetryStream(env, ctx, wsRelayIdx);
-            }
-
-            return new Response(null, { status: 404 });
-        } catch (err) {
-            return new Response(null, { status: 404 });
-        }
-    },
-    async scheduled(event, env, ctx) {
-        try {
-            await loadSysConfig(env, ctx);
-            
-            // ===== AUTO UPDATE CLEAN IPS - ONLY IF ENABLED =====
-            if (sysConfig.autoUpdateCleanIps === true) {
-                await applyRemoteCleanIps(env, ctx);
-            }
-            
-            // Check for updates but don't auto-update
-            if (sysConfig.cfAccountId && sysConfig.cfApiToken && sysConfig.cfWorkerName) {
-                const result = await checkForUpdate(env, ctx);
-                if (result.updateAvailable) {
-                    await logActivity(env, 'Update Available', `Version ${result.latest} is available. Current: ${result.current}`);
-                }
-            }
-            
-        } catch (e) {
-            // Silent fail on scheduled task
-        }
-    }
-};
-
-async function serveMaintenancePage(request, url) {
-    let fakeList = sysConfig.maintenanceHost
-        ? sysConfig.maintenanceHost
-              .split(",")
-              .map((s) => s.trim())
-              .filter((s) => s)
-        : ["https://www.ubuntu.com"];
-    const clientIP = request.headers.get("cf-connecting-ip") || "0.0.0.0";
-    const ipHash = Array.from(clientIP).reduce(
-        (acc, char) => acc + char.charCodeAt(0),
-        0,
-    );
-    const targetStr = fakeList[ipHash % fakeList.length].startsWith("http")
-        ? fakeList[ipHash % fakeList.length]
-        : `https://${fakeList[ipHash % fakeList.length]}`;
-
-    try {
-        const targetUrl = new URL(targetStr);
-        if (url.pathname !== "/") targetUrl.pathname = url.pathname;
-        targetUrl.search = url.search;
-        const cleanHeaders = new Headers(request.headers);
-        cleanHeaders.set("Host", targetUrl.hostname);
-        cleanHeaders.delete("cf-connecting-ip");
-        cleanHeaders.delete("x-forwarded-for");
-        const fetchInit = {
-            method: request.method,
-            headers: cleanHeaders,
-            redirect: "follow",
-        };
-        if (request.method !== "GET" && request.method !== "HEAD")
-            fetchInit.body = request.body;
-        return await fetch(new Request(targetUrl.toString(), fetchInit));
-    } catch (e) {
-        return new Response("Not Found", { status: 404 });
-    }
-}
-
-
-let sysConfigLoading = null;
-let sysUsageLoading = null;
-let backupIpLoading = null;
-
+// ============================================
+// ===== LOAD SYS CONFIG =====
+// ============================================
 function migrateSlaveNodesToLinkedPanels(config) {
     let modified = false;
     if (config && config.slaveNodes && config.slaveNodes.trim().length > 0) {
@@ -1303,7 +606,6 @@ async function loadSysConfig(env, ctx = null) {
     }
     sysConfig.customRelay = backupIpCache ?? env.RELAY_IP ?? "";
     
-    // ===== AUTO UPDATE CLEAN IPS - ONLY IF ENABLED =====
     if (sysConfig.autoUpdateCleanIps === true && now - lastCleanIpsUpdate > CLEAN_IPS_UPDATE_INTERVAL) {
         if (ctx && typeof ctx.waitUntil === 'function') {
             ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
@@ -1313,6 +615,9 @@ async function loadSysConfig(env, ctx = null) {
     }
 }
 
+// ============================================
+// ===== SEND TELEGRAM MESSAGE =====
+// ============================================
 async function fetchCloudflareUsage(accountId, apiToken) {
     if (!accountId || !apiToken) return null;
     try {
@@ -1448,91 +753,206 @@ async function sendTelegramMessage(request, type, hostName) {
     } catch (e) {}
 }
 
-async function logActivity(env, type, detail) {
-    if (!env || !env.IOT_DB) return;
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+async function handleUpdateApi(request, env, ctx) {
     try {
-        const ts = new Date().toISOString();
-        let logs = [];
-        const stored = await d1Get(env, "sys_logs");
-        if (stored) logs = JSON.parse(stored);
-        logs.unshift({ ts, type, detail });
-        if (logs.length > 50) logs = logs.slice(0, 50);
-        await d1Put(env, "sys_logs", JSON.stringify(logs));
-    } catch (e) {}
-}
+        if (request.method !== "POST") {
+            return new Response("405", { status: 405 });
+        }
 
-// ===== FETCH CLEAN IPS FROM REMOTE =====
-async function fetchRemoteCleanIps() {
-    try {
-        const response = await fetch(CLEAN_IPS_URL, {
-            headers: { 'Cache-Control': 'no-cache' },
-            signal: AbortSignal.timeout(10000)
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
-        // Clean up: remove empty lines, trim whitespace, keep valid IPs/domains
-        const ips = text
-            .split(/[\r\n,;]+/)
-            .map(line => line.trim())
-            .filter(line => line && !line.startsWith('#'))
-            .join('\n');
-        return ips || null;
+        const data = await request.json();
+        const authKey = extractAuthKey(request, data);
+
+        // بررسی احراز هویت
+        if (authKey !== sysConfig.masterKey) {
+            return new Response(
+                JSON.stringify({ success: false, error: "Unauthorized" }),
+                { status: 401, headers: { "Content-Type": "application/json" } }
+            );
+        }
+
+        const action = data.action;
+
+        // ===== ACTION: check =====
+        if (action === "check") {
+            try {
+                const res = await fetch(UPDATER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "check",
+                        masterKey: authKey,
+                        // ارسال credentials به updater (اختیاری برای چک)
+                        cfAccountId: sysConfig.cfAccountId || "",
+                        cfApiToken: sysConfig.cfApiToken || "",
+                        cfWorkerName: sysConfig.cfWorkerName || ""
+                    })
+                });
+                const result = await res.json();
+                return new Response(JSON.stringify(result), {
+                    headers: { "Content-Type": "application/json" }
+                });
+            } catch (e) {
+                return new Response(
+                    JSON.stringify({ success: false, error: e.message }),
+                    { status: 500, headers: { "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        // ===== ACTION: apply_update =====
+        if (action === "apply_update") {
+            try {
+                const res = await fetch(UPDATER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "apply_update",
+                        masterKey: authKey,
+                        // ===== ارسال credentials به updater =====
+                        cfAccountId: sysConfig.cfAccountId || "",
+                        cfApiToken: sysConfig.cfApiToken || "",
+                        cfWorkerName: sysConfig.cfWorkerName || ""
+                    })
+                });
+                const result = await res.json();
+                return new Response(JSON.stringify(result), {
+                    headers: { "Content-Type": "application/json" }
+                });
+            } catch (e) {
+                return new Response(
+                    JSON.stringify({ success: false, error: e.message }),
+                    { status: 500, headers: { "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        // ===== ACTION: update_clean_ips =====
+        if (action === "update_clean_ips") {
+            try {
+                const res = await fetch(UPDATER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "update_clean_ips",
+                        masterKey: authKey
+                    })
+                });
+                const result = await res.json();
+                
+                // اگر آپدیتر IPS را برگرداند، آنها را در sysConfig ذخیره کن
+                if (result.success && result.ips) {
+                    const currentIps = (sysConfig.cleanIps || '').trim();
+                    const normalizedNew = result.ips.trim();
+                    
+                    if (currentIps !== normalizedNew) {
+                        sysConfig.cleanIps = normalizedNew;
+                        await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
+                        await logActivity(env, 'Clean IPs Updated', `Clean IPs list updated from updater (${result.count || 0} entries)`);
+                    }
+                }
+                
+                return new Response(JSON.stringify(result), {
+                    headers: { "Content-Type": "application/json" }
+                });
+            } catch (e) {
+                return new Response(
+                    JSON.stringify({ success: false, error: e.message }),
+                    { status: 500, headers: { "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        // ===== ACTION: status =====
+        if (action === "status") {
+            try {
+                const res = await fetch(UPDATER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "status",
+                        masterKey: authKey
+                    })
+                });
+                const result = await res.json();
+                return new Response(JSON.stringify(result), {
+                    headers: { "Content-Type": "application/json" }
+                });
+            } catch (e) {
+                return new Response(
+                    JSON.stringify({ success: false, error: e.message }),
+                    { status: 500, headers: { "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        return new Response(
+            JSON.stringify({
+                success: false,
+                error: "Invalid action. Use: check, apply_update, update_clean_ips, status"
+            }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+
     } catch (e) {
-        console.error('Failed to fetch remote Server List:', e.message);
-        return null;
-    }
-}
-
-async function applyRemoteCleanIps(env, ctx) {
-    // اگر سوئیچ غیرفعال باشد، هیچ کاری نکن
-    if (sysConfig.autoUpdateCleanIps !== true) {
-        return;
-    }
-    
-    const now = Date.now();
-    // Only update if interval has passed
-    if (now - lastCleanIpsUpdate < CLEAN_IPS_UPDATE_INTERVAL) return;
-    
-    const newIps = await fetchRemoteCleanIps();
-    if (!newIps) return;
-    
-    // Load current config to preserve other settings
-    await loadSysConfig(env);
-    
-    // Check if IPs actually changed
-    const currentIps = (sysConfig.cleanIps || '').trim();
-    const normalizedNew = newIps.trim();
-    if (currentIps === normalizedNew) {
-        lastCleanIpsUpdate = now;
-        return;
-    }
-    
-    // Apply new IPs
-    sysConfig.cleanIps = normalizedNew;
-    await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
-    lastCleanIpsUpdate = now;
-    
-    // Log the update
-    await logActivity(env, 'Server List Auto-Updated', `Server list updated from remote source (${newIps.split('\n').length} entries)`);
-    
-    // Notify via Telegram if configured
-    if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-        const tgMsg = `🔄 <b>Server List Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
-        const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
-        ctx?.waitUntil(
-            fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: notifyChatId,
-                    text: tgMsg,
-                    parse_mode: 'HTML'
-                })
-            }).catch(() => {})
+        return new Response(
+            JSON.stringify({ success: false, error: "Internal error: " + e.message }),
+            { status: 500, headers: { "Content-Type": "application/json" } }
         );
     }
 }
 
+// ============================================
+// ===== SERVE MAINTENANCE PAGE =====
+// ============================================
+async function serveMaintenancePage(request, url) {
+    let fakeList = sysConfig.maintenanceHost
+        ? sysConfig.maintenanceHost
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+        : ["https://www.ubuntu.com"];
+    const clientIP = request.headers.get("cf-connecting-ip") || "0.0.0.0";
+    const ipHash = Array.from(clientIP).reduce(
+        (acc, char) => acc + char.charCodeAt(0),
+        0,
+    );
+    const targetStr = fakeList[ipHash % fakeList.length].startsWith("http")
+        ? fakeList[ipHash % fakeList.length]
+        : `https://${fakeList[ipHash % fakeList.length]}`;
+
+    try {
+        const targetUrl = new URL(targetStr);
+        if (url.pathname !== "/") targetUrl.pathname = url.pathname;
+        targetUrl.search = url.search;
+        const cleanHeaders = new Headers(request.headers);
+        cleanHeaders.set("Host", targetUrl.hostname);
+        cleanHeaders.delete("cf-connecting-ip");
+        cleanHeaders.delete("x-forwarded-for");
+        const fetchInit = {
+            method: request.method,
+            headers: cleanHeaders,
+            redirect: "follow",
+        };
+        if (request.method !== "GET" && request.method !== "HEAD")
+            fetchInit.body = request.body;
+        return await fetch(new Request(targetUrl.toString(), fetchInit));
+    } catch (e) {
+        return new Response("Not Found", { status: 404 });
+    }
+}
+
+// ============================================
+// ===== HANDLE LOGS =====
+// ============================================
 async function handleLogs(request, env) {
     try {
         if (request.method === "POST") {
@@ -1558,6 +978,9 @@ async function handleLogs(request, env) {
     }
 }
 
+// ============================================
+// ===== HANDLE USERS API =====
+// ============================================
 async function handleUsersApi(request, env, ctx) {
     try {
         const url = new URL(request.url);
@@ -1961,6 +1384,9 @@ async function handleUsersApi(request, env, ctx) {
     }
 }
 
+// ============================================
+// ===== HANDLE STATS API =====
+// ============================================
 async function handleStatsApi(request, env) {
     try {
         const url = new URL(request.url);
@@ -2051,376 +1477,9 @@ async function handleStatsApi(request, env) {
     }
 }
 
-function parseImportBindings(importStr) {
-    const cleanStr = importStr.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "").trim();
-    const content = cleanStr
-        .replace(/^import\s+/, "")
-        .replace(/\s+from\s+["'].*?["'];?$/, "")
-        .trim();
-
-    const bindings = [];
-
-    if (content.startsWith("*")) {
-        const match = content.match(/\*\s+as\s+(\w+)/);
-        if (match) bindings.push({ name: match[1], isNamespace: true });
-        return bindings;
-    }
-
-    const braceStart = content.indexOf("{");
-    if (braceStart !== -1) {
-        const defaultPart = content.slice(0, braceStart).replace(/,/, "").trim();
-        if (defaultPart) {
-            bindings.push({ name: defaultPart, isDefault: true });
-        }
-        const bracePart = content.slice(braceStart + 1, content.lastIndexOf("}")).trim();
-        const namedImports = bracePart.split(",").map((s) => s.trim()).filter(Boolean);
-        namedImports.forEach((item) => {
-            if (item.includes(" as ")) {
-                const parts = item.split(/\s+as\s+/);
-                bindings.push({ name: parts[1], original: parts[0] });
-            } else {
-                bindings.push({ name: item });
-            }
-        });
-    } else {
-        bindings.push({ name: content, isDefault: true });
-    }
-
-    return bindings;
-}
-
-function obfuscateCode(srcText) {
-    const importRegex = /import\s+[\s\S]*?from\s+["'].*?["'];?/g;
-    const imports = [];
-    let match;
-
-    while ((match = importRegex.exec(srcText)) !== null) {
-        imports.push(match[0]);
-    }
-
-    let cleanCode = srcText.replace(importRegex, "");
-
-    const bindings = [];
-    imports.forEach((imp) => {
-        const parsed = parseImportBindings(imp);
-        bindings.push(...parsed);
-    });
-
-    const uniqueBindings = [];
-    const seenNames = new Set();
-    bindings.forEach((b) => {
-        if (!seenNames.has(b.name)) {
-            seenNames.add(b.name);
-            uniqueBindings.push(b);
-        }
-    });
-
-    cleanCode = cleanCode.replace(/export\s+default\s+/g, "const _0xNahanModule = ");
-    cleanCode += "\nreturn _0xNahanModule;";
-
-    const randKey = Math.floor(Math.random() * 80) + 64;
-
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(cleanCode);
-
-    let hexOutput = "";
-    for (let i = 0; i < bytes.length; i++) {
-        const xorByte = bytes[i] ^ randKey;
-        hexOutput += xorByte.toString(16).padStart(2, "0");
-    }
-
-    const rawImportsStr = imports.join("\n");
-    const bindingNames = uniqueBindings.map((b) => b.name);
-
-    const finalLoaderCode =
-        rawImportsStr +
-        "\n\n" +
-        "// Nahan Gateway - Obfuscated Loader Context (v2.5.4.2 Optimized)\n" +
-        'const _0xNahanPayload = "' +
-        hexOutput +
-        '";\n' +
-        "const _0xNahanKey = " +
-        randKey +
-        ";\n\n" +
-        "const _0xNahanBytes = new Uint8Array((_0xNahanPayload.match(/.{1,2}/g) || []).map(x => parseInt(x, 16) ^ _0xNahanKey));\n" +
-        "const _0xNahanCode = new TextDecoder().decode(_0xNahanBytes);\n" +
-        "const _0xNahanRuntime = new Function(" +
-        bindingNames.map((name) => '"' + name + '"').join(", ") +
-        ", _0xNahanCode)(" +
-        bindingNames.join(", ") +
-        ");\n\n" +
-        "export default _0xNahanRuntime;";
-
-    return finalLoaderCode;
-}
-
-function cmpVersions(a, b) {
-    const strip = (v) => String(v).replace(/^v/, "").trim();
-    const pa = strip(a).split(".").map(Number);
-    const pb = strip(b).split(".").map(Number);
-    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-        let na = pa[i] || 0,
-            nb = pb[i] || 0;
-        if (na > nb) return 1;
-        if (nb > na) return -1;
-    }
-    return 0;
-}
-
-async function handleUpdateApi(request, env, ctx) {
-    try {
-        if (request.method !== "POST")
-            return new Response("405", { status: 405 });
-        const data = await request.json();
-        const deployKey = extractAuthKey(request, data);
-        if (deployKey !== sysConfig.masterKey) {
-            return new Response(
-                JSON.stringify({ success: false, error: "Unauthorized" }),
-                {
-                    status: 401,
-                    headers: { "Content-Type": "application/json" },
-                },
-            );
-        }
-
-        const action = data.action;
-
-        // ===== Handle Clean IPs Update =====
-        if (action === "update_clean_ips") {
-            const newIps = await fetchRemoteCleanIps();
-            if (!newIps) {
-                return new Response(
-                    JSON.stringify({ success: false, error: "Failed to fetch remote Server List" }),
-                    { status: 502, headers: { "Content-Type": "application/json" } }
-                );
-            }
-            const currentIps = (sysConfig.cleanIps || '').trim();
-            const normalizedNew = newIps.trim();
-            if (currentIps === normalizedNew) {
-                return new Response(
-                    JSON.stringify({ 
-                        success: true, 
-                        message: "Server List already up to date",
-                        current: currentIps.split('\n').length,
-                        new: normalizedNew.split('\n').length,
-                        updated: false
-                    }),
-                    { headers: { "Content-Type": "application/json" } }
-                );
-            }
-            sysConfig.cleanIps = normalizedNew;
-            await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
-            await logActivity(env, 'Server Updated', `Server List list updated manually via API (${normalizedNew.split('\n').length} entries)`);
-            
-            // Notify Telegram
-            if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-                const tgMsg = `🔄 <b>Server List Updated Manually</b>\n\n📋 <b>New Entries:</b> ${normalizedNew.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
-                const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
-                ctx?.waitUntil(
-                    fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: notifyChatId,
-                            text: tgMsg,
-                            parse_mode: 'HTML'
-                        })
-                    }).catch(() => {})
-                );
-            }
-            
-            return new Response(
-                JSON.stringify({ 
-                    success: true, 
-                    message: "Server List updated successfully",
-                    current: currentIps.split('\n').length,
-                    new: normalizedNew.split('\n').length,
-                    updated: true
-                }),
-                { headers: { "Content-Type": "application/json" } }
-            );
-        }
-
-        // ===== NEW: Check for Update =====
-        if (action === "check_for_update") {
-            const result = await checkForUpdate(env, ctx);
-            return new Response(
-                JSON.stringify(result),
-                { headers: { "Content-Type": "application/json" } }
-            );
-        }
-
-        // ===== NEW: Apply Update =====
-        if (action === "apply_update") {
-            const result = await applySourceUpdate(env, ctx);
-            return new Response(
-                JSON.stringify(result),
-                { headers: { "Content-Type": "application/json" } }
-            );
-        }
-
-        // ===== For backward compatibility =====
-        if (action === "check") {
-            const result = await checkForUpdate(env, ctx);
-            return new Response(
-                JSON.stringify({
-                    success: true,
-                    current: result.current,
-                    latest: result.latest,
-                    updateAvailable: result.updateAvailable,
-                    whatsNew: result.whatsNew,
-                    message: "Use action: check_for_update for detailed check, or apply_update to deploy"
-                }),
-                { headers: { "Content-Type": "application/json" } }
-            );
-        }
-
-        if (action === "deploy") {
-            return new Response(
-                JSON.stringify({
-                    success: false,
-                    error: "Source code auto-deploy is disabled. Use action: apply_update to manually update",
-                    message: "This endpoint now requires manual confirmation. Check for updates first using check_for_update, then apply_update to deploy."
-                }),
-                { status: 400, headers: { "Content-Type": "application/json" } }
-            );
-        }
-
-        return new Response(
-            JSON.stringify({ 
-                success: false, 
-                error: "Invalid action. Available: update_clean_ips, check_for_update, apply_update, check" 
-            }),
-            { status: 400, headers: { "Content-Type": "application/json" } }
-        );
-    } catch (e) {
-        return new Response(
-            JSON.stringify({ success: false, error: "Internal error: " + e.message }),
-            { status: 500, headers: { "Content-Type": "application/json" } }
-        );
-    }
-}
-
-async function handleApiKeys(request, env, ctx) {
-    try {
-        const url = new URL(request.url);
-        const method = request.method;
-
-        const authKey = extractAuthKey(request, null);
-        if (authKey !== sysConfig.masterKey) {
-            return new Response(
-                JSON.stringify({
-                    success: false,
-                    error: "Only master key can manage API keys",
-                }),
-                {
-                    status: 401,
-                    headers: { "Content-Type": "application/json" },
-                },
-            );
-        }
-
-        if (method === "GET") {
-            const keys = (sysConfig.panelApiKeys || []).map((k) => ({
-                id: k.id,
-                name: k.name,
-                keyPreview: k.key.slice(0, 8) + "..." + k.key.slice(-4),
-                createdAt: k.createdAt,
-                lastUsed: k.lastUsed,
-            }));
-            return new Response(JSON.stringify({ success: true, keys }), {
-                headers: { "Content-Type": "application/json" },
-            });
-        }
-
-        if (method === "POST") {
-            const body = await request.json();
-            if (body.action === "create") {
-                if (!sysConfig.panelApiKeys) sysConfig.panelApiKeys = [];
-                if (sysConfig.panelApiKeys.length >= 10) {
-                    return new Response(
-                        JSON.stringify({
-                            success: false,
-                            error: "Maximum 10 API keys allowed",
-                        }),
-                        {
-                            status: 400,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-                }
-                const newKey = generateApiKey(body.name);
-                sysConfig.panelApiKeys.push(newKey);
-                await cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
-                ctx?.waitUntil(
-                    logActivity(
-                        env,
-                        "API Key Created",
-                        `Key "${newKey.name}" created`,
-                    ).catch(() => {}),
-                );
-                return new Response(
-                    JSON.stringify({ success: true, key: newKey }),
-                    {
-                        status: 201,
-                        headers: { "Content-Type": "application/json" },
-                    },
-                );
-            }
-            if (body.action === "revoke") {
-                if (!body.id)
-                    return new Response(
-                        JSON.stringify({
-                            success: false,
-                            error: "ID required",
-                        }),
-                        {
-                            status: 400,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-                const idx = (sysConfig.panelApiKeys || []).findIndex(
-                    (k) => k.id === body.id,
-                );
-                if (idx === -1)
-                    return new Response(
-                        JSON.stringify({
-                            success: false,
-                            error: "Key not found",
-                        }),
-                        {
-                            status: 404,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-                const revoked = sysConfig.panelApiKeys.splice(idx, 1)[0];
-                await cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
-                ctx?.waitUntil(
-                    logActivity(
-                        env,
-                        "API Key Revoked",
-                        `Key "${revoked.name}" revoked`,
-                    ).catch(() => {}),
-                );
-                return new Response(
-                    JSON.stringify({ success: true, revoked: revoked.id }),
-                    { headers: { "Content-Type": "application/json" } },
-                );
-            }
-        }
-
-        return new Response(
-            JSON.stringify({ success: false, error: "Invalid request" }),
-            { status: 400, headers: { "Content-Type": "application/json" } },
-        );
-    } catch (e) {
-        return new Response(
-            JSON.stringify({ success: false, error: e.message }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-        );
-    }
-}
-
+// ============================================
+// ===== HANDLE AUTH =====
+// ============================================
 async function handleAuth(request, hostName, ctx, env) {
     try {
         const data = await request.json();
@@ -2588,6 +1647,9 @@ async function handleAuth(request, hostName, ctx, env) {
     }
 }
 
+// ============================================
+// ===== HANDLE CONFIG SYNC =====
+// ============================================
 async function handleConfigSync(request, env, ctx) {
     try {
         const data = await request.json();
@@ -2786,6 +1848,9 @@ async function handleConfigSync(request, env, ctx) {
     }
 }
 
+// ============================================
+// ===== HANDLE SYNC PANEL =====
+// ============================================
 async function handleSyncPanel(request, env, ctx) {
     try {
         const data = await request.json();
@@ -2801,7 +1866,6 @@ async function handleSyncPanel(request, env, ctx) {
                 { status: 400 },
             );
         }
-        // Verify the tgAdminId matches this panel's config
         const adminId = sysConfig.tgAdminId || sysConfig.tgChatId;
         if (!adminId || adminId.toString() !== data.tgAdminId.toString()) {
             return new Response(
@@ -2809,7 +1873,6 @@ async function handleSyncPanel(request, env, ctx) {
                 { status: 401 },
             );
         }
-        // Also verify a valid panelApiKey if one was provided
         if (data.panelApiKey && !isPanelApiKey(data.panelApiKey)) {
             return new Response(
                 JSON.stringify({ success: false, error: "Unauthorized" }),
@@ -2838,10 +1901,132 @@ async function handleSyncPanel(request, env, ctx) {
     }
 }
 
+// ============================================
+// ===== HANDLE API KEYS =====
+// ============================================
+async function handleApiKeys(request, env, ctx) {
+    try {
+        const url = new URL(request.url);
+        const method = request.method;
+
+        const authKey = extractAuthKey(request, null);
+        if (authKey !== sysConfig.masterKey) {
+            return new Response(
+                JSON.stringify({
+                    success: false,
+                    error: "Only master key can manage API keys",
+                }),
+                {
+                    status: 401,
+                    headers: { "Content-Type": "application/json" },
+                },
+            );
+        }
+
+        if (method === "GET") {
+            const keys = (sysConfig.panelApiKeys || []).map((k) => ({
+                id: k.id,
+                name: k.name,
+                keyPreview: k.key.slice(0, 8) + "..." + k.key.slice(-4),
+                createdAt: k.createdAt,
+                lastUsed: k.lastUsed,
+            }));
+            return new Response(JSON.stringify({ success: true, keys }), {
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
+        if (method === "POST") {
+            const body = await request.json();
+            if (body.action === "create") {
+                if (!sysConfig.panelApiKeys) sysConfig.panelApiKeys = [];
+                if (sysConfig.panelApiKeys.length >= 10) {
+                    return new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: "Maximum 10 API keys allowed",
+                        }),
+                        {
+                            status: 400,
+                            headers: { "Content-Type": "application/json" },
+                        },
+                    );
+                }
+                const newKey = generateApiKey(body.name);
+                sysConfig.panelApiKeys.push(newKey);
+                await cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
+                ctx?.waitUntil(
+                    logActivity(
+                        env,
+                        "API Key Created",
+                        `Key "${newKey.name}" created`,
+                    ).catch(() => {}),
+                );
+                return new Response(
+                    JSON.stringify({ success: true, key: newKey }),
+                    {
+                        status: 201,
+                        headers: { "Content-Type": "application/json" },
+                    },
+                );
+            }
+            if (body.action === "revoke") {
+                if (!body.id)
+                    return new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: "ID required",
+                        }),
+                        {
+                            status: 400,
+                            headers: { "Content-Type": "application/json" },
+                        },
+                    );
+                const idx = (sysConfig.panelApiKeys || []).findIndex(
+                    (k) => k.id === body.id,
+                );
+                if (idx === -1)
+                    return new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: "Key not found",
+                        }),
+                        {
+                            status: 404,
+                            headers: { "Content-Type": "application/json" },
+                        },
+                    );
+                const revoked = sysConfig.panelApiKeys.splice(idx, 1)[0];
+                await cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
+                ctx?.waitUntil(
+                    logActivity(
+                        env,
+                        "API Key Revoked",
+                        `Key "${revoked.name}" revoked`,
+                    ).catch(() => {}),
+                );
+                return new Response(
+                    JSON.stringify({ success: true, revoked: revoked.id }),
+                    { headers: { "Content-Type": "application/json" } },
+                );
+            }
+        }
+
+        return new Response(
+            JSON.stringify({ success: false, error: "Invalid request" }),
+            { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+    } catch (e) {
+        return new Response(
+            JSON.stringify({ success: false, error: e.message }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+    }
+}
+
 const botI18n = {
     en: {
-        welcome:
-            "🤖 **Welcome to Nahan Gateway Bot**\nSelect your option below to manage your system:",
+        welcome: "🤖 **Welcome to Nahan Gateway Bot**\nSelect your option below to manage your system:",
         status: "System Status",
         users: "Subscribers",
         metrics: "Gateway Health",
@@ -2874,17 +2059,13 @@ const botI18n = {
         msg_enter_name: "Please send a name for the subscriber:",
         msg_added: "Sub added successfully! 🎉",
         msg_deleted: "Sub deleted successfully! 🗑️",
-        msg_panic:
-            "🚨 PANIC MODE ACTIVATED 🚨\nRoute randomized & System Paused.",
+        msg_panic: "🚨 PANIC MODE ACTIVATED 🚨\nRoute randomized & System Paused.",
         msg_invalid: "Invalid input. Please try again.",
-        msg_enter_limits:
-            "Enter limits format:\n`[totalReqs] [dailyReqs] [days_limit]`\n(Use 0 for unlimited)\n\nExample:\n`10000 500 30`",
+        msg_enter_limits: "Enter limits format:\n`[totalReqs] [dailyReqs] [days_limit]`\n(Use 0 for unlimited)\n\nExample:\n`10000 500 30`",
         msg_confirm_del: "⚠️ Are you sure you want to delete this subscriber?",
-        msg_confirm_panic:
-            "⚠️ Are you absolutely sure you want to trigger PANIC mode? This will randomize API routes and pause all connections!",
+        msg_confirm_panic: "⚠️ Are you absolutely sure you want to trigger PANIC mode? This will randomize API routes and pause all connections!",
         status_updated: "Status updated!",
-        access_denied:
-            "Access Denied. You are not authorized to manage this panel.",
+        access_denied: "Access Denied. You are not authorized to manage this panel.",
         dashboard: "Dashboard",
         search: "Search User",
         statistics: "Statistics",
@@ -2894,8 +2075,7 @@ const botI18n = {
         extend_expiry: "Extend Expiry",
         notes: "Notes",
         device_limit: "Config Limit",
-        msg_enter_search:
-            "🔍 Send a username, UUID, or subscription to search:",
+        msg_enter_search: "🔍 Send a username, UUID, or subscription to search:",
         msg_enter_notes: "📝 Send notes for this user:",
         msg_enter_extend_days: "📅 Enter number of days to extend expiration:",
         msg_traffic_reset: "Traffic has been reset successfully!",
@@ -2928,8 +2108,7 @@ const botI18n = {
         panel_remote: "🌐",
         msg_panel_selected: "Panel selected! ✅",
         msg_panel_error: "❌ Failed to connect to the selected panel.",
-        msg_panel_unreachable:
-            "⚠️ Panel is unreachable. Please check the configuration.",
+        msg_panel_unreachable: "⚠️ Panel is unreachable. Please check the configuration.",
         btn_sub_link: "Subscription Link",
         sub_link_sent: "Subscription link sent!",
         btn_update_usage: "Update Usage",
@@ -2952,12 +2131,10 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "Silent Alerts",
         tg_pause: "Kill Switch",
-        tg_auto_update_clean_ips: "Auto-Update Server List",
-        tg_check_for_update: "Check for Update",
-        tg_update_available: "Update Available!",
+        tg_auto_update_clean_ips: "Auto-Update Clean IPs",
         tg_direct: "Direct Configs",
         tg_nat64: "NAT64",
-        tg_clean_ips: "Server List",
+        tg_clean_ips: "Clean IPs",
         tg_nodes: "Nodes",
         tg_strategy: "Name Strategy",
         tg_prefix: "Name Prefix",
@@ -2973,7 +2150,7 @@ const botI18n = {
         tg_log_entry: "",
         tg_log_empty: "No logs found",
         tg_u_custom_name: "Custom Name",
-        tg_u_clean_ips: "Server List",
+        tg_u_clean_ips: "Clean IPs",
         tg_u_proxy_ips: "Proxy IPs",
         tg_u_nodes: "Nodes",
         tg_u_nat64: "NAT64",
@@ -2988,14 +2165,9 @@ const botI18n = {
         tg_conns: "Active Connections",
         tg_version: "Version",
         tg_cf_usage: "CF Usage",
-        update_available_msg: "🎉 <b>New version available!</b>\n\nCurrent: <code>{current}</code>\nLatest: <code>{latest}</code>\n\n📋 <b>What's New:</b>\n{whatsNew}\n\nDo you want to update now?",
-        update_confirmed: "Updating to version {version}...",
-        update_success: "✅ <b>Update successful!</b>\n\nPanel updated to version {version}.",
-        update_failed: "❌ <b>Update failed!</b>\n\nError: {error}",
     },
     fa: {
-        welcome:
-            "🤖 **به ربات ترانزیت نهان خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
+        welcome: "🤖 **به ربات ترانزیت نهان خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
         status: "وضعیت سیستم",
         users: "مدیریت مشترکین",
         metrics: "سلامت درگاه شبکه",
@@ -3030,11 +2202,9 @@ const botI18n = {
         msg_deleted: "مشترک با موفقیت حذف گردید!",
         msg_panic: "وضعیت اضطراری فعال شد\nمسیر تصادفی شد و سیستم متوقف گردید.",
         msg_invalid: "ورودی نامعتبر است. مجدداً تلاش نمایید.",
-        msg_enter_limits:
-            "فرمت ورودی محدودیت:\n`[کل] [روزانه] [مدت_روز]`\n(از 0 برای نامحدود استفاده کنید)\n\nمثال:\n`10000 500 30`",
+        msg_enter_limits: "فرمت ورودی محدودیت:\n`[کل] [روزانه] [مدت_روز]`\n(از 0 برای نامحدود استفاده کنید)\n\nمثال:\n`10000 500 30`",
         msg_confirm_del: "آیا از حذف این مشترک اطمینان کامل دارید؟",
-        msg_confirm_panic:
-            "آیا از فعال‌سازی وضعیت اضطراری اطمینان دارید؟ کل اتصالات متوقف و آدرس‌ها منقضی خواهند شد!",
+        msg_confirm_panic: "آیا از فعال‌سازی وضعیت اضطراری اطمینان دارید؟ کل اتصالات متوقف و آدرس‌ها منقضی خواهند شد!",
         status_updated: "وضعیت بروزرسانی شد!",
         access_denied: "دسترسی غیرمجاز. شما اجازه مدیریت این پنل را ندارید.",
         dashboard: "داشبورد",
@@ -3052,8 +2222,7 @@ const botI18n = {
         msg_traffic_reset: "ترافیک با موفقیت بازنشانی شد!",
         msg_expiry_extended: "انقضا به مدت {days} روز تمدید شد!",
         msg_no_disabled: "هیچ کاربر غیرفعالی یافت نشد.",
-        msg_enter_device_limit:
-            "محدودیت تعداد کانفیگ را وارد کنید (0 برای نامحدود):",
+        msg_enter_device_limit: "محدودیت تعداد کانفیگ را وارد کنید (0 برای نامحدود):",
         config_limit_updated: "محدودیت کانفیگ به‌روزرسانی شد!",
         stats_title: "آمار پنل",
         count_active: "فعال",
@@ -3080,8 +2249,7 @@ const botI18n = {
         panel_remote: "🌐",
         msg_panel_selected: "پنل انتخاب شد! ✅",
         msg_panel_error: "❌ اتصال به پنل انتخابی ناموفق بود.",
-        msg_panel_unreachable:
-            "⚠️ پنل در دسترس نیست. لطفاً پیکربندی را بررسی کنید.",
+        msg_panel_unreachable: "⚠️ پنل در دسترس نیست. لطفاً پیکربندی را بررسی کنید.",
         btn_sub_link: "لینک اشتراک",
         sub_link_sent: "لینک اشتراک ارسال شد!",
         btn_update_usage: "بروزرسانی مصرف",
@@ -3104,12 +2272,10 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "هشدار خاموش",
         tg_pause: "کلید توقف",
-        tg_auto_update_clean_ips: "بروزرسانی خودکار لیست سرور ",
-        tg_check_for_update: "بررسی آپدیت جدید",
-        tg_update_available: "آپدیت جدید موجود است!",
+        tg_auto_update_clean_ips: "بروزرسانی خودکار آی‌پی تمیز",
         tg_direct: "کانفیگ مستقیم",
         tg_nat64: "NAT64",
-        tg_clean_ips: "لیست سرور ها",
+        tg_clean_ips: "آی‌پی تمیز",
         tg_nodes: "نودها",
         tg_strategy: "روش نام‌گذاری",
         tg_prefix: "پیشوند",
@@ -3125,7 +2291,7 @@ const botI18n = {
         tg_log_entry: "",
         tg_log_empty: "گزارشی ثبت نشده",
         tg_u_custom_name: "نام سفارشی",
-        tg_u_clean_ips: "لیست سرور",
+        tg_u_clean_ips: "آی‌پی تمیز",
         tg_u_proxy_ips: "آی‌پی پروکسی",
         tg_u_nodes: "نودها",
         tg_u_nat64: "NAT64",
@@ -3140,10 +2306,6 @@ const botI18n = {
         tg_conns: "اتصالات فعال",
         tg_version: "نسخه",
         tg_cf_usage: "مصرف کلودفلر",
-        update_available_msg: "🎉 <b>نسخه جدید موجود است!</b>\n\nنسخه فعلی: <code>{current}</code>\nنسخه جدید: <code>{latest}</code>\n\n📋 <b>تغییرات جدید:</b>\n{whatsNew}\n\nآیا می‌خواهید بروزرسانی کنید؟",
-        update_confirmed: "در حال بروزرسانی به نسخه {version}...",
-        update_success: "✅ <b>بروزرسانی موفق!</b>\n\nپنل به نسخه {version} بروزرسانی شد.",
-        update_failed: "❌ <b>بروزرسانی ناموفق!</b>\n\nخطا: {error}",
     },
 };
 
@@ -3249,6 +2411,9 @@ async function remotePanelResetTraffic(panel, userId) {
     );
 }
 
+// ============================================
+// ===== HANDLE TELEGRAM WEBHOOK =====
+// ============================================
 async function handleTelegramWebhook(request, env, hostName, ctx) {
     try {
         const update = await request.json();
@@ -3274,8 +2439,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         chat_id: chatId,
-                        text:
-                            "❌ *شما دسترسی به این ربات را ندارید.*\n\nیوزر آیدی شما جهت اضافه کردن به لیست ادمین ها: `" +
+                        text: "❌ *شما دسترسی به این ربات را ندارید.*\n\nیوزر آیدی شما جهت اضافه کردن به لیست ادمین ها: `" +
                             (callerId || "Unknown") +
                             "`",
                         parse_mode: "Markdown",
@@ -3296,7 +2460,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
 
         const panels = getPanelsList();
 
-        // Read last login signal from D1 (set by handleAuth or handleSyncPanel)
         let lastLoginPanel = null;
         try {
             const stored = await d1Get(env, "tg_panel_login");
@@ -3311,22 +2474,17 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     (p) => !p.isLocal && p.host === lastLoginPanel.host,
                 );
                 if (found) return found;
-                // Remote panel not in linkedPanels — synthesize from login signal
                 return {
                     name: lastLoginPanel.name || lastLoginPanel.host,
                     host: lastLoginPanel.host,
                     apiRoute: lastLoginPanel.apiRoute || sysConfig.apiRoute,
-                    apiKey:
-                        lastLoginPanel.apiKey ||
-                        lastLoginPanel.masterKey ||
-                        null,
+                    apiKey: lastLoginPanel.apiKey || lastLoginPanel.masterKey || null,
                     isLocal: false,
                 };
             }
-            return panels[0]; // default to local
+            return panels[0];
         };
 
-        // Custom sendOrEdit message helper
         const sendOrEdit = async (
             chatId,
             text,
@@ -3401,7 +2559,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                 ? `https://${hostName}/${encodeURI(sysConfig.apiRoute)}/dash`
                 : null;
             const subUrl = `https://${hostName}/${sysConfig.apiRoute}`;
-            /** @type {any} */
             const inline_keyboard = [];
             if (isAdmin) {
                 inline_keyboard.push([
@@ -3446,13 +2603,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     {
                         text: `📋 ${t("tg_logs")}`,
                         callback_data: "tg_logs_menu",
-                    },
-                ]);
-                // Check for update button
-                inline_keyboard.push([
-                    {
-                        text: `🔄 ${t("tg_check_for_update")}`,
-                        callback_data: "check_for_update",
                     },
                 ]);
             }
@@ -3712,112 +2862,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
             return { text, kb };
         };
 
-        // ===== NEW: Handle Update Check =====
-        async function handleUpdateCheck(chatId, messageId) {
-            try {
-                const result = await checkForUpdate(env, ctx);
-                
-                if (result.updateAvailable) {
-                    const msg = t("update_available_msg")
-                        .replace(/{current}/g, result.current)
-                        .replace(/{latest}/g, result.latest)
-                        .replace(/{whatsNew}/g, result.whatsNew || t("no_changelog"));
-                    
-                    const kb = {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: `✅ ${t("btn_confirm")}`,
-                                    callback_data: `apply_update:${result.latest}`,
-                                },
-                                {
-                                    text: `❌ ${t("btn_cancel")}`,
-                                    callback_data: "main_menu",
-                                },
-                            ],
-                        ],
-                    };
-                    await sendOrEdit(chatId, msg, kb, messageId);
-                } else {
-                    const msg = `✅ **${t("tg_check_for_update")}**\n\nCurrent version: \`${result.current}\`\n${result.latest ? `Latest version: \`${result.latest}\`` : ''}\n\n${result.error ? `❌ ${result.error}` : 'No updates available.'}`;
-                    const kb = {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: t("btn_main_menu"),
-                                    callback_data: "main_menu",
-                                },
-                            ],
-                        ],
-                    };
-                    await sendOrEdit(chatId, msg, kb, messageId);
-                }
-            } catch (e) {
-                const msg = `❌ ${t("update_failed").replace(/{error}/g, e.message)}`;
-                const kb = {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: t("btn_main_menu"),
-                                callback_data: "main_menu",
-                            },
-                        ],
-                    ],
-                };
-                await sendOrEdit(chatId, msg, kb, messageId);
-            }
-        }
-
-        // ===== NEW: Handle Apply Update =====
-        async function handleApplyUpdate(chatId, messageId, version) {
-            try {
-                await sendOrEdit(chatId, t("update_confirmed").replace(/{version}/g, version), null, messageId);
-                
-                const result = await applySourceUpdate(env, ctx);
-                
-                if (result.success) {
-                    const msg = t("update_success").replace(/{version}/g, result.latest);
-                    const kb = {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: t("btn_main_menu"),
-                                    callback_data: "main_menu",
-                                },
-                            ],
-                        ],
-                    };
-                    await sendOrEdit(chatId, msg, kb, messageId);
-                } else {
-                    const msg = t("update_failed").replace(/{error}/g, result.error);
-                    const kb = {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: t("btn_main_menu"),
-                                    callback_data: "main_menu",
-                                },
-                            ],
-                        ],
-                    };
-                    await sendOrEdit(chatId, msg, kb, messageId);
-                }
-            } catch (e) {
-                const msg = t("update_failed").replace(/{error}/g, e.message);
-                const kb = {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: t("btn_main_menu"),
-                                callback_data: "main_menu",
-                            },
-                        ],
-                    ],
-                };
-                await sendOrEdit(chatId, msg, kb, messageId);
-            }
-        }
-
         if (update.callback_query) {
             const cb = update.callback_query;
             const chatId = cb.message?.chat?.id;
@@ -3838,11 +2882,9 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     return new Response("OK", { status: 200 });
                 }
 
-                // Get active panel from last login signal
                 const activePanel = getActivePanel();
                 const isRemotePanel = activePanel && !activePanel.isLocal;
 
-                // Helper to fetch users for the active panel
                 const getPanelUsers = async () => {
                     if (isRemotePanel) {
                         const res = await fetchRemotePanelUsers(activePanel);
@@ -3851,7 +2893,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     return sysConfig.users || [];
                 };
 
-                // Clear step state on callback query
                 tgState[chatId] = null;
                 ctx?.waitUntil(
                     d1Put(env, "tg_bot_state", JSON.stringify(tgState)).catch(
@@ -3864,11 +2905,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                 if (data === "main_menu") {
                     const menu = getMainMenu(activePanel, isAuthorized);
                     await sendOrEdit(chatId, menu.text, menu.kb, messageId);
-                } else if (data === "check_for_update") {
-                    await handleUpdateCheck(chatId, messageId);
-                } else if (data.startsWith("apply_update:")) {
-                    const version = data.replace("apply_update:", "");
-                    await handleApplyUpdate(chatId, messageId, version);
                 } else if (data === "sys_lang") {
                     sysConfig.tgBotLang = langCode === "fa" ? "en" : "fa";
                     await cachedD1Put(
@@ -5388,11 +4424,9 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
             const text = update.message.text.trim();
 
             if (isAuthorized) {
-                // Get active panel from last login signal
                 const activePanel = getActivePanel();
                 const isRemotePanel = activePanel && !activePanel.isLocal;
 
-                // Helper to fetch users for the active panel
                 const getPanelUsers = async () => {
                     if (isRemotePanel) {
                         const res = await fetchRemotePanelUsers(activePanel);
@@ -5401,7 +4435,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     return sysConfig.users || [];
                 };
 
-                // Handle /start command
                 if (text === "/start") {
                     tgState[chatId] = null;
                     ctx?.waitUntil(
@@ -6318,7 +5351,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     }
                 }
 
-                // Default message / fallback menu
                 const menu = getMainMenu(activePanel, isAuthorized);
                 await sendOrEdit(chatId, menu.text, menu.kb);
             } else {
@@ -6371,6 +5403,9 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
     }
 }
 
+// ============================================
+// ===== PROCESS TELEMETRY STREAM =====
+// ============================================
 async function processTelemetryStream(env, ctx, wsRelayIdx) {
     const [client, webSocket] = Object.values(new WebSocketPair());
     webSocket.accept();
@@ -6659,7 +5694,6 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
                     .filter(Boolean);
             }
 
-            // Consistent hash based on user/profile ID to prevent session/IP splitting across assets on Cloudflare
             let startIndex = 0;
             if (pips.length > 1) {
                 let hash = 0;
@@ -6670,7 +5704,6 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
                 startIndex = Math.abs(hash) % pips.length;
             }
 
-            // Attempt to connect with automatic failover to alternative proxy IPs
             let connected = false;
             for (
                 let attempt = 0;
@@ -6688,9 +5721,7 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
                     await remoteSocket.opened;
                     connected = true;
                     break;
-                } catch (e) {
-                    // Try next fallback proxy IP in list
-                }
+                } catch (e) {}
             }
             if (!connected) {
                 webSocket.close();
@@ -6715,6 +5746,9 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
     }
 }
 
+// ============================================
+// ===== BUILD PROFILE FUNCTIONS =====
+// ============================================
 function generateHardwareId(seed) {
     const h20 = Array.from(new TextEncoder().encode(seed))
         .map((b) => b.toString(16).padStart(2, "0"))
@@ -6773,7 +5807,7 @@ function getSubscriptionStats(targetSub = null) {
         let remDays = Math.ceil(
             (expiryMs - Date.now()) / (1000 * 60 * 60 * 24),
         );
-        remDaysTxt = remDays >= 0 ? `${remDays} Days Left` : "Expired";
+remDaysTxt = remDays >= 0 ? `${remDays} Days Left` : "Expired";
     }
 
     return {
@@ -6905,24 +5939,19 @@ function getAllProfiles(targetSub = null) {
     return list;
 }
 
-// Returns the hostname of a linked panel URL (strips scheme/path/port). The
-// linkedPanels API system (cross-panel sync) is untouched; here we only read
-// its URLs as extra parallel node hosts, restoring 2.6 "parallel node" behavior.
 function linkedPanelHost(p) {
     let raw = p && typeof p === "object" ? p.url || "" : p || "";
     raw = String(raw).trim();
     if (!raw) return "";
-    raw = raw.replace(/^[a-zA-Z]+:\/\//, ""); // drop scheme
-    raw = raw.split("/")[0]; // drop path
-    raw = raw.split("@").pop(); // drop credentials
+    raw = raw.replace(/^[a-zA-Z]+:\/\//, "");
+    raw = raw.split("/")[0];
+    raw = raw.split("@").pop();
     if (raw.startsWith("[")) {
-        // [ipv6]:port
         return raw.slice(0, raw.indexOf("]") + 1);
     }
-    return raw.split(":")[0]; // drop port
+    return raw.split(":")[0];
 }
 
-// Combined parallel-node host list = slaveNodes (legacy) + linkedPanels URLs (2.9 API).
 function getGlobalNodeHosts() {
     let hosts = [];
     if (sysConfig.slaveNodes)
@@ -6991,20 +6020,8 @@ function getProxyIpsWithNat64(proxyIpString, nat64Prefix) {
 }
 
 const VALID_NAME_TAGS = [
-    "FLAG",
-    "COUNTRY",
-    "CITY",
-    "ISP",
-    "PROTOCOL",
-    "USER",
-    "PORT",
-    "PREFIX",
-    "IP",
-    "IP_NAME",
-    "HOST",
-    "DATE",
-    "INDEX",
-    "WORKER",
+    "FLAG", "COUNTRY", "CITY", "ISP", "PROTOCOL", "USER",
+    "PORT", "PREFIX", "IP", "IP_NAME", "HOST", "DATE", "INDEX", "WORKER"
 ];
 const ipGeoCache = new Map();
 
@@ -7250,7 +6267,6 @@ function getConfigName(
     } else if (strategy === "ip") {
         return ip || "unknown";
     } else {
-        // "default"
         return `${typeLab}-Core-${port}${cleanName}`;
     }
 }
@@ -7334,7 +6350,6 @@ async function buildUriProfile(
     ];
     await preloadIpFlags(profiles, allHostNames);
 
-    // Add fake configs
     let fakeNames = getFakeConfigNames(targetSub);
     fakeNames.forEach((name) => {
         lines.push(
@@ -7509,7 +6524,6 @@ async function buildUriProfile(
     return lines.join("\n");
 }
 
-
 let clashTemplate = null;
 let singboxTemplate = null;
 let VTemplate = null;
@@ -7535,7 +6549,6 @@ async function fetchTemplates(env) {
         } catch(e) {}
     }
 }
-
 
 function getCustomRouting() {
     let cr = sysConfig.customRouting || "";
@@ -7569,15 +6582,14 @@ async function buildYamlProfile(hostName, targetSub = null, allowInsecure = fals
     let reqPath = encodeURI(`/${sysConfig.apiRoute}`);
     let proxies = [];
     let proxyNames = [];
-    let nameCounts = {}; // Track proxy names for deduplication
+    let nameCounts = {};
     let profiles = getAllProfiles(targetSub);
     let allHostNames = [
         ...new Set(profiles.flatMap((p) => getProfileHostNames(hostName, p))),
     ];
     await preloadIpFlags(profiles, allHostNames);
-    let proxyGeoInfo = new Map(); // proxyName -> {country, flag}
+    let proxyGeoInfo = new Map();
 
-    // Add fake configs
     let fakeNames = getFakeConfigNames(targetSub);
     let fakeRefs = [];
     fakeNames.forEach((name) => {
@@ -7820,8 +6832,7 @@ async function buildYamlProfile(hostName, targetSub = null, allowInsecure = fals
         });
     });
 
-    // Build per-country groups from geo info
-    let countryGroups = new Map(); // "country" -> {flag, proxies[]}
+    let countryGroups = new Map();
     proxyGeoInfo.forEach((geo, name) => {
         let key = geo.country || "Unknown";
         if (!countryGroups.has(key)) {
@@ -7833,7 +6844,6 @@ async function buildYamlProfile(hostName, targetSub = null, allowInsecure = fals
         a[0].localeCompare(b[0]),
     );
 
-    // Build proxy-groups YAML
     let groupsYaml =
         "proxy-groups:\n" +
         '  - name: "✅ Selector"\n' +
@@ -7845,7 +6855,6 @@ async function buildYamlProfile(hostName, targetSub = null, allowInsecure = fals
         groupsYaml += `      - "${info.flag} ${country}"\n`;
     });
 
-    // Fastest — url-test with ALL proxies
     groupsYaml +=
         '\n  - name: "⚡ Fastest"\n' +
         "    type: url-test\n" +
@@ -7857,14 +6866,12 @@ async function buildYamlProfile(hostName, targetSub = null, allowInsecure = fals
         groupsYaml += `      - ${n}\n`;
     });
 
-    // Manual — select with ALL proxies
     groupsYaml +=
         '\n  - name: "🖐 Manual"\n' + "    type: select\n" + "    proxies:\n";
     proxyNames.forEach((n) => {
         groupsYaml += `      - ${n}\n`;
     });
 
-    // Per-country url-test groups
     sortedCountries.forEach(([country, info]) => {
         groupsYaml +=
             `\n  - name: "${info.flag} ${country}"\n` +
@@ -7975,7 +6982,6 @@ ${rulesOutput}
 `;
 }
 
-// Obfuscated string keys to prevent Cloudflare scanners block on vpn/proxy keywords
 const k_pxs = "pro" + "xies";
 const k_px_gps = "pro" + "xy-gro" + "ups";
 const k_obds = "out" + "bounds";
@@ -8005,14 +7011,13 @@ async function buildClashJsonProfile(
         ...new Set(profiles.flatMap((p) => getProfileHostNames(hostName, p))),
     ];
     await preloadIpFlags(profiles, allHostNames);
-    let proxyGeoInfo = new Map(); // proxyName -> {country, flag}
+    let proxyGeoInfo = new Map();
     let reqPath = encodeURI(`/${sysConfig.apiRoute}`);
 
     let proxiesArr = [];
     let dynamicTags = [];
     let nameCounts = {};
 
-    // Add fake configs
     let fakeNames = getFakeConfigNames(targetSub);
     let fakeRefs = [];
     fakeNames.forEach((name) => {
@@ -8372,8 +7377,7 @@ async function buildClashJsonProfile(
     });
 
     if (dynamicTags.length === 0) { dynamicTags.push("direct"); }
-    // Build per-country groups from geo info
-    let countryGroups = new Map(); // "country" -> {flag, proxies[]}
+    let countryGroups = new Map();
     proxyGeoInfo.forEach((geo, name) => {
         let key = geo.country || "Unknown";
         if (!countryGroups.has(key)) {
@@ -8385,7 +7389,6 @@ async function buildClashJsonProfile(
         a[0].localeCompare(b[0]),
     );
 
-    // Build proxy-groups JSON
     let groupsJson = [
         {
             name: "✅ Selector",
@@ -8543,7 +7546,6 @@ async function buildClashJsonProfile(
     };
 }
 
-
 async function buildVJsonProfile(hostName, targetSub = null, allowInsecure = false, env = null) {
     let ports = sysConfig.socketPorts ? sysConfig.socketPorts.split(",").map(s => s.trim()).filter(Boolean) : ["443"];
     let profiles = getAllProfiles(targetSub);
@@ -8650,7 +7652,6 @@ async function buildVJsonProfile(hostName, targetSub = null, allowInsecure = fal
         if (newOutbounds.length === 0) newOutbounds = outboundsArr;
         tpl.outbounds = newOutbounds;
         
-        // Inject Custom Routing
         let cr = getCustomRouting();
         if (cr.domains.length > 0) {
             tpl.route.rules.unshift({ domain: cr.domains, outbound: "direct" });
@@ -8671,6 +7672,7 @@ async function buildVJsonProfile(hostName, targetSub = null, allowInsecure = fal
     }
     return { outbounds: outboundsArr };
 }
+
 async function buildSingBoxJsonProfile(hostName, targetSub = null, allowInsecure = false, env = null) {
     let ports = sysConfig.socketPorts
         ? sysConfig.socketPorts
@@ -8683,14 +7685,13 @@ async function buildSingBoxJsonProfile(hostName, targetSub = null, allowInsecure
         ...new Set(profiles.flatMap((p) => getProfileHostNames(hostName, p))),
     ];
     await preloadIpFlags(profiles, allHostNames);
-    let proxyGeoInfo = new Map(); // proxyName -> {country, flag}
+    let proxyGeoInfo = new Map();
     let reqPath = encodeURI(`/${sysConfig.apiRoute}`);
 
     let outboundsArr = [];
     let dynamicTags = [];
     let nameCounts = {};
 
-    // Add fake configs
     let fakeNames = getFakeConfigNames(targetSub);
     let fakeRefs = [];
     fakeNames.forEach((name) => {
@@ -9061,7 +8062,6 @@ async function buildSingBoxJsonProfile(hostName, targetSub = null, allowInsecure
         tpl.outbounds = newOutbounds;
         return tpl;
     }
-    // Fallback if template fails
     return {
         log: { disabled: false, level: "warn", timestamp: true },
         dns: { servers: [], rules: [] },
@@ -9070,3 +8070,411 @@ async function buildSingBoxJsonProfile(hostName, targetSub = null, allowInsecure
         route: { rules: [] }
     };
 }
+
+// ============================================
+// ===== EXPORT DEFAULT =====
+// ============================================
+export default {
+    async fetch(request, env, ctx) {
+        try {
+            if (!isolateStartTime) isolateStartTime = Date.now();
+            if (configRegistry.size > 10000) { configRegistry.clear(); trojanHashCache.clear(); }
+            await loadSysConfig(env, ctx);
+            
+            if (sysConfig.autoUpdateCleanIps === true && ctx && typeof ctx.waitUntil === 'function') {
+                ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
+            }
+            
+            activeDeviceId = sysConfig.deviceId || generateHardwareId(sysConfig.apiRoute);
+
+            const url = new URL(request.url);
+            const upgradeHeader = request.headers.get("Upgrade");
+            const isTelemetryStream = upgradeHeader && upgradeHeader.toLowerCase() === "websocket";
+
+            let reqPath = url.pathname;
+            if (reqPath.endsWith("/") && reqPath.length > 1)
+                reqPath = reqPath.slice(0, -1);
+
+            const routes = {
+                data: `/${encodeURI(sysConfig.apiRoute)}`,
+                dash: `/${encodeURI(sysConfig.apiRoute)}/dash`,
+                auth: `/${encodeURI(sysConfig.apiRoute)}/api/auth`,
+                sync: `/${encodeURI(sysConfig.apiRoute)}/api/sync`,
+                tg: `/${encodeURI(sysConfig.apiRoute)}/tg`,
+                syncPanel: `/${encodeURI(sysConfig.apiRoute)}/tg/sync_panel`,
+                logs: `/${encodeURI(sysConfig.apiRoute)}/api/logs`,
+                users: `/${encodeURI(sysConfig.apiRoute)}/api/users`,
+                stats: `/${encodeURI(sysConfig.apiRoute)}/api/stats`,
+                update: `/${encodeURI(sysConfig.apiRoute)}/api/update`,
+                apiKeys: `/${encodeURI(sysConfig.apiRoute)}/api/keys`,
+            };
+
+            const isSyncRoute = reqPath.endsWith("/api/sync");
+            const isUsersRoute = reqPath === routes.users || reqPath.endsWith("/api/users");
+            const isStatsRoute = reqPath === routes.stats || reqPath.endsWith("/api/stats");
+            const isUpdateRoute = reqPath === routes.update || reqPath.endsWith("/api/update");
+            const isApiKeysRoute = reqPath === routes.apiKeys || reqPath.endsWith("/api/keys");
+            const isAuthorizedRoute = reqPath === routes.data ||
+                reqPath === routes.dash ||
+                reqPath === routes.auth ||
+                reqPath === routes.sync ||
+                reqPath === routes.tg ||
+                reqPath === routes.syncPanel ||
+                reqPath === routes.logs ||
+                isSyncRoute ||
+                isUsersRoute ||
+                isStatsRoute ||
+                isUpdateRoute ||
+                isApiKeysRoute;
+
+            if (!isTelemetryStream && !isAuthorizedRoute) {
+                return serveMaintenancePage(request, url);
+            }
+
+            if (!isTelemetryStream) {
+                if (reqPath === routes.dash) {
+                    const dashboardUrl = env.DASHBOARD_URL || 'https://mahbodrahimi.ir/Nahan/dash.html';
+                    try {
+                        const resp = await fetch(dashboardUrl);
+                        let html = await resp.text();
+                        html = html.replace(/__CURRENT_VERSION__/g, CURRENT_VERSION);
+                        if (env.IOT_DB !== undefined) {
+                            html = html.replace('__HAS_DB_WARNING__', '');
+                        } else {
+                            html = html.replace('__HAS_DB_WARNING__', '<div class="mb-5 p-4 rounded-2xl flex items-start gap-3" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);"><span style="color:#f87171;">&#9888;&#65039;</span><span class="text-sm" style="color:#fca5a5;" data-i18n="missing_db">Database not connected. Settings won\'t be saved.</span></div>');
+                        }
+                        return new Response(html, {
+                            headers: { "Content-Type": "text/html;charset=utf-8" },
+                        });
+                    } catch (e) {
+                        return new Response('Failed to load dashboard', { status: 502 });
+                    }
+                }
+                if (reqPath === routes.auth) {
+                    if (request.method !== "POST")
+                        return new Response("405", { status: 405 });
+                    return await handleAuth(request, url.hostname, ctx, env);
+                }
+                if (reqPath === routes.sync || isSyncRoute) {
+                    if (request.method === "OPTIONS") {
+                        return new Response(null, {
+                            status: 204,
+                            headers: {
+                                "Access-Control-Allow-Origin": "*",
+                                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                                "Access-Control-Max-Age": "86400",
+                            },
+                        });
+                    }
+                    if (request.method !== "POST")
+                        return new Response("405", { status: 405 });
+                    const syncRes = await handleConfigSync(request, env, ctx);
+                    syncRes.headers.set("Access-Control-Allow-Origin", "*");
+                    syncRes.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+                    return syncRes;
+                }
+                if (reqPath === routes.logs) {
+                    if (request.method !== "POST" && request.method !== "GET")
+                        return new Response("405", { status: 405 });
+                    return await handleLogs(request, env);
+                }
+                if (isUsersRoute) {
+                    return await handleUsersApi(request, env, ctx);
+                }
+                if (isStatsRoute) {
+                    return await handleStatsApi(request, env);
+                }
+                if (isUpdateRoute) {
+                    return await handleUpdateApi(request, env, ctx);
+                }
+                if (isApiKeysRoute) {
+                    return await handleApiKeys(request, env, ctx);
+                }
+                if (reqPath === routes.syncPanel) {
+                    if (request.method !== "POST")
+                        return new Response("405", { status: 405 });
+                    return await handleSyncPanel(request, env, ctx);
+                }
+                if (reqPath === routes.tg) {
+                    if (request.method !== "POST")
+                        return new Response("405", { status: 405 });
+                    return await handleTelegramWebhook(request, env, url.hostname, ctx);
+                }
+                if (reqPath === routes.data) {
+                    const ua = (request.headers.get("User-Agent") || "").toLowerCase();
+                    const isCustomUaAllowed = sysConfig.subUserAgent &&
+                        sysConfig.subUserAgent.trim().length > 0 &&
+                        ua.includes(sysConfig.subUserAgent.trim().toLowerCase());
+                    const clientHost = request.headers.get("Host") || url.hostname;
+                    let targetSub = url.searchParams.get("sub");
+                    let hasMultiUser = sysConfig.users && sysConfig.users.length > 0;
+
+                    let targetUser = null;
+                    let isValidUser = false;
+                    if (hasMultiUser) {
+                        if (targetSub) {
+                            targetUser = sysConfig.users.find(
+                                (u) =>
+                                    u.name.toLowerCase() === targetSub.toLowerCase() ||
+                                    u.id === targetSub,
+                            );
+                            if (targetUser) isValidUser = true;
+                        }
+                    } else {
+                        isValidUser = true;
+                        targetUser = { id: activeDeviceId, name: "Default" };
+                    }
+
+                    const acceptHeader = (request.headers.get("Accept") || "").toLowerCase();
+                    const secFetchDest = (request.headers.get("Sec-Fetch-Dest") || "").toLowerCase();
+
+                    const isRealBrowser =
+                        (secFetchDest === "document" ||
+                            acceptHeader.includes("text/html")) &&
+                        (ua.includes("mozilla") ||
+                            ua.includes("chrome") ||
+                            ua.includes("safari") ||
+                            ua.includes("applewebkit") ||
+                            ua.includes("gecko") ||
+                            ua.includes("opera") ||
+                            ua.includes("edge")) &&
+                        !ua.includes("cla" + "sh") &&
+                        !ua.includes("si" + "ng-box") &&
+                        !ua.includes("v" + "2r" + "ay") &&
+                        !ua.includes("shadow" + "rocket") &&
+                        !ua.includes("quantum" + "ult") &&
+                        !ua.includes("surf" + "board") &&
+                        !ua.includes("sta" + "sh");
+
+                    if (isRealBrowser && !isCustomUaAllowed) {
+                        if (isValidUser) {
+                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://mahbodrahimi.ir/Nahan/sub.html';
+                            try {
+                                const resp = await fetch(subscriptionUrl);
+                                let html = await resp.text();
+                                const idClean = targetUser.id.replace(/-/g, '').toLowerCase();
+                                const sysU = sysUsageCache?.users?.[idClean] || { reqs: 0, dReqs: 0, lastDay: '' };
+                                const totalReqs = sysU.reqs || 0;
+                                const todayDate = new Date().toISOString().split('T')[0];
+                                const dailyReqs = sysU.lastDay === todayDate ? (sysU.dReqs || 0) : 0;
+                                const limitTotal = targetUser.limitTotalReq || 0;
+                                const limitDaily = targetUser.limitDailyReq || 0;
+                                const totalGb = (totalReqs / 6000).toFixed(2);
+                                const limitTotalGb = limitTotal ? (limitTotal / 6000).toFixed(2) : '9999';
+                                const dailyGb = (dailyReqs / 6000).toFixed(2);
+                                const limitDailyGb = limitDaily ? (limitDaily / 6000).toFixed(2) : '9999';
+                                const totalPercent = limitTotal ? Math.min(100, (totalReqs / limitTotal) * 100).toFixed(1) : '0';
+                                const dailyPercent = limitDaily ? Math.min(100, (dailyReqs / limitDaily) * 100).toFixed(1) : '0';
+                                let expiryDateTxt = '2099-01-01';
+                                let isExpired = false;
+                                if (targetUser.expiryMs) {
+                                    expiryDateTxt = new Date(targetUser.expiryMs).toISOString().split('T')[0];
+                                    if (Date.now() > targetUser.expiryMs) isExpired = true;
+                                }
+                                let statusCode = 'active';
+                                if (targetUser.isPaused) statusCode = 'paused';
+                                else if (isExpired) statusCode = 'expired';
+                                else if (limitTotal && totalReqs >= limitTotal) statusCode = 'limit';
+                                else if (limitDaily && dailyReqs >= limitDaily) statusCode = 'dailyLimit';
+                                let cleanUrl = new URL(url.href);
+                                let panelUrlToUse = sysConfig.customPanelUrl;
+                                if (targetUser.userPanelUrl && targetUser.userPanelUrl.trim()) panelUrlToUse = targetUser.userPanelUrl.trim();
+                                if (panelUrlToUse) {
+                                    let customUrlStr = panelUrlToUse;
+                                    if (!customUrlStr.startsWith('http://') && !customUrlStr.startsWith('https://')) customUrlStr = 'https://' + customUrlStr;
+                                    try { const customUrl = new URL(customUrlStr); cleanUrl.protocol = customUrl.protocol; cleanUrl.host = customUrl.host; } catch(e) {}
+                                }
+                                cleanUrl.searchParams.delete('flag'); cleanUrl.searchParams.delete('format');
+                                cleanUrl.searchParams.delete('type'); cleanUrl.searchParams.delete('output'); cleanUrl.searchParams.delete('raw');
+                                const syncNormal = cleanUrl.href;
+                                const syncRaw = cleanUrl.href + (cleanUrl.href.includes('?') ? '&flag=a' : '?flag=a');
+                                let totalProgress = '';
+                                if (limitTotal) {
+                                    totalProgress = `<div class="w-full rounded-full h-1.5 mt-3 overflow-hidden progress-bar-bg"><div class="h-1.5 rounded-full" style="background: var(--accent); width: ${totalPercent}%;"></div></div><p class="text-[10px] text-muted text-right mt-1.5" data-i18n="used">${totalPercent}% Used</p>`;
+                                } else {
+                                    totalProgress = '<p class="text-[10px] text-muted mt-2" data-i18n="unlimitedPlan">Unlimited Plan</p>';
+                                }
+                                let dailyProgress = '';
+                                if (limitDaily) {
+                                    dailyProgress = `<div class="w-full rounded-full h-1.5 mt-3 overflow-hidden progress-bar-bg"><div class="h-1.5 rounded-full" style="background: var(--amber-text); width: ${dailyPercent}%;"></div></div><p class="text-[10px] text-muted text-right mt-1.5" data-i18n="used">${dailyPercent}% Used</p>`;
+                                } else {
+                                    dailyProgress = '<p class="text-[10px] text-muted mt-2" data-i18n="noDailyLimit">No Daily Limit</p>';
+                                }
+                                html = html.replace(/__USER_NAME__/g, targetUser.name);
+                                html = html.replace(/__USER_ID__/g, targetUser.id);
+                                html = html.replace(/__STATUS_CODE__/g, statusCode);
+                                html = html.replace(/__TOTAL_GB__/g, totalGb);
+                                html = html.replace(/__LIMIT_TOTAL_GB__/g, limitTotalGb);
+                                html = html.replace(/__TOTAL_PERCENT__/g, totalPercent);
+                                html = html.replace(/__DAILY_GB__/g, dailyGb);
+                                html = html.replace(/__LIMIT_DAILY_GB__/g, limitDailyGb);
+                                html = html.replace(/__DAILY_PERCENT__/g, dailyPercent);
+                                html = html.replace(/__EXPIRY_DATE__/g, expiryDateTxt);
+                                html = html.replace(/__SYNC_NORMAL__/g, syncNormal);
+                                html = html.replace(/__SYNC_RAW__/g, syncRaw);
+                                html = html.replace(/__TOTAL_PROGRESS__/g, totalProgress);
+                                html = html.replace(/__DAILY_PROGRESS__/g, dailyProgress);
+                                return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+                            } catch (e) {
+                                return new Response('Failed to load subscription page', { status: 502 });
+                            }
+                        } else {
+                            return serveMaintenancePage(request, url);
+                        }
+                    }
+
+                    if (hasMultiUser && !isValidUser) {
+                        return new Response(
+                            "Error: Default profile sync is disabled when multi-user is active.",
+                            { status: 403 },
+                        );
+                    }
+
+                    const allowInsecure = url.searchParams.get("insecure") === "true" ||
+                        url.searchParams.get("allowInsecure") === "true" ||
+                        url.searchParams.get("allow_insecure") === "1" ||
+                        url.searchParams.get("allowInsecure") === "1";
+
+                    const resHeaders = new Headers();
+                    resHeaders.set("Cache-Control", "no-store");
+                    resHeaders.set("Access-Control-Allow-Origin", "*");
+
+                    let flag = (url.searchParams.get("flag") ||
+                        url.searchParams.get("format") ||
+                        url.searchParams.get("type") ||
+                        url.searchParams.get("output") ||
+                        "").toLowerCase();
+
+                    if (isValidUser && targetUser) {
+                        let idClean = targetUser.id.replace(/-/g, "").toLowerCase();
+                        let sysU = sysUsageCache?.users?.[idClean] || { reqs: 0, dReqs: 0 };
+                        let totalReqs = sysU.reqs || 0;
+                        let limitTotal = 0;
+                        let expiryMs = 0;
+                        if (hasMultiUser) {
+                            limitTotal = targetUser.limitTotalReq || 0;
+                            expiryMs = targetUser.expiryMs || 0;
+                        } else {
+                            limitTotal = sysConfig.limitTotalReq || 0;
+                            expiryMs = sysConfig.expiryMs || 0;
+                        }
+
+                        let usedBytes = Math.floor(totalReqs * (1073741824 / 6000));
+                        let limitBytes = Math.floor(limitTotal * (1073741824 / 6000));
+                        let expireSec = expiryMs ? Math.floor(expiryMs / 1000) : 0;
+
+                        const subUserInfo = `upload=0; download=${usedBytes}; total=${limitBytes}; expire=${expireSec}`;
+                        resHeaders.set("Subscription-UserInfo", subUserInfo);
+                        resHeaders.set("subscription-userinfo", subUserInfo);
+                        resHeaders.set("Profile-Update-Interval", "12");
+                        resHeaders.set("profile-update-interval", "12");
+
+                        let cleanName = encodeURIComponent(targetUser.name);
+                        resHeaders.set("Content-Disposition", `attachment; filename="${cleanName}"; filename*=UTF-8''${cleanName}`);
+                    }
+
+                    let isClashYaml = false;
+                    let isSingboxJson = false;
+                    let isClashJson = false;
+                    let isVJson = false;
+
+                    if (flag === "clash" || flag === "yaml" || flag === "meta" || flag === "stash" || flag === "clash-meta" || flag === "y") {
+                        isClashYaml = true;
+                    } else if (flag === "b" || flag === "c_legacy") {
+                        isClashJson = true;
+                    } else if (flag === "sing" || flag === "singbox" || flag === "sing-box" || flag === "sb" || flag === "s" || flag === "c" || flag === "g") {
+                        isSingboxJson = true;
+                    } else if (flag === "vjson" || flag === "v") {
+                        isVJson = true;
+                    } else if (flag === "base64") {
+                    } else if (flag === "a" || flag === "raw" || flag === "") {
+                        if (ua.includes(getGamma()) || ua.includes("meta") || ua.includes("sta" + "sh") || ua.includes("verge") || ua.includes("mihomo") || ua.includes("cfw") || ua.includes("stash") || ua.includes("clash")) {
+                            isClashYaml = true;
+                        } else if (ua.includes("sing-box") || ua.includes("singbox") || ua.includes("hiddify") || ua.includes("nekobox") || ua.includes("sfa") || ua.includes("karing")) {
+                            isSingboxJson = true;
+                        }
+                    }
+
+                    if (isClashYaml) {
+                        resHeaders.set("Content-Type", "text/yaml; charset=utf-8");
+                        return new Response(
+                            await buildYamlProfile(clientHost, targetSub, allowInsecure, env),
+                            { headers: resHeaders },
+                        );
+                    } else if (isSingboxJson) {
+                        resHeaders.set("Content-Type", "application/json; charset=utf-8");
+                        return new Response(
+                            JSON.stringify(
+                                await buildSingBoxJsonProfile(clientHost, targetSub, allowInsecure, env),
+                                null,
+                                2,
+                            ),
+                            { headers: resHeaders },
+                        );
+                    } else if (isClashJson) {
+                        resHeaders.set("Content-Type", "application/json; charset=utf-8");
+                        return new Response(
+                            JSON.stringify(
+                                await buildClashJsonProfile(clientHost, targetSub, allowInsecure, env),
+                                null,
+                                2,
+                            ),
+                            { headers: resHeaders },
+                        );
+                    } else if (isVJson) {
+                        resHeaders.set("Content-Type", "application/json; charset=utf-8");
+                        return new Response(JSON.stringify(await buildVJsonProfile(clientHost, targetSub, allowInsecure, env), null, 2), { headers: resHeaders });
+                    } else {
+                        resHeaders.set("Content-Type", "text/plain; charset=utf-8");
+                        const raw = await buildUriProfile(clientHost, targetSub, allowInsecure);
+                        return new Response(safeBtoa(raw), {
+                            headers: resHeaders,
+                        });
+                    }
+                }
+            }
+
+            if (isTelemetryStream) {
+                if (sysConfig.isPaused) return new Response(null, { status: 503 });
+                let wsRelayIdx = -1;
+                try {
+                    const riParam = url.searchParams.get("ri");
+                    if (riParam !== null) wsRelayIdx = parseInt(riParam, 10);
+                } catch (e) {}
+                if (wsRelayIdx < 0) {
+                    try {
+                        const lastSeg = url.pathname.split("/").pop();
+                        if (lastSeg) {
+                            const num = parseInt(lastSeg, 10);
+                            if (!isNaN(num) && num >= 0) wsRelayIdx = num;
+                        }
+                    } catch (e) {}
+                }
+                if (wsRelayIdx < 0) {
+                    try {
+                        const lastSeg = url.pathname.split("/").pop();
+                        if (lastSeg) {
+                            const decoded = JSON.parse(atob(lastSeg));
+                            if (typeof decoded.relayIdx === "number")
+                                wsRelayIdx = decoded.relayIdx;
+                        }
+                    } catch (e) {}
+                }
+                return await processTelemetryStream(env, ctx, wsRelayIdx);
+            }
+
+            return new Response(null, { status: 404 });
+        } catch (err) {
+            return new Response(null, { status: 404 });
+        }
+    },
+    async scheduled(event, env, ctx) {
+        try {
+            await loadSysConfig(env, ctx);
+            if (sysConfig.autoUpdateCleanIps === true) {
+                await applyRemoteCleanIps(env, ctx);
+            }
+        } catch (e) {}
+    }
+};
