@@ -2294,25 +2294,64 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           // ============================================
           // The applyUpdate function is now a placeholder that shows a message
           // about manual update process.
-          async function applyUpdate() {
-              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-              
-              // Close the modal
-              closeUpdateConfirmModal();
-              
-              // Show a message that the user needs to update manually
-              const statusDiv = document.getElementById('update-status');
-              const actionsDiv = document.getElementById('update-actions');
-              
-              statusDiv.classList.remove('hidden');
-              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
-              statusDiv.innerHTML = '🔧 ' + (lang === 'fa' 
-                  ? 'برای بروزرسانی به داشبورد → تنظیمات → برسی آپدیت مراجعه کنید و سپس روی دکمه بروزرسانی کلیک کنید.'
-                  : 'To update, go to Dash → Settings → Check for Update and click the update button.');
-              
-              actionsDiv.classList.add('hidden');
-              applyLang();
-          }
+async function applyUpdate() {
+    const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+    const btn = document.getElementById('btn-apply-update');
+    const origText = btn.innerHTML;
+    
+    // غیرفعال کردن دکمه و نمایش وضعیت در حال انجام
+    btn.disabled = true;
+    btn.innerHTML = '⏳ ' + t('update_applying');
+    
+    try {
+        // درخواست آپدیت به سرور (Worker)
+        const res = await fetch(baseRoute + '/api/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                key: sessionKey,
+                action: 'apply_update' // اکشن جدید برای اعمال آپدیت
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            // نمایش پیغام موفقیت
+            const statusDiv = document.getElementById('update-status');
+            statusDiv.classList.remove('hidden');
+            statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+            statusDiv.innerHTML = '✅ ' + t('update_applied');
+            
+            // بستن مودال
+            closeUpdateConfirmModal();
+            
+            // بارگذاری مجدد صفحه بعد از چند ثانیه
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+        } else {
+            // نمایش خطا
+            const statusDiv = document.getElementById('update-status');
+            statusDiv.classList.remove('hidden');
+            statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+            statusDiv.innerHTML = '❌ ' + t('update_failed').replace('{error}', data.error || 'Unknown error');
+            
+            // فعال‌سازی مجدد دکمه
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    } catch (e) {
+        // مدیریت خطای شبکه
+        const statusDiv = document.getElementById('update-status');
+        statusDiv.classList.remove('hidden');
+        statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+        statusDiv.innerHTML = '❌ ' + t('update_failed').replace('{error}', e.message);
+        
+        btn.disabled = false;
+        btn.innerHTML = origText;
+    }
+}
 
           function checkVersionPopup() {
               const popupKey = `nahan_shown_v__CURRENT_VERSION__`;
