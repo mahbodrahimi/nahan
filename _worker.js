@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "2.9.5";
+const CURRENT_VERSION = "2.9.6";
 const SOURCE_REPO = "mahbodrahimi/nahan";
 const WHATNEW_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/whatnew`;
 const VERSION_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/version`;
@@ -1478,7 +1478,7 @@ async function fetchRemoteCleanIps() {
             .join('\n');
         return ips || null;
     } catch (e) {
-        console.error('Failed to fetch remote clean IPs:', e.message);
+        console.error('Failed to fetch remote Server List:', e.message);
         return null;
     }
 }
@@ -1513,11 +1513,11 @@ async function applyRemoteCleanIps(env, ctx) {
     lastCleanIpsUpdate = now;
     
     // Log the update
-    await logActivity(env, 'Clean IPs Auto-Updated', `Clean IPs list updated from remote source (${newIps.split('\n').length} entries)`);
+    await logActivity(env, 'Server List Auto-Updated', `Server list updated from remote source (${newIps.split('\n').length} entries)`);
     
     // Notify via Telegram if configured
     if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-        const tgMsg = `🔄 <b>Clean IPs Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+        const tgMsg = `🔄 <b>Server List Auto-Updated</b>\n\n📋 <b>New Entries:</b> ${newIps.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
         const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
         ctx?.waitUntil(
             fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
@@ -2190,7 +2190,7 @@ async function handleUpdateApi(request, env, ctx) {
             const newIps = await fetchRemoteCleanIps();
             if (!newIps) {
                 return new Response(
-                    JSON.stringify({ success: false, error: "Failed to fetch remote clean IPs" }),
+                    JSON.stringify({ success: false, error: "Failed to fetch remote Server List" }),
                     { status: 502, headers: { "Content-Type": "application/json" } }
                 );
             }
@@ -2200,7 +2200,7 @@ async function handleUpdateApi(request, env, ctx) {
                 return new Response(
                     JSON.stringify({ 
                         success: true, 
-                        message: "Clean IPs already up to date",
+                        message: "Server List already up to date",
                         current: currentIps.split('\n').length,
                         new: normalizedNew.split('\n').length,
                         updated: false
@@ -2210,11 +2210,11 @@ async function handleUpdateApi(request, env, ctx) {
             }
             sysConfig.cleanIps = normalizedNew;
             await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
-            await logActivity(env, 'Clean IPs Updated', `Clean IPs list updated manually via API (${normalizedNew.split('\n').length} entries)`);
+            await logActivity(env, 'Server Updated', `Server List list updated manually via API (${normalizedNew.split('\n').length} entries)`);
             
             // Notify Telegram
             if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-                const tgMsg = `🔄 <b>Clean IPs Updated Manually</b>\n\n📋 <b>New Entries:</b> ${normalizedNew.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+                const tgMsg = `🔄 <b>Server List Updated Manually</b>\n\n📋 <b>New Entries:</b> ${normalizedNew.split('\n').length}\n⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
                 const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
                 ctx?.waitUntil(
                     fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
@@ -2232,7 +2232,7 @@ async function handleUpdateApi(request, env, ctx) {
             return new Response(
                 JSON.stringify({ 
                     success: true, 
-                    message: "Clean IPs updated successfully",
+                    message: "Server List updated successfully",
                     current: currentIps.split('\n').length,
                     new: normalizedNew.split('\n').length,
                     updated: true
@@ -2952,12 +2952,12 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "Silent Alerts",
         tg_pause: "Kill Switch",
-        tg_auto_update_clean_ips: "Auto-Update Clean IPs",
+        tg_auto_update_clean_ips: "Auto-Update Server List",
         tg_check_for_update: "Check for Update",
         tg_update_available: "Update Available!",
         tg_direct: "Direct Configs",
         tg_nat64: "NAT64",
-        tg_clean_ips: "Clean IPs",
+        tg_clean_ips: "Server List",
         tg_nodes: "Nodes",
         tg_strategy: "Name Strategy",
         tg_prefix: "Name Prefix",
@@ -2973,7 +2973,7 @@ const botI18n = {
         tg_log_entry: "",
         tg_log_empty: "No logs found",
         tg_u_custom_name: "Custom Name",
-        tg_u_clean_ips: "Clean IPs",
+        tg_u_clean_ips: "Server List",
         tg_u_proxy_ips: "Proxy IPs",
         tg_u_nodes: "Nodes",
         tg_u_nat64: "NAT64",
@@ -3104,12 +3104,12 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "هشدار خاموش",
         tg_pause: "کلید توقف",
-        tg_auto_update_clean_ips: "بروزرسانی خودکار آی‌پی تمیز",
+        tg_auto_update_clean_ips: "بروزرسانی خودکار لیست سرور ",
         tg_check_for_update: "بررسی آپدیت جدید",
         tg_update_available: "آپدیت جدید موجود است!",
         tg_direct: "کانفیگ مستقیم",
         tg_nat64: "NAT64",
-        tg_clean_ips: "آی‌پی تمیز",
+        tg_clean_ips: "لیست سرور ها",
         tg_nodes: "نودها",
         tg_strategy: "روش نام‌گذاری",
         tg_prefix: "پیشوند",
@@ -3125,7 +3125,7 @@ const botI18n = {
         tg_log_entry: "",
         tg_log_empty: "گزارشی ثبت نشده",
         tg_u_custom_name: "نام سفارشی",
-        tg_u_clean_ips: "آی‌پی تمیز",
+        tg_u_clean_ips: "لیست سرور",
         tg_u_proxy_ips: "آی‌پی پروکسی",
         tg_u_nodes: "نودها",
         tg_u_nat64: "NAT64",
