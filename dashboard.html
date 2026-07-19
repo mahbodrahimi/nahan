@@ -2297,25 +2297,64 @@ async function checkForUpdate() {
           // ============================================
           // The applyUpdate function is now a placeholder that shows a message
           // about manual update process.
-          async function applyUpdate() {
-              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-              
-              // Close the modal
-              closeUpdateConfirmModal();
-              
-              // Show a message that the user needs to update manually
-              const statusDiv = document.getElementById('update-status');
-              const actionsDiv = document.getElementById('update-actions');
-              
-              statusDiv.classList.remove('hidden');
-              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
-              statusDiv.innerHTML = '🔧 ' + (lang === 'fa' 
-                  ? 'برای بروزرسانی به داشبورد → تنظیمات → برسی آپدیت مراجعه کنید و سپس روی دکمه بروزرسانی کلیک کنید.'
-                  : 'To update, go to Dash → Settings → Check for Update and click the update button.');
-              
-              actionsDiv.classList.add('hidden');
-              applyLang();
-          }
+async function applyUpdate() {
+    const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+    
+    // Close the modal
+    closeUpdateConfirmModal();
+    
+    // Show loading status
+    const statusDiv = document.getElementById('update-status');
+    const actionsDiv = document.getElementById('update-actions');
+    
+    statusDiv.classList.remove('hidden');
+    statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400 animate-pulse';
+    statusDiv.innerHTML = '⏳ ' + (lang === 'fa' ? 'در حال بروزرسانی... لطفاً صبر کنید...' : 'Updating... Please wait...');
+    actionsDiv.classList.add('hidden');
+    applyLang();
+    
+    try {
+        // Send apply_update request to backend
+        const res = await fetch(baseRoute + '/api/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                key: sessionKey, 
+                action: 'apply_update' 
+            })
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+            statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+            statusDiv.innerHTML = '✅ ' + (lang === 'fa' 
+                ? `بروزرسانی با موفقیت انجام شد! (نسخه ${result.latest})` 
+                : `Update successful! (version ${result.latest})`);
+            
+            // Show reload button
+            actionsDiv.classList.remove('hidden');
+            actionsDiv.innerHTML = `
+                <button onclick="location.reload()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all">
+                    🔄 ${lang === 'fa' ? 'بارگذاری مجدد' : 'Reload'}
+                </button>
+            `;
+        } else {
+            statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+            statusDiv.innerHTML = '❌ ' + (lang === 'fa' 
+                ? `بروزرسانی ناموفق: ${result.error || 'خطای ناشناخته'}` 
+                : `Update failed: ${result.error || 'Unknown error'}`);
+        }
+        
+    } catch (e) {
+        statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+        statusDiv.innerHTML = '❌ ' + (lang === 'fa' 
+            ? `خطا در ارتباط با سرور: ${e.message}` 
+            : `Server error: ${e.message}`);
+    }
+    
+    applyLang();
+}
 
           function checkVersionPopup() {
               const popupKey = `nahan_shown_v__CURRENT_VERSION__`;
