@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "2.9.6";
+const CURRENT_VERSION = "2.9.7";
 const SOURCE_REPO = "mahbodrahimi/nahan";
 const WHATNEW_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/whatnew`;
 const VERSION_URL = `https://raw.githubusercontent.com/${SOURCE_REPO}/refs/heads/main/version`;
