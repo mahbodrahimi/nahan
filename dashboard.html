@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en" class="dark"><head>
+<!DOCTYPE html>
+<html lang="en" class="dark"><head>
 <link rel="icon" type="image/png" sizes="16x16" href="https://raw.githubusercontent.com/mahbodrahimi/nahan/323a5e7dc4281a422cf650671b580df231cf888f/icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/mahbodrahimi/nahan/323a5e7dc4281a422cf650671b580df231cf888f/icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/mahbodrahimi/nahan/323a5e7dc4281a422cf650671b580df231cf888f/icon.png">
@@ -763,8 +764,8 @@ html.dark select option {
                                <div class="space-y-3 md:col-span-2">
                                    <label class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/30 cursor-pointer">
                                        <div>
-                                           <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400" data-i18n="lbl_auto_update_clean_ips">🔄 Auto-Update Clean IPs</span>
-                                           <p class="text-[10px] text-emerald-500/70 dark:text-emerald-400/60 mt-0.5" data-i18n="desc_auto_update_clean_ips">Automatically fetch and update Clean IPs list from remote source every hour</p>
+                                           <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400" data-i18n="lbl_auto_update_clean_ips">🔄 Auto-Update Server List</span>
+                                           <p class="text-[10px] text-emerald-500/70 dark:text-emerald-400/60 mt-0.5" data-i18n="desc_auto_update_clean_ips">Automatically fetch and update Server List from remote source every hour</p>
                                        </div>
                                        <div class="relative inline-flex items-center">
                                            <input type="checkbox" id="cfg-auto-update-clean-ips" class="sr-only peer">
@@ -845,7 +846,7 @@ html.dark select option {
                                   <div class="space-y-4 px-5 pb-5 pt-1">
                                       <div>
                                           <div class="flex items-center justify-between mb-2">
-                                              <label class="text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_clean_ips">Clean IPs (Multi-Generator)</label>
+                                              <label class="text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_clean_ips">Server List</label>
                                               <span class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded-md font-bold" id="ip-count-badge">1 Config Set</span>
                                           </div>
                                           <div class="flex gap-2 mb-2">
@@ -1112,13 +1113,12 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                               </div>
                           </div>
 
-                          <!-- Section: Cloudflare -->
-<!-- Section: Cloudflare -->
+                          <!-- Section: Update Api -->
                           <div class="bg-[var(--color-surface)]  rounded-2xl border border-slate-200 dark:border-darkborder overflow-hidden" data-accordion="">
                               <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                   <div class="flex items-center gap-3">
                                       <span class="text-lg">☁️</span>
-                                      <span class="text-sm font-bold text-slate-700 dark:text-white" data-i18n="adv_cloudflare">Cloudflare</span>
+                                      <span class="text-sm font-bold text-slate-700 dark:text-white" data-i18n="adv_cloudflare">Update Api</span>
                                   </div>
                                   <svg class="w-4 h-4 text-slate-400 transform transition-transform duration-200 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                               </button>
@@ -1126,7 +1126,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                   <div class="space-y-3 px-5 pb-5 pt-1">
                                       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                           <div class="space-y-1">
-                                              <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_acc">CF Account ID</label>
+                                              <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_acc">Account ID</label>
                                               <input type="text" id="cfg-cf-acc" placeholder="a1b2c3d4e5f6..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
                                           </div>
                                           <div class="space-y-1">
@@ -1138,29 +1138,11 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                           </div>
                                       </div>
                                       <div class="space-y-1">
-                                          <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_worker">CF Worker Script Name</label>
+                                          <label class="block text-sm font-bold text-slate-600 dark:text-slate-300" data-i18n="lbl_cf_worker">Panel Name</label>
                                           <input type="text" id="cfg-cf-worker" placeholder="e.g. nahan" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary outline-none text-sm font-mono">
                                           <p class="text-xs text-slate-400" data-i18n="desc_cf_worker">Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.</p>
                                       </div>
                                       <p class="text-xs text-slate-400" data-i18n="desc_cf_api">Optional: Monitor Worker free usage limits (100k/day). Needs Account Analytics Read permission.</p>
-                                      <div class="border-t border-slate-100 dark:border-darkborder pt-3">
-                                          <button type="button" onclick="document.getElementById('cf-helper-guide').classList.toggle('hidden')" class="w-full text-start px-4 py-3 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold rounded-xl flex items-center justify-between transition-colors">
-                                              <span class="flex items-center gap-1.5">
-                                                  💡 <span data-i18n="cf_help_title">Need help getting these? Beginner's Guide</span>
-                                              </span>
-                                              <span class="text-[10px] transform transition-transform duration-200">▼</span>
-                                          </button>
-                                          <div id="cf-helper-guide" class="hidden mt-3 p-4 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200 dark:border-darkborder rounded-2xl text-[11px] space-y-4 text-start leading-relaxed">
-                                              <div class="space-y-1 pb-3 border-b border-dashed border-slate-200 dark:border-darkborder">
-                                                  <h5 class="font-extrabold text-[var(--color-text)] flex items-center gap-1">🇬🇧 Beginner's Walkthrough:</h5>
-                                                  <ol class="list-decimal list-inside space-y-1 text-slate-500 dark:text-slate-400">
-                                                      <li><strong>CF API Token:</strong> Click <a href="https://dash.cloudflare.com/profile/api-tokens?template=edit-workers" target="_blank" class="text-primary hover:underline font-bold">Api Token Template ↗</a>. Click <strong>Use Template</strong>, then <strong>Continue to summary</strong> &gt; <strong>Create Token</strong>. Copy and paste above!</li>
-                                                      <li><strong>CF Account ID:</strong> Open any Cloudflare Workers page. Copy the 32-char string after <code>dash.cloudflare.com/</code> in the URL.</li>
-                                                      <li><strong>Worker Script Name:</strong> Go to <strong>Compute &gt; Workers &amp; Pages</strong> in Cloudflare. Copy your worker's name.</li>
-                                                  </ol>
-                                              </div>
-                                          </div>
-                                      </div>
                                   </div>
                               </div>
                           </div>
@@ -1281,9 +1263,9 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider" data-i18n="section_network">Network</h4>
                                        <div class="space-y-3">
                                            <div>
-                                               <label class="block text-xs font-bold text-slate-500 mb-1.5" data-i18n="lbl_clean_ips">Clean IPs</label>
+                                               <label class="block text-xs font-bold text-slate-500 mb-1.5" data-i18n="lbl_clean_ips">Server List</label>
                                                <div id="add-user-clean-ips-wrap" class="flex flex-wrap gap-2 mt-1 text-slate-500"></div>
-                                               <label class="block text-[10px] font-bold text-slate-400 mt-2" data-i18n="desc_clean_ips_modal">Custom Clean IPs (comma/newline)</label>
+                                               <label class="block text-[10px] font-bold text-slate-400 mt-2" data-i18n="desc_clean_ips_modal">Custom Server List (comma/newline)</label>
                                                <div class="flex gap-2 mt-1 mb-1">
                                                    <input type="text" id="add-user-helper-ip" placeholder="1.2.3.4" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-1 outline-none text-xs">
                                                    <input type="text" id="add-user-helper-name" placeholder="Name" class="w-1/3 px-3 py-2 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-1 outline-none text-xs">
@@ -1395,9 +1377,9 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider" data-i18n="section_network">Network</h4>
                                        <div class="space-y-3">
                                            <div>
-                                               <label class="block text-xs font-bold text-slate-500 mb-1.5" data-i18n="lbl_clean_ips">Clean IPs</label>
+                                               <label class="block text-xs font-bold text-slate-500 mb-1.5" data-i18n="lbl_clean_ips">Server List</label>
                                                <div id="edit-user-clean-ips-wrap" class="flex flex-wrap gap-2 mt-1 text-slate-500"></div>
-                                               <label class="block text-[10px] font-bold text-slate-400 mt-2" data-i18n="desc_clean_ips_modal">Custom Clean IPs (comma/newline)</label>
+                                               <label class="block text-[10px] font-bold text-slate-400 mt-2" data-i18n="desc_clean_ips_modal">Custom Server List (comma/newline)</label>
                                                <div class="flex gap-2 mt-1 mb-1">
                                                    <input type="text" id="edit-user-helper-ip" placeholder="1.2.3.4" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-1 outline-none text-xs">
                                                    <input type="text" id="edit-user-helper-name" placeholder="Name" class="w-1/3 px-3 py-2 rounded-xl border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-1 outline-none text-xs">
@@ -1472,148 +1454,9 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                           </div>
                       </div>
 
-                      <!-- HELP & FAQ VIEW -->
-                      <div id="view-help" class="hidden space-y-6">
-                          <div class="bg-[var(--color-surface)]/70 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-slate-200 dark:border-darkborder/50 relative overflow-hidden">
-                              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                                  <div>
-                                      <h3 class="text-lg font-black text-slate-800 dark:text-white" data-i18n="help_title">Help & Common Questions</h3>
-                                      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-i18n="help_desc">Learn about fields, features, and troubleshooting on your Nahan Gateway.</p>
-                                  </div>
-                                  <!-- Search bar -->
-                                  <div class="relative w-full md:w-72">
-                                      <input type="text" id="faq-search" oninput="filterFAQs()" placeholder="Search FAQ / جستجو در راهنما..." class="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkborder rounded-xl text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary">
-                                  </div>
-                              </div>
+                      <!-- HELP & FAQ VIEW - REMOVED -->
+                      <div id="view-help" class="hidden space-y-6"></div>
 
-                              <div class="space-y-4" id="faq-list">
-                                  <!-- Item 1 -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">What is Nahan Gateway? / دروازه نهان چیست؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> Nahan Gateway is an advanced, high-performance, single-file subscription and proxy manager built directly for Cloudflare Workers. It acts as a gateway to securely distribute configurations (Clash, Sing-box, Trojan, VMess) to clients while concealing the main panel's backend server behind Cloudflare's global edge network.</p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> دروازه نهان یک سیستم مدیریت اشتراک و پروکسی پیشرفته و تک‌فایلی است که برای کلودفلر ورکرز توسعه یافته است. این سیستم به عنوان یک دروازه عمل می‌کند تا کانفیگ‌ها (Clash, Sing-box, Trojan, VMess) را به صورت امن توزیع کند و سرور اصلی شما را پشت شبکه جهانی کلودفلر پنهان کند.</p>
-                                      </div>
-                                  </div>
-
-                                  <!-- Item 2 -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">How does "Auto-Update Clean IPs" work? / قابلیت «بروزرسانی خودکار آی‌پی تمیز» چطور کار می‌کند؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> When Auto-Update Clean IPs is enabled, a background task fetches the latest Clean IPs list from the remote source every hour and automatically updates your panel's Clean IPs configuration, keeping your gateway always connected through non-filtered Cloudflare IPs.</p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> وقتی بروزرسانی خودکار آی‌پی تمیز فعال باشد، یک تسک پس‌زمینه هر ساعت لیست جدید آی‌پی‌های تمیز را از منبع راه‌دور دریافت کرده و به‌طور خودکار تنظیمات آی‌پی تمیز پنل شما را به‌روز می‌کند تا دروازه شما همیشه از طریق آی‌پی‌های بدون فیلتر کلودفلر متصل باشد.</p>
-                                      </div>
-                                  </div>
-
-                                  <!-- Item 3 -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">What is the difference between Normal and Obfuscated formats? / تفاوت فرمت معمولی و مبهم‌سازی چیست؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> 
-                                              • <strong>Normal:</strong> Deploys raw JS code. Easily readable, but prone to traffic analysis/firewall scanning.<br>
-                                              • <strong>Obfuscated:</strong> Uses XOR byte-shifting to obscure the source code. The Cloudflare Edge compiles it at runtime using high-speed dynamic decoders, preventing third-party scanning and middleman inspection.
-                                          </p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> 
-                                              • <strong>معمولی:</strong> کد خام جاوااسکریپت دپلوی می‌شود. خوانایی آسانی دارد اما در معرض آنالیز ترافیک فایروال‌ها است.<br>
-                                              • <strong>مبهم‌سازی‌شده:</strong> از شیفت بایت XOR برای پنهان‌سازی کد استفاده می‌کند. کلودفلر در زمان اجرا آن را به سرعت رمزگشایی می‌کند تا فایروال‌ها متوجه محتوای اسکریپت نشوند.
-                                          </p>
-                                      </div>
-                                  </div>
-
-                                  <!-- Item 4 -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">What are "Clients" & "Subscription Fake Entries"? / کاربران و ورودی‌های اطلاعاتی اشتراک چیست؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> The <strong>Clients</strong> tab lets you provision individual subscriber tokens with specific limits (Quota, Expiry, IP connection count limits). <strong>Subscription Fake Entries</strong> customize what gets shown in the subscription profile UI inside the client app, such as remaining traffic or days left using placeholder patterns like <code>{usage}</code> and <code>{expiry}</code>.</p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> تب <strong>کاربران</strong> به شما اجازه می‌دهد اشتراک‌های یکتا با محدودیت‌های ترافیک، تاریخ انقضا و تعداد اتصالات همزمان بسازید. <strong>ورودی‌های اطلاعاتی اشتراک</strong> مشخص می‌کند چه پیام‌هایی (مانند حجم مصرفی یا روزهای باقی‌مانده) با کدهای پویایی مانند <code>{usage}</code> و <code>{expiry}</code> درون نرم‌افزار کاربر نمایش داده شوند.</p>
-                                      </div>
-                                  </div>
-
-                                  <!-- Item 5 -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">What are "Other Nodes" / linked panels? / «سایر نودها» (پنل‌های متصل) چیست؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> "Other Nodes" represents external linked panels. By generating a Panel API Key and registering the child node's URL, the main panel automatically synchronizes, updates, and deploys the identical worker code to all linked nodes whenever an update is triggered on the main panel. This enables seamless multi-server synchronization.</p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> «سایر نودها» پنل‌های فرعی متصل هستند. با ساخت یک کلید دسترسی پنل (API Key) و ثبت آدرس نود فرعی، پنل اصلی با هر بروزرسانی به صورت خودکار نسخه جدید را برای تمام نودهای متصل ارسال و دپلوی می‌کند تا همه سرورها همزمان آپدیت شوند.</p>
-                                      </div>
-                                  </div>
-
-                                  <!-- Item 6 -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">Explain critical fields like Clean IPs and Proxy IPs / توضیح فیلدهای آی‌پی تمیز و پروکسی آی‌پی</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> 
-                                              • <strong>Clean IPs (Multi-Generator):</strong> Clean non-filtered Cloudflare IPs. The gateway generates unique config sets multiplied for each clean IP added here, giving users redundancy.<br>
-                                              • <strong>Proxy IPs:</strong> Behind-the-scene IPv4/IPv6 transit nodes to fetch data from blocking target sites.
-                                          </p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> 
-                                              • <strong>آی‌پی‌های تمیز:</strong> آی‌پی‌های بدون فیلتر کلودفلر. این سیستم برای تک‌تک آی‌پی‌های ثبت شده در این بخش خروجی‌های مجزا می‌سازد تا اتصالی پایدار ارائه شود.<br>
-                                              • <strong>آی‌پی‌های پروکسی:</strong> آی‌پی‌های ترانزیت پشت‌صحنه برای برقراری ارتباط با سایت‌های هدف فیلترشده.
-                                          </p>
-                                      </div>
-                                  </div>
-
-                                  <!-- Item 7: Check for Update -->
-                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
-                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
-                                          <span class="flex items-center gap-2">
-                                              <span class="text-primary text-sm">❓</span>
-                                              <span class="text-sm md:text-base">How does "Check for Update" work? / قابلیت «بررسی آپدیت» چطور کار می‌کند؟</span>
-                                          </span>
-                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                      </button>
-                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
-                                          <p><strong>English:</strong> 
-                                              • <strong>Check for Update:</strong> Manually checks the GitHub repository for a new version. If a new version is available, it shows you the "What's New" details.<br>
-                                              • <strong>Apply Update:</strong> After confirming, it downloads the new source code from GitHub and deploys it to your Cloudflare Worker automatically.<br>
-                                              • Unlike Auto-Update, this requires your manual confirmation before any changes are made.
-                                          </p>
-                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> 
-                                              • <strong>بررسی آپدیت:</strong> به‌صورت دستی مخزن گیت‌هاب را برای نسخه جدید بررسی می‌کند. اگر نسخه جدید موجود باشد، جزئیات «تغییرات جدید» را نمایش می‌دهد.<br>
-                                              • <strong>اعمال آپدیت:</strong> پس از تأیید شما، کد جدید را از گیت‌هاب دانلود کرده و به‌صورت خودکار روی وورکر کلودفلر شما دپلوی می‌کند.<br>
-                                              • برخلاف آپدیت خودکار، این قابلیت نیاز به تأیید دستی شما قبل از هر تغییری دارد.
-                                          </p>
-                                      </div>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
                   </div>
               </div>
 
@@ -1866,10 +1709,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   stat_ip: "Origin IP", stat_dc: "Edge Node", stat_loc: "Data Region",
                   lbl_proto: "Primary Display Mode", lbl_port: "Data Port", lbl_id: "Device UUID (Empty=Auto)",
                   lbl_path: "API Route (Hidden Path)", lbl_pass: "Master Key", lbl_fp: "TLS Signature", lbl_dns: "Resolver IP",
-                  lbl_clean_ips: "Clean IPs (Multi-Generator)", ph_clean_ips: "1.1.1.1, 2.2.2.2", desc_clean_ips: "Separate IPs by comma or new line. The Sync URL will multiply configs for all IPs.",
+                  lbl_clean_ips: "Server List", ph_clean_ips: "1.1.1.1, 2.2.2.2", desc_clean_ips: "Separate IPs by comma or new line. The Sync URL will multiply configs for all IPs.",
                   lbl_fake: "Maintenance Hosts (Camouflage)", lbl_relay: "Backup Relay IP", lbl_tfo: "TCP Fast Open", lbl_ech: "Secure Hello (ECH)",
                   lbl_fake_configs: "Subscription Fake Entries", desc_fake_configs: "Customize info entries shown in subscription profiles. Use {usage} and {expiry} for dynamic values.", btn_add_entry: "Add Entry",                   lbl_tg_token: "Telegram Bot Token", lbl_tg_chat: "Telegram Chat ID", lbl_tg_admin: "Authorized Telegram Admin ID", desc_tg_admin: "Only this Telegram User ID can manage the panel via bot. Leave empty to use Chat ID.", desc_tg_bot: "Set these values to receive login alerts via Telegram.",
-                  lbl_cf_acc: "Cloudflare Account ID", lbl_cf_token: "Cloudflare API Token", desc_cf_api: "Optional: Monitor Worker daily usage limit (100k/day). Requires Account Analytics read permission.",
+                  lbl_cf_acc: "Account ID", lbl_cf_token: "CF API Token", desc_cf_api: "Optional: Monitor Worker daily usage limit (100k/day). Requires Account Analytics read permission.",
                   lbl_silent: "Silent UI Alerts", lbl_pause: "Kill Switch (Pause System)",
                   lbl_sub_ua: "Custom Subscription User-Agent", desc_sub_ua: "Allow specific browser User-Agent containing this text to bypass camouflage and retrieve profile data directly in web browser.",
                   tab_users: "Clients",
@@ -1908,9 +1751,9 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     add_node_title: "Add External Node", add_node_desc: "Enter the URL and API Key of the external panel.",
                     add_node_url: "Node URL", add_node_apikey: "API Key", add_node_confirm: "Add Node", add_node_invalid: "Please enter both URL and API Key.",
                     node_added: "Node added successfully!", node_removed: "Node removed.",
-                    deploy_btn: "Update Clean IPs", update_deploying: "Updating Clean IPs...",
-                   update_success: "Clean IPs updated successfully! Reloading...", update_error: "Update failed",
-                   lbl_cf_worker: "CF Worker Script Name", desc_cf_worker: "Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.",
+                    deploy_btn: "Update Server List", update_deploying: "Updating Server List...",
+                   update_success: "Server List updated successfully! Reloading...", update_error: "Update failed",
+                   lbl_cf_worker: "Panel Name", desc_cf_worker: "Required for in-panel updates. The script name shown in your Cloudflare Workers dashboard.",
                    view_github: "View on GitHub",
                     cf_help_title: "Need help getting these? Beginner's Step-by-Step Guide",
                     lbl_update_format: "Update Format & Obfuscated Options:",
@@ -1919,7 +1762,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     format_obfuscated: "Obfuscated (UTF-8 + XOR)",
                      btn_redeploy_force: "Force Redeploy / Switch Format",
                     adv_network_dns: "Network & DNS", adv_proxy_relay: "Proxy & Relay", adv_subscription: "Subscription",
-                    adv_protocol: "Protocol", adv_telegram: "Telegram Bot", adv_cloudflare: "Cloudflare",
+                    adv_protocol: "Protocol", adv_telegram: "Telegram Bot", adv_cloudflare: "Update Api",
                     stat_datetime: "Date Time",
                     desc_custom_panel_url: "Optionally specify a custom domain/URL to be used for subscription/sync links. If empty, the default Worker address will be used.",
                     lbl_custom_config_name: "Custom Config Name / Prefix",
@@ -1937,15 +1780,15 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     lbl_nat64: "NAT64 Prefix", desc_nat64: "Optional. Converts IPv4 Proxy IPs to NAT64 IPv6 addresses. Supports multiple prefixes.",
                     lbl_direct_configs: "Include Direct Configs", desc_direct_configs: "Generate configs without Proxy IP alongside relay configs",
                     lbl_sync_api_key: "Sync API Key (Slave Push)", desc_sync_api_key: "API key from a slave panel. Main uses this to push config. Same key must exist on each slave's Panel API Keys.",
-                    lbl_auto_update_clean_ips: "🔄 Auto-Update Clean IPs", desc_auto_update_clean_ips: "Automatically fetch and update Clean IPs list from remote source every hour",
+                    lbl_auto_update_clean_ips: "🔄 Auto-Update Server List", desc_auto_update_clean_ips: "Automatically fetch and update Server List from remote source every hour",
                     lbl_auto_update_format: "Update Format", format_normal_label: "Normal", format_obfuscated_label: "Obfuscated",
                     desc_format_normal: "Standard _worker.js", desc_format_obfuscated: "XOR byte-shifting",
-                    lbl_prefix: "Custom Name Prefix", html_desc_prefix_note: "This prefix is injected where the <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code> tag is used in your naming strategy.", lbl_clean_ips: "Clean IPs", lbl_proxy_ips: "Proxy IPs", lbl_assigned_nodes: "Assigned Nodes",
+                    lbl_prefix: "Custom Name Prefix", html_desc_prefix_note: "This prefix is injected where the <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code> tag is used in your naming strategy.", lbl_clean_ips: "Server List", lbl_proxy_ips: "Proxy IPs", lbl_assigned_nodes: "Assigned Nodes",
                     lbl_protocol_mode: "Protocol Mode", lbl_max_configs: "Max Configs",
                     desc_assigned_nodes: "Custom Nodes (comma/newline, empty = all nodes)",
                     desc_nat64_user: "Optional. Converts IPv4 Proxy IPs to NAT64 IPv6 addresses.",
                     desc_proxy_ips: "Custom Proxy IPs (comma/newline)",
-                    desc_clean_ips_modal: "Custom Clean IPs (comma/newline)",
+                    desc_clean_ips_modal: "Custom Server List (comma/newline)",
                     btn_generate_uuid: "Generate UUID",
                     lbl_conn_limit: "IP Connection Limit", desc_conn_limit: "Max simultaneous connections per user. Leave empty for unlimited.",
                     lbl_user_panel_url: "Main Panel URL (Custom Nodes)", desc_user_panel_url: "Main panel domain for custom nodes. If empty, default panel URL is used.",
@@ -1965,7 +1808,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                    update_changes: "Changes in this version:",
                    update_current_version: "Current version: {version}",
                    update_latest_version: "Latest version: {version}",
-                   update_no_cf: "⚠️ Cloudflare credentials required. Please configure CF Account ID, API Token, and Worker Name in Advanced settings.",
+                   update_no_cf: "⚠️ Cloudflare credentials required. Please configure Account ID, API Token, and Panel Name in Advanced settings.",
               },
               fa: {
                   title: "دروازه نهان", pass_ph: "کلید اصلی", login_btn: "ورود به سیستم", err_pass: "دسترسی مسدود شد", missing_db: "⚠️ فضای پایگاه داده یافت نشد! تنظیمات ذخیره نمی‌شوند.", system_online: "سیستم فعال است",
@@ -1974,10 +1817,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   stat_ip: "آی‌پی مبدا", stat_dc: "گره لبه", stat_loc: "منطقه داده",
                   lbl_proto: "پروتکل نمایش مستقیم", lbl_port: "پورت داده", lbl_id: "شناسه یکتا (خالی=خودکار)",
                   lbl_path: "مسیر مخفی آی‌پی‌آی", lbl_pass: "کلید اصلی", lbl_fp: "امضای امنیتی", lbl_dns: "آی‌پی تحلیلگر",
-                  lbl_clean_ips: "آی‌پی‌های تمیز (مولد چندگانه)", ph_clean_ips: "1.1.1.1, 2.2.2.2", desc_clean_ips: "آی‌پی ها را با کاما یا خط جدید جدا کنید. لینک ساب برای همه ترکیب می‌سازد.",
+                  lbl_clean_ips: "لیست سرورها", ph_clean_ips: "1.1.1.1, 2.2.2.2", desc_clean_ips: "آی‌پی ها را با کاما یا خط جدید جدا کنید. لینک ساب برای همه ترکیب می‌سازد.",
                   lbl_fake: "سایت‌های استتار (حالت مخفی)", lbl_relay: "آی‌پی جایگزین (کمکی)", lbl_tfo: "اتصال سریع", lbl_ech: "سلام امن",
                   lbl_fake_configs: "ورودی‌های اطلاعاتی اشتراک", desc_fake_configs: "متن نمایشی ورودی‌ها در پروفایل اشتراک را سفارشی کنید. از {usage} و {expiry} برای مقادیر پویا استفاده کنید.", btn_add_entry: "افزودن ورودی", lbl_tg_token: "توکن ربات تلگرام", lbl_tg_chat: "شناسه عددی تلگرام", lbl_tg_admin: "شناسه مدیر تلگرام", desc_tg_admin: "فقط این شناسه کاربری تلگرام می‌تواند پنل را از طریق ربات مدیریت کند. خالی بگذارید برای استفاده از شناسه چت.", desc_tg_bot: "با تنظیم این مقادیر، جزئیات ورود به پنل به تلگرام ارسال می‌شود.",
-                  lbl_cf_acc: "شناسه اکانت ابری", lbl_cf_token: "توکن دسترسی کاربری", desc_cf_api: "اختیاری: برای نمایش میزان مصرف روزانه کارگر از صد هزار درخواست رایگان در پیام‌های تلگرام.",
+                  lbl_cf_acc: "شناسه اکانت", lbl_cf_token: "توکن دسترسی کاربری", desc_cf_api: "اختیاری: برای نمایش میزان مصرف روزانه کارگر از صد هزار درخواست رایگان در پیام‌های تلگرام.",
                   lbl_silent: "هشدار و پیغام خاموش", lbl_pause: "کلید توقف اضطراری",
                    lbl_sub_ua: "یوزراجنت سفارشی ساب", desc_sub_ua: "درخواست‌های مرورگر که حاوی این متن باشند، استتار را خنثی کرده و مستقیم به ساب دسترسی پیدا می‌کنند.",
                    lbl_api_keys: "کلیدهای API پنل", desc_api_keys: "کلیدهای API برای اتصال امن پنل‌های راهدور ایجاد کنید. پنل‌های راهدور به جای اشتراک‌گذاری کلید اصلی، از این کلیدها استفاده می‌کنند.",
@@ -1999,7 +1842,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     format_obfuscated: "مبهم‌سازی شده (UTF-8 + XOR)",
                     btn_redeploy_force: "تفویض مجدد / تغییر قالب پنل",
                     adv_network_dns: "شبکه و DNS", adv_proxy_relay: "پروکسی و رله", adv_subscription: "اشتراک",
-                    adv_protocol: "پروتکل", adv_telegram: "ربات تلگرام", adv_cloudflare: "کلودفلر",
+                    adv_protocol: "پروتکل", adv_telegram: "ربات تلگرام", adv_cloudflare: "Update Api",
                     stat_datetime: "تاریخ و زمان",
                     desc_custom_panel_url: "اختیاری. یک دامنه/آدرس سفارشی برای لینک‌های ساب/همگام‌سازی وارد کنید. اگر خالی باشد، آدرس پیش‌فرض ورکر استفاده می‌شود.",
                     lbl_custom_config_name: "نام/پیشوند سفارشی کانفیگ",
@@ -2016,15 +1859,15 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     lbl_nat64: "پیشوند NAT64", desc_nat64: "اختیاری. آی‌پی‌های پروکسی IPv4 را به آدرس‌های NAT64 IPv6 تبدیل می‌کند. چند پیشوند پشتیبانی می‌شود.",
                     lbl_direct_configs: "شامل کانفیگ‌های مستقیم", desc_direct_configs: "تولید کانفیگ‌ها بدون آی‌پی پروکسی در کنار کانفیگ‌های رله",
                     lbl_sync_api_key: "کلید API همگام‌سازی (ارسال به اسلیو)", desc_sync_api_key: "کلید API از پنل اسلیو. پنل اصلی با این کلید کانفیگ را ارسال می‌کند. این کلید باید در کلیدهای API پنل اسلیو وجود داشته باشد.",
-                    lbl_auto_update_clean_ips: "🔄 بروزرسانی خودکار آی‌پی تمیز", desc_auto_update_clean_ips: "دریافت و بروزرسانی خودکار لیست آی‌پی‌های تمیز از منبع راه‌دور هر ساعت",
+                    lbl_auto_update_clean_ips: "🔄 بروزرسانی خودکار لیست سرور", desc_auto_update_clean_ips: "دریافت و بروزرسانی خودکار لیست سرور از منبع راه‌دور هر ساعت",
                     lbl_auto_update_format: "قالب بروزرسانی", format_normal_label: "معمولی", format_obfuscated_label: "مبهم‌سازی شده",
                     desc_format_normal: "استاندارد _worker.js", desc_format_obfuscated: "جابجایی بایت XOR",
-                    lbl_clean_ips: "آی‌پی‌های تمیز", lbl_proxy_ips: "آی‌پی‌های پروکسی", lbl_assigned_nodes: "نودهای اختصاصی",
+                    lbl_clean_ips: "لیست سرورها", lbl_proxy_ips: "آی‌پی‌های پروکسی", lbl_assigned_nodes: "نودهای اختصاصی",
                     lbl_protocol_mode: "پروتکل", lbl_max_configs: "حداکثر کانفیگ",
                     desc_assigned_nodes: "نودهای سفارشی (کاما/خط جدید، خالی = همه نودها)",
                     desc_nat64_user: "اختیاری. آی‌پی‌های پروکسی IPv4 را به آدرس‌های NAT64 IPv6 تبدیل می‌کند.",
                     desc_proxy_ips: "آی‌پی‌های پروکسی سفارشی (کاما/خط جدید)",
-                    desc_clean_ips_modal: "آی‌پی‌های تمیز سفارشی (کاما/خط جدید)",
+                    desc_clean_ips_modal: "لیست سرور سفارشی (کاما/خط جدید)",
                     btn_generate_uuid: "تولید UUID",
                     lbl_conn_limit: "محدودیت اتصال همزمان", desc_conn_limit: "حداکثر اتصالات همزمان برای هر کاربر. برای نامحدود خالی بگذارید.",
                     lbl_user_panel_url: "آدرس پنل اصلی (نودهای سفارشی)", desc_user_panel_url: "دامنه پنل اصلی برای نودهای سفارشی. اگر خالی باشد، آدرس پنل پیش‌فرض استفاده می‌شود.",
@@ -2060,11 +1903,11 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                      add_node_title: "افزودن نود خارجی", add_node_desc: "آدرس URL و کلید API پنل خارجی را وارد کنید.",
                      add_node_url: "آدرس نود", add_node_apikey: "کلید API", add_node_confirm: "افزودن نود", add_node_invalid: "لطفاً URL و کلید API را وارد کنید.",
                      node_added: "نود با موفقیت اضافه شد!", node_removed: "نود حذف شد.",
-                      deploy_btn: "بروزرسانی آی‌پی تمیز", update_deploying: "در حال بروزرسانی آی‌پی تمیز...",
-                      update_success: "آی‌پی تمیز با موفقیت بروزرسانی شد! در حال بارگذاری...", update_error: "خطا در بروزرسانی",
-                      lbl_cf_worker: "نام اسکریپت کارگر ابری", desc_cf_worker: "برای بروزرسانی خودکار الزامی است. نام اسکریپت در داشبورد کارگرهای ابری.",
+                      deploy_btn: "بروزرسانی لیست سرور", update_deploying: "در حال بروزرسانی لیست سرور...",
+                      update_success: "لیست سرور با موفقیت بروزرسانی شد! در حال بارگذاری...", update_error: "خطا در بروزرسانی",
+                      lbl_cf_worker: "نام پنل", desc_cf_worker: "برای بروزرسانی خودکار الزامی است. نام اسکریپت در داشبورد کارگرهای ابری.",
                       view_github: "مشاهده در گیت‌هاب",
-                     update_requires_cf: "برای نصب خودکار، شناسه اکانت، توکن API و نام کارگر را تنظیم کنید.",
+                     update_requires_cf: "برای نصب خودکار، شناسه اکانت، توکن API و نام پنل را تنظیم کنید.",
                      html_desc_strategy: "<details><summary class='cursor-pointer text-primary'>مشاهده متغیرهای پشتیبانی شده...</summary><div class='mt-2'>متغیرهای پشتیبانی شده: <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{FLAG}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{COUNTRY}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{CITY}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{ISP}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PROTOCOL}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{USER}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PORT}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP_NAME}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{HOST}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{DATE}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{INDEX}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{WORKER}</code>.<br><span class='text-[10px] text-slate-400 dark:text-slate-500 leading-snug'>• <b>{FLAG}</b>: ایموجی پرچم.<br>• <b>{COUNTRY}</b>: نام کشور.<br>• <b>{CITY}</b>: نام شهر.<br>• <b>{ISP}</b>: نام ارائه‌دهنده اینترنت.<br>• <b>{PROTOCOL}</b>: پروتکل اصلی.<br>• <b>{USER}</b>: نام مشترک.<br>• <b>{PORT}</b>: پورت فعال.<br>• <b>{PREFIX}</b>: پیشوند دلخواه.<br>• <b>{IP}</b>: آی‌پی تمیز.<br>• <b>{IP_NAME}</b>: نام آی‌پی تمیز.<br>• <b>{HOST}</b>: نام دامنه.<br>• <b>{DATE}</b>: تاریخ.<br>• <b>{INDEX}</b>: شماره ردیف کانفیگ.<br>• <b>{WORKER}</b>: نام اسکریپت.</span><br>طرح‌های پیش‌فرض: <code>default</code>، <code>type-user-port</code>، <code>user-port</code>، <code>host-port-user</code>، <code>prefix-user-port</code>، <code>ip</code>.</div></details>",
                   // ===== NEW: Update related strings =====
                   check_for_update_title: "🔍 بررسی آپدیت جدید",
@@ -2081,355 +1924,100 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   update_changes: "تغییرات این نسخه:",
                   update_current_version: "نسخه فعلی: {version}",
                   update_latest_version: "نسخه جدید: {version}",
-                  update_no_cf: "⚠️ اطلاعات کلودفلر مورد نیاز است. لطفاً شناسه اکانت، توکن API و نام ورکر را در تنظیمات پیشرفته وارد کنید.",
+                  update_no_cf: "⚠️ اطلاعات کلودفلر مورد نیاز است. لطفاً شناسه اکانت، توکن API و نام پنل را در تنظیمات پیشرفته وارد کنید.",
               }
           };
 
-          const CHANGELOG_DATA = {
-
-              "2.9.4": {
-                  headline: { en: "Live Active Connections, Auto-Update Cron & v2rayN JSON", fa: "اتصالات زنده، کرون‌جاب آپدیت خودکار و خروجی v2rayN JSON" },
-                  added: [
-                      { en: "Added maxConfigs option per user to limit the number of generated configurations", fa: "افزودن قابلیت maxConfigs برای محدود کردن تعداد کانفیگ‌های تولید شده هر کاربر" },
-                      { en: "Live active connections stream count in the dashboard for each user/profile", fa: "تعداد لحظه‌ای اتصالات استریم زنده در داشبورد برای هر کاربر/پروفایل" },
-                      { en: "Added scheduled cron job capability for automatic Cloudflare worker updates", fa: "افزودن قابلیت برنامه‌ریزی کرون‌جاب (cron) برای بروزرسانی خودکار ورکر Cloudflare" },
-                      { en: "Added ?format=vjson parameter support for raw V2Ray/v2rayN JSON configuration outputs", fa: "پشتیبانی از پارامتر ?format=vjson برای خروجی پیکربندی‌های خام V2Ray/v2rayN JSON" },
-                      { en: "Dashboard HTML & Subscription Info HTML are now dynamically fetched reducing worker size", fa: "فایل‌های HTML داشبورد و صفحه اشتراک اکنون به صورت داینامیک دریافت می‌شوند که حجم ورکر را به شدت کاهش می‌دهد" }
-                  ],
-                  fixed: [
-                      { en: "Fixed activeConnections tracking limit logic and decrements upon WebSocket close", fa: "رفع مشکل منطق محدودیت activeConnections و کاهش آن هنگام بسته شدن وب‌ساکت" },
-                      { en: "Security: Removed url authentication key fallback to prevent potential API key logging", fa: "امنیت: حذف جستجوی کلید احراز هویت از پارامتر URL برای جلوگیری از ثبت در لاگ‌ها" }
-                  ],
-                  improved: [
-                      { en: "Added auto-refreshing dashboard stats using setInterval on dashboard intervals", fa: "اضافه شدن تازه‌سازی خودکار آمار داشبورد با استفاده از کرون زمان‌بندی داخلی داشبورد" },
-                      { en: "Added memory management limit that clears configRegistry if it exceeds 10,000 entries", fa: "افزودن محدودیت مدیریت حافظه که configRegistry را پس از ۱۰ هزار ورود پاک می‌کند" }
-                  ],
-                  notes: []
-              },
-              "2.9.0": {
-                  headline: { en: "Protocol Fix & Per-Config Node Routing", fa: "رفع پروتکل و مسیریابی نود به‌ازای هر کانفیگ" },
-                  added: [
-                      { en: "Per-config node routing for beta protocol via WebSocket path payload — beta nodes now route through their designated gateway IP just like alpha", fa: "مسیریابی نود به‌ازای هر کانفیگ پروتکل بتا از طریق مسیر وب‌ساکت — نودهای بتا اکنون مانند آلفا از طریق آدرس دروازه تعیین‌شده مسیریابی می‌کنند" },
-                      { en: "Server-side node index extraction with triple fallback: query parameter → numeric path segment → base64 JSON payload", fa: "استخراج شاخص نود سمت سرور با زنجیره سه‌گانه بازگشت: پارامتر کوئری → بخش عددی مسیر → بار پیلود JSON باینری" },
-                      { en: "Device connection limit per user (connLimit) — cap simultaneous connections per subscriber", fa: "محدودیت اتصال دستگاه به‌ازای هر کاربر (connLimit) — محدود کردن اتصالات همزمان هر مشترک" },
-                      { en: "Panel API key system for secure node-to-panel authentication", fa: "سیستم کلید API پنل برای احراز هویت امن اتصال نود به پنل" },
-                      { en: "Mobile-friendly add/edit user modals with improved responsive layout", fa: "فرم‌های افزودن/ویرایش کاربر سازگار با موبایل با طرح‌بندی واکنش‌گرا بهبودیافته" }
-                  ],
-                  fixed: [
-                      { en: "Fixed beta protocol header offset parsing — beta connections were silently dropping payload data after the port field", fa: "رفع خطای اندازه‌گیری افست هدر پروتکل بتا — اتصالات بتا به‌طور خاموش داده پس از فیلد پورت را حذف می‌کردند" },
-                      { en: "Fixed beta protocol authentication — password was set to generated internal ID instead of raw user identifier, causing permanent auth failure", fa: "رفع احراز هویت پروتکل بتا — رمز عبور به‌جای شناسه داخلی تولیدشده از شناسه خام کاربر استفاده می‌کند" },
-                      { en: "Added SHA224 hash registration in configRegistry so beta lookup works when isolate is warm", fa: "افزودن ثبت هش SHA224 در configRegistry تا جستجوی بتا در isolate گرم کار کند" },
-                      { en: "Removed Maintenance Hosts and Sync API Key fields from Advanced tab network section as requested", fa: "حذف فیلدهای میزبان‌های نگهداری و کلید API همگام‌سازی از بخش شبکه پیشرفته" }
-                  ],
-                  improved: [
-                      { en: "Beta node routing now uses the same base64 JSON WebSocket path payload format as alpha for maximum client compatibility", fa: "مسیریابی نود بتا اکنون از همان قالب پیلود مسیر وب‌ساکت JSON باینری آلفا برای حداکثر سازگاری استفاده می‌کند" },
-                      { en: "Node resolution uses getEffectivePips with NAT64 awareness for both alpha and beta protocols", fa: "解析 نود از getEffectivePips با آگاهی NAT64 برای هر دو پروتکل آلفا و بتا استفاده می‌کند" },
-                      { en: "Added reqPath variable to buildYamlProfile for consistent path generation", fa: "افزودن متغیر reqPath به buildYamlProfile برای تولید مسیر یکپارچه" }
-                  ],
-                  notes: []
-              },
-              "2.6.0": {
-                  headline: { en: "Bilingual Subscription Page & NAT64 Support", fa: "صفحه اشتراک چندزبانه و پشتیبانی NAT64" },
-                  added: [
-                      { en: "Full Persian and English language support on the subscription info page with RTL layout", fa: "پشتیبانی کامل از فارسی و انگلیسی در صفحه اطلاعات اشتراک با چیدمان RTL" },
-                      { en: "Dark and light mode toggle on the subscription page with saved preference", fa: "قابلیت تغییر حالت تاریک/روشن در صفحه اشتراک با ذخیره ترجیح کاربر" },
-                      { en: "NAT64 support for automatic IPv4 to IPv6 address conversion", fa: "پشتیبانی NAT64 برای تبدیل خودکار آدرس IPv4 به IPv6" },
-                      { en: "Per-user custom hostnames for multi-region deployments", fa: "هاست‌های اختصاصی برای هر کاربر جهت استقرار چند منطقه‌ای" },
-                      { en: "Direct connection configs that work without gateway IPs", fa: "کانفیگ‌های اتصال مستقیم بدون نیاز به آدرس دروازه" },
-                      { en: "Auto update from GitHub directly inside the dashboard", fa: "بروزرسانی خودکار از GitHub مستقیماً از داشبورد" },
-                      { en: "Customizable fake subscription entries with usage and expiry display", fa: "ورودی‌های اشتراک جعلی سفارشی با نمایش مصرف و انقضا" },
-                      { en: "Full gateway management via Telegram inline buttons", fa: "مدیریت کامل دروازه از طریق دکمه‌های اینلاین تلگرام" }
-                  ],
-                  fixed: [
-                      { en: "Fixed garbled Persian text in the user interface", fa: "اصلاح متن‌های فارسی نادرست در رابط کاربری" },
-                      { en: "Fixed subscription page not loading properly", fa: "رفع مشکل بارگذاری صفحه اشتراک" }
-                  ],
-                  improved: [
-                      { en: "Significantly faster dashboard scrolling and page loading", fa: "سرعت اسکرول و بارگذاری صفحات داشبورد بهبود چشمگیر یافت" },
-                      { en: "Rewritten config generators for better compatibility", fa: "بازنویسی مولدهای کانفیگ برای سازگاری بهتر" },
-                      { en: "Faster and more accurate country flag detection", fa: "سرعت و دقت نمایش پرچم کشورها بهبود یافت" },
-                      { en: "New config naming tags: country, city, ISP, date, and worker name", fa: "تگ‌های جدید نامگذاری: کشور، شهر، ارائه‌دهنده، تاریخ و نام ورکر" }
-                  ],
-                  notes: []
-              },
-              "2.5.8": {
-                  headline: { en: "Advanced Naming Tags & GeoIP Tag Engine", fa: "موتور نامگذاری پیشرفته با تگ‌های جغرافیایی" },
-                  added: [
-                      { en: "Added 7 new config naming placeholders: {COUNTRY}, {CITY}, {ISP}, {HOST}, {DATE}, {INDEX}, {WORKER}", fa: "اضافه شدن ۷ متغیر جدید نامگذاری: {COUNTRY}، {CITY}، {ISP}، {HOST}، {DATE}، {INDEX}، {WORKER}" },
-                      { en: "Replaced single-purpose flag API with batch ip-api.com GeoIP enrichment for country, city, and ISP data", fa: "جایگزینی API پرچم با غنی‌سازی GeoIP دسته‌ای ip-api.com برای داده‌های کشور، شهر و ارائه‌دهنده اینترنت" },
-                      { en: "Added tag validation engine that detects and reports unknown/invalid tags in naming strategies", fa: "افزودن موتور اعتبارسنجی تگ که تگ‌های ناشناخته یا نامعتبر در استراتژی نامگذاری را شناسایی و گزارش می‌کند" }
-                  ],
-                  fixed: [
-                      { en: "GeoIP cache now stores full geo metadata (country, city, ISP) instead of only flag emoji", fa: "کش GeoIP اکنون فراداده‌های کامل جغرافیایی (کشور، شهر، ارائه‌دهنده) را به جای فقط ایموجی پرچم ذخیره می‌کند" }
-                  ],
-                  improved: [
-                      { en: "Config name generation now receives config index for sequential naming patterns via {INDEX}", fa: "تولید نام کانفیگ اکنون شماره ردیف را برای الگوهای نامگذاری متوالی از طریق {INDEX} دریافت می‌کند" },
-                      { en: "Updated dashboard documentation with full list of all 13 supported naming tags in English and Persian", fa: "به‌روزرسانی مستندات داشبورد با لیست کامل ۱۳ تگ نامگذاری پشتیبانی شده در فارسی و انگلیسی" }
-                  ],
-                  notes: []
-              },
-              "2.5.7": {
-                  headline: { en: "Dynamic Multi-IP Failover & Keyless Country Flagging", fa: "لینک هوشمند آی‌پی‌ها، بهبود کلودفلر و نگاشت پرچم بدون تحریم" },
-                  added: [
-                      { en: "Support entering custom clean IPs, gateway IPs, and custom config names for each subscriber dynamically in Add/Edit user modals, with automatic extraction and seamless database merging", fa: "امکان ثبت آی‌پی تمیز دلخواه، آی‌پی دروازه دلخواه و نام کانفیگ دلخواه برای هر کاربر به صورت مجزا با قابلیت استخراج خودکار و ادغام هوشمند" },
-                      { en: "Integrated free, open-source and keyless api.country.is for country flag mapping of IP addresses", fa: "یکپارچه‌سازی وب‌سرویس رایگان و متن‌باز api.country.is جهت نگاشت پرچم کشورهای مربوط به آدرس‌های آی‌پی" }
-                  ],
-                  fixed: [
-                      { en: "Resolved Cloudflare API compatibility flag error ('No such compatibility flag: unsafe-eval' and startup 'Uncaught EvalError') by updating to 'allow_eval_during_startup'", fa: "رفع خطای ناسازگاری فلگ کلودفلر (خطای عدم وجود فلگ unsafe-eval و خطای زمان شروع کار EvalError) در بخش استقرار خودکار با بازنویسی به فلگ مدرن allow_eval_during_startup" },
-                      { en: "Fixed a critical issue where selecting multiple gateway IPs for a user caused session disruptions (IP splitting) on sites behind Cloudflare, resolved via user-consistent hashing and smart gateway failover", fa: "رفع مشکل عدم باز شدن وب‌سایت‌های پشت کلودفلر هنگام انتخاب چندین آی‌پی دروازه با پیاده‌سازی مکانیزم Hashing پایدار کاربر و سوییچ خودکار (Failover) بر روی دروازه‌های جایگزین" },
-                      { en: "Fixed client-side regular expression parsing to correctly split global IPs separated by backslashes, tabs, commas, or semicolons in the browser", fa: "اصلاح عبارات منظم فرانت‌اند در مروگر جهت تفکیک صحیح لیست آی‌پی‌های تفکیک شده با اینتر، ویرگول، نقطه ویرگول یا بک‌اسلش" }
-                  ],
-                  improved: [
-                      { en: "Enhanced reliability of user management dashboard modals and subscription validation logic", fa: "بهبود پایداری پنجره‌های مدیریتی داشبورد و منطق بررسی اعتبار اشتراک‌ها" }
-                  ],
-                  notes: []
-              },
-              "2.5.6.1": {
-                  headline: { en: "Multi-IP Management & Crucial Bug Fixes", fa: "مدیریت آی‌پی‌های چندگانه و رفع خطاهای بحرانی" },
-                  added: [
-                       { en: "Support setting custom config name, custom gateway IP, and custom clean IP for each user dynamically in the Add User modal", fa: "اضافه شدن امکان ثبت نام کانفیگ دلخواه، آی‌پی دروازه اختصاصی و آی‌پی تمیز اختصاصی به صورت مجزا برای هر کاربر در پنجره افزودن کاربر" }
-                  ],
-                  fixed: [
-                      { en: "Fixed a critical JavaScript rollback error ('ReferenceError: proxyIp is not defined') when adding a new user", fa: "رفع خطای بحرانی جاوااسکریپت ('ReferenceError: proxyIp is not defined') هنگام تلاش برای افزودن یک کاربر جدید" }
-                  ],
-                  improved: [
-                      { en: "Streamlined alignment of custom user values with subscription generation", fa: "بهبود همگام‌سازی مقادیر اختصاصی کاربران با فرایند ساخت کانفیگ‌ها در اشتراک" }
-                  ],
-                  notes: []
-              },
-              "2.5.6": {
-                  headline:                { en: "Multiple Gateway IPs & Flag Matching", fa: "آی‌پی‌های دروازه متعدد و انطباق پرچم" },
-                  added: [
-                      { en: "Support multi-gateway IP lists (rotated/distributed across generated configs to bypass Cloudflare limits)", fa: "پشتیبانی از لیست‌های آی‌پی دروازه چندگانه (چرخش و توزیع خودکار میان کانفیگ‌ها برای عبور از محدودیت‌های کلودفلر)" },
-                      { en: "Proper country flag matching for configs based on the actual gateway IP used", fa: "انطباق صحیح پرچم کشور برای کانفیگ‌ها بر اساس آی‌پی دروازه واقعی استفاده‌شده" }
-                  ],
-                  fixed: [
-                      { en: "Fixed outbound transport and websocket configurations formatting errors", fa: "رفع خطاهای فرمت‌دهی در کانفیگ‌های حمل و نقل خروجی و وب‌ساکت" }
-                  ],
-                  improved: [
-                      { en: "Distributed multiple gateway IPs evenly across subscription sub-configs", fa: "توزیع یکنواخت چندین آی‌پی دروازه میان زیرکانفیگ‌های اشتراک" },
-                      { en: "Enhanced IP API resolving and flag caching logic", fa: "بهبود منطق حل‌وفصل و کش پرچم برای آی‌پی‌ها" }
-                  ],
-                  notes: []
-              },
-              "2.5.5": {
-                  headline: { en: "One-Click Panel Update", fa: "بروزرسانی پنل با یک کلیک" },
-                  added: [
-                      { en: "Update the panel directly from the admin panel — no need to use Cloudflare dashboard", fa: "بروزرسانی پنل مستقیماً از پنل مدیریت — بدون نیاز به داشبورد کلودفلر" },
-                      { en: "One-click deployment inside the panel for quick and easy updates", fa: "نصب با یک کلیک داخل پنل برای بروزرسانی سریع و آسان" },
-                  ],
-                  fixed: [],
-                  improved: [
-                      { en: "Improved stability and reliability of the update system", fa: "بهبود پایداری و اطمینان سیستم بروزرسانی" },
-                  ],
-                  notes: []
-              },
-              "2.5.4.2": {
-                  headline: { en: "Performance Optimization & Background Processing", fa: "بهینه‌سازی عملکرد و پردازش پس‌زمینه" },
-                  added: [],
-                  fixed: [],
-                  improved: [
-                      { en: "Improved system performance using smart caching (faster responses and less database load)", fa: "بهبود عملکرد سیستم با استفاده از کش هوشمند (پاسخ‌ سریع‌تر و بار کمتر روی پایگاه داده)" },
-                      { en: "Added smart caching system (TTL) for configuration and usage data", fa: "افزودن سیستم کش هوشمند (TTL) برای داده‌های تنظیمات و مصرف" },
-                      { en: "Reduced database calls to make the panel faster and more efficient", fa: "کاهش درخواست‌ها به پایگاه داده برای سریع‌تر و کاراتر شدن پنل" },
-                      { en: "Background processing added for non-critical tasks to improve speed", fa: "افزودن پردازش پس‌زمینه برای کارهای غیربحرانی جهت بهبود سرعت" },
-                  ],
-                  notes: []
-              },
-              "2.5.4.1": {
-                  headline: { en: "Security Hotfix — Bot Authorization", fa: "اصلاح امنیتی — احراز هویت ربات" },
-                  added: [],
-                  fixed: [
-                      { en: "Fixed critical issue where unauthorized users could access bot and panel data via Worker", fa: "رفع مشکل بحرانی دسترسی کاربران غیرمجاز به اطلاعات ربات و پنل از طریق Worker" },
-                      { en: "Added proper Telegram user ID validation for all Worker-related requests", fa: "افزودن بررسی صحیح آیدی عددی تلگرام برای تمام درخواست‌های مربوط به Worker" },
-                  ],
-                  improved: [
-                      { en: "Only users with approved admin IDs can interact with the bot and access panel data", fa: "فقط کاربرانی که آیدی آن‌ها در لیست ادمین‌ها ثبت شده باشد اجازه دسترسی به ربات و اطلاعات پنل را دارند" },
-                      { en: "Unauthorized users now receive a clear access denied message", fa: "کاربران غیرمجاز اکنون پیام خطای دسترسی مناسب دریافت می‌کنند" },
-                  ],
-                  notes: [
-                      { en: "Security update — recommended for all users", fa: "به‌روزرسانی امنیتی — توصیه‌شده برای تمام کاربران" },
-                  ]
-              },
-              "2.5.4": {
-                  headline: { en: "Overview Dashboard & Mobile Improvements", fa: "داشبورد نمای کلی و بهبود نمایش در موبایل" },
-                  added: [
-                      { en: "Added Overview Dashboard as the default home page", fa: "اضافه شدن داشبورد نمای کلی به عنوان صفحه اصلی پنل" },
-                      { en: "Added quick statistics and recent activity section", fa: "اضافه شدن بخش آمار سریع و فعالیت‌های اخیر" },
-                  ],
-                  fixed: [],
-                  improved: [
-                      { en: "Improved mobile responsiveness of the Overview page", fa: "بهبود نمایش صفحه نمای کلی در موبایل" },
-                      { en: "Localized traffic units for Persian language", fa: "نمایش واحد ترافیک به فارسی در صفحه نمای کلی" },
-                  ],
-                  notes: []
-              },
-              "2.5.3": {
-                  headline: { en: "Telegram Bot Fixes & Formatting Cleanup", fa: "رفع مشکلات ربات تلگرام و اصلاح فرمت‌بندی" },
-                  added: [],
-                  fixed: [
-                      { en: "Fixed admin buttons not showing immediately after /start in some cases", fa: "رفع مشکل نمایش ندادن دکمه‌های مدیر بلافاصله پس از /start در بعضی موارد" },
-                      { en: "Fixed subscription link button returning per-user links instead of master link", fa: "رفع مشکل بازگشت لینک‌های کاربری به جای لینک اصلی هنگام فشردن دکمه لینک اشتراک" },
-                      { en: "Fixed duplicate messages when clicking Update Usage with unchanged stats", fa: "رفع مشکل ارسال پیام تکراری هنگام فشردن بروزرسانی مصرف بدون تغییر آمار" },
-                      { en: "Fixed <code> tags showing as raw text in Telegram messages", fa: "رفع مشکل نمایش تگ‌های <code> به صورت متن خام در پیام‌های تلگرام" },
-                      { en: "Fixed subscription links not being clickable in Telegram", fa: "رفع مشکل غیرقابل کلیک بودن لینک‌های اشتراک در تلگرام" },
-                  ],
-                  improved: [
-                      { en: "Subscription links now use tap-to-copy formatting in Telegram", fa: "لینک‌های اشتراک اکنون با فرمت کپی با یک لمس در تلگرام نمایش داده می‌شوند" },
-                      { en: "UUIDs now use tap-to-copy formatting in user lists and detail views", fa: "شناسه‌های یکتا اکنون با فرمت کپی با یک لمس در لیست و جزئیات کاربران نمایش داده می‌شوند" },
-                      { en: "Bot menu now correctly shows admin options on first interaction after login", fa: "منوی ربات اکنون گزینه‌های مدیریتی را در اولین تعامل پس از ورود به درستی نمایش می‌دهد" },
-                      { en: "Update Usage button now edits the existing message instead of sending a new one", fa: "دکمه بروزرسانی مصرف اکنون پیام موجود را ویرایش می‌کند به جای ارسال پیام جدید" },
-                  ],
-                  notes: [
-                      { en: "No breaking changes — fully backward compatible", fa: "بدون تغییرات ناسازگار — کاملاً سازگار با نسخه‌های قبلی" },
-                  ]
-              },
-              "2.5.2": {
-                  headline: { en: "Modal Responsiveness & Mobile UX", fa: "واکنش‌گرایی مودال و تجربه کاربری موبایل" },
-                  added: [],
-                  fixed: [],
-                  improved: [
-                      { en: "Improved Add/Edit User modal responsiveness on all screen sizes", fa: "بهبود واکنش‌گرایی مودال افزودن/ویرایش کاربر در تمام اندازه‌های صفحه" },
-                      { en: "Added sticky action buttons in modals for better mobile support", fa: "افزودن دکمه‌های شناور در مودال‌ها برای پشتیبانی بهتر از موبایل" },
-                      { en: "Enhanced scrolling behavior — form content scrolls independently while buttons stay visible", fa: "بهبود رفتار اسکرول — محتوای فرم به‌طور مستقل اسکرول می‌شود در حالی که دکمه‌ها قابل مشاهده باقی می‌مانند" },
-                      { en: "Improved overall user experience when managing subscribers", fa: "بهبود تجربه کاربری هنگام مدیریت مشترکین" },
-                  ],
-                  notes: [
-                      { en: "No breaking changes — fully backward compatible", fa: "بدون تغییرات ناسازگار — کاملاً سازگار با نسخه‌های قبلی" },
-                  ]
-              },
-              "2.5.1": {
-                  headline: { en: "Simplified Panel Management & Bot Stability", fa: "مدیریت ساده‌شده پنل و پایداری ربات" },
-                  added: [
-                      { en: "Web login signal system — bot auto-detects the last active web-logged panel", fa: "سیستم سیگنال ورود وب — ربات به‌طور خودکار آخرین پنل واردشده از وب را شناسایی می‌کند" },
-                      { en: "Login sync endpoint (/tg/sync_panel) for remote panels to notify the hub on admin login", fa: "نقطه پایانی همگام‌سازی ورود (/tg/sync_panel) برای اطلاع‌رسانی پنل‌های راهدور به هاب هنگام ورود مدیر" },
-                      { en: "Hub panel URL config (hubPanelUrl) for remote panels to signal login events", fa: "پیکربندی آدرس هاب پنل (hubPanelUrl) برای ارسال سیگنال ورود از پنل‌های راهدور" },
-                      { en: "Full user management via Telegram bot (create, edit, delete, search, disable, re-enable)", fa: "مدیریت کامل کاربران از طریق ربات تلگرام (ایجاد، ویرایش، حذف، جستجو، غیرفعال‌سازی، فعال‌سازی مجدد)" },
-                      { en: "HTTP REST API for all user operations at /api/users (GET, POST, PUT, DELETE)", fa: "API جدید REST برای تمام عملیات کاربران در /api/users" },
-                      { en: "Statistics API at /api/stats with user counts, traffic totals, and system status", fa: "API آمار در /api/stats با تعداد کاربران، مجموع ترافیک و وضعیت سیستم" },
-                  ],
-                  fixed: [
-                      { en: "Removed multi-panel selection system that caused session confusion and incorrect panel switching", fa: "حذف سیستم انتخاب چندپنلی که باعث سردرگمی نشست و جابجایی نادرست پنل می‌شد" },
-                      { en: "Fixed bot not responding after pressing /start due to stale step state", fa: "رفع مشکل پاسخ ندادن ربات پس از فشار دادن /start به دلیل وضعیت مرحله قدیمی" },
-                      { en: "Fixed panel context mixing when switching between panels", fa: "رفع مشکل ترکیب زمینه پنل هنگام جابجایی بین پنل‌ها" },
-                      { en: "Fixed race condition in bot state persistence from non-blocking D1 writes", fa: "رفع مشکل شرایط مسابقه در ماندگاری وضعیت ربات ناشی از نوشتن غیرهمزمان D1" },
-                  ],
-                  improved: [
-                      { en: "/start now directly opens panel management based on last web login — no panel selection menu", fa: "/start اکنون مستقیماً مدیریت پنل را بر اساس آخرین ورود وب باز می‌کند — بدون منوی انتخاب پنل" },
-                      { en: "Bot automatically links Telegram session to the last active web-logged panel", fa: "ربات به‌طور خودکار نشست تلگرام را به آخرین پنل فعال واردشده از وب متصل می‌کند" },
-                      { en: "Simplified bot logic with clean 1-to-1 mapping between web login and Telegram session", fa: "ساده‌سازی منطق ربات با نگاشت یک‌به‌یک بین ورود وب و نشست تلگرام" },
-                      { en: "Telegram bot main menu redesigned with inline keyboard layout for mobile-first management", fa: "منوی اصلی ربات تلگرام با طرح‌بندی کیبورد درون‌خطی برای مدیریت موبایل‌محور بازطراحی شد" },
-                  ],
-                  notes: [
-                      { en: "Single-panel mode works more reliably — it is recommended to use one Telegram bot per panel for best stability", fa: "حالت تک‌پنلی پایدارتر است — توصیه می‌شود برای بهترین پایداری از یک ربات تلگرام برای هر پنل استفاده کنید" },
-                      { en: "For multi-panel setups: set hubPanelUrl on each remote panel to enable automatic login sync", fa: "برای تنظیمات چندپنلی: hubPanelUrl را روی هر پنل راهدور تنظیم کنید تا همگام‌سازی خودکار ورود فعال شود" },
-                      { en: "Each panel having its own dedicated bot improves session accuracy and prevents panel mix-up issues", fa: "داشتن ربات اختصاصی برای هر پنل، دقت نشست را بهبود می‌دهد و از مشکلات ترکیب پنل جلوگیری می‌کند" },
-                      { en: "API endpoints are authenticated via Master Key (Bearer token or ?key= parameter)", fa: "نقاط پایانی API از طریق کلید اصلی احراز هویت می‌شوند (توکن Bearer یا پارامتر ?key=)" },
-                  ]
-              },
-              "2.5.0": {
-                  headline: { en: "User Auto-Disable & Management Improvements", fa: "غیرفعال‌سازی خودکار کاربر و بهبود مدیریت" },
-                  added: [
-                      { en: "Automatic user disable on traffic limit exceeded", fa: "غیرفعال‌سازی خودکار کاربر هنگام اتمام محدودیت ترافیک" },
-                      { en: "Automatic user disable on expiration date reached", fa: "غیرفعال‌سازی خودکار کاربر هنگام رسیدن به تاریخ انقضا" },
-                      { en: "Activity log and Telegram notification for auto-disabled users", fa: "ثبت در گزارش فعالیت و ارسال اعلان تلگرام برای کاربران غیرفعال شده خودکار" },
-                      { en: "Recently Disabled Users notification panel in Users tab", fa: "پنل اعلان کاربران اخیراً غیرفعال شده در بخش کاربران" },
-                      { en: "Status filter dropdown (All/Active/Paused/Auto-Disabled)", fa: "فیلتر وضعیت (همه/فعال/متوقف/غیرفعال خودکار)" },
-                      { en: "Auto-Disabled statistics card in dashboard", fa: "کارت آمار غیرفعال‌سازی خودکار در داشبورد" },
-                  ],
-                  fixed: [
-                      { en: "Expired users are now disabled instead of deleted", fa: "کاربران منقضی شده اکنون غیرفعال می‌شوند به جای حذف" },
-                      { en: "Users exceeding traffic limits are preserved in panel", fa: "کاربرانی که محدودیت ترافیک را رد می‌کنند در پنل حفظ می‌شوند" },
-                  ],
-                  improved: [
-                      { en: "User data, statistics, and history are now preserved", fa: "داده‌ها، آمار و تاریخچه کاربران اکنون حفظ می‌شود" },
-                      { en: "Account renewal workflow for administrators", fa: "فرآیند تمدید حساب برای مدیران" },
-                  ],
-                  notes: [
-                      { en: "Re-enabling a user clears the auto-disable reason", fa: "فعال‌سازی مجدد کاربر، دلیل غیرفعال‌سازی خودکار را پاک می‌کند" },
-                  ]
-              },
-              "2.4.9": {
-                  headline: { en: "Custom Protocol & Port Configuration", fa: "پیکربندی پروتکل و پورت سفارشی" },
-                  added: [
-                      { en: "Custom protocol mode per user (VLESS/Beta/Both)", fa: "حالت پروتکل سفارشی برای هر کاربر (VLESS/Beta/هر دو)" },
-                      { en: "Custom port configuration per user", fa: "پیکربندی پورت سفارشی برای هر کاربر" },
-                      { en: "Maximum configs limit per user", fa: "محدودیت حداکثر کانفیگ برای هر کاربر" },
-                  ],
-                  fixed: [],
-                  improved: [
-                      { en: "User management panel interface", fa: "رابط کاربری پنل مدیریت کاربران" },
-                  ],
-                  notes: []
-              },
-              "2.9.5": {
-                  headline: { en: "Auto Update Server List & Manual Update Check", fa: "بروزرسانی خودکار لیست سرور و بررسی دستی آپدیت" },
-                  added: [
-                      { en: "Added manual Check for Update button in dashboard to check GitHub for new versions", fa: "افزودن دکمه دستی «بررسی آپدیت» در داشبورد برای بررسی نسخه‌های جدید در گیت‌هاب" },
-                      { en: "Added What's New display showing changes before applying update", fa: "افزودن نمایش تغییرات جدید قبل از اعمال آپدیت" },
-                      { en: "Update confirmation modal requiring user approval before deployment", fa: "پنجره تأیید آپدیت که نیاز به تأیید کاربر قبل از دپلوی دارد" },
-                      { en: "Last update check status displayed in dashboard", fa: "نمایش وضعیت آخرین بررسی آپدیت در داشبورد" }
-                  ],
-                  fixed: [],
-                  improved: [
-                      { en: "Removed automatic source code update - now requires manual confirmation", fa: "حذف بروزرسانی خودکار سورس کد - اکنون نیاز به تأیید دستی دارد" }
-                  ],
-                  notes: [
-                      { en: "To update: Go to Settings → Click 'Check for Update' → Review changes → Click 'Update Now'", fa: "برای بروزرسانی: به تنظیمات بروید → روی «بررسی آپدیت» کلیک کنید → تغییرات را بررسی کنید → روی «بروزرسانی کن» کلیک کنید" }
-                  ]
-              }
-          };
+          // Remove changelog data for internal versions
+          const CHANGELOG_DATA = {};
 
           function renderChangelog(version) {
               const container = document.getElementById('modal-changelog-container');
               if (!container) return;
 
-              const data = CHANGELOG_DATA[version];
-              if (!data) {
-                  container.innerHTML = '<p class="text-slate-400 text-xs">' + (i18n[lang]?.no_changelog || 'No changelog available for this version.') + '</p>';
-                  return;
-              }
-
-              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-              let html = '';
-
-              if (data.headline) {
-                  const headlineEl = document.getElementById('modal-version-headline');
-                  if (headlineEl) headlineEl.textContent = data.headline[lang] || data.headline['en'];
-              }
-
-              const sections = [
-                  { key: 'added', icon: '✨', color: 'emerald', items: data.added },
-                  { key: 'fixed', icon: '🔧', color: 'blue', items: data.fixed },
-                  { key: 'improved', icon: '⚡', color: 'violet', items: data.improved },
-                  { key: 'changed', icon: '🔄', color: 'amber', items: data.changed },
-                  { key: 'note', icon: '⚠️', color: 'red', items: data.notes },
-              ];
-
-              sections.forEach(section => {
-                  if (section.items && section.items.length > 0) {
-                      html += '<div class="mb-4">';
-                      html += '<div class="flex items-center gap-2 mb-2">';
-                      html += '<span class="text-sm">' + section.icon + '</span>';
-                      html += '<h5 class="text-xs font-bold text-' + section.color + '-600 dark:text-' + section.color + '-400 uppercase tracking-wider">' + t('changelog_' + section.key) + '</h5>';
-                      html += '</div>';
-                      html += '<div class="space-y-1.5 ps-6">';
-                      section.items.forEach(item => {
-                          html += '<div class="flex items-start gap-2">';
-                          html += '<span class="text-' + section.color + '-400 mt-1.5">•</span>';
-                          html += '<span class="text-xs text-slate-600 dark:text-slate-300">' + (item[lang] || item['en']) + '</span>';
-                          html += '</div>';
+              // Fetch from remote source
+              fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/whatnew')
+                  .then(res => {
+                      if (!res.ok) throw new Error('Failed to fetch changelog');
+                      return res.text();
+                  })
+                  .then(text => {
+                      const lines = text.split('\n').filter(line => line.trim());
+                      let currentSection = '';
+                      let html = '';
+                      
+                      // Parse version number
+                      const versionMatch = lines[0]?.match(/^([\d.]+)/);
+                      if (versionMatch && versionMatch[1] !== version) {
+                          // If remote version doesn't match current, we still show what's new
+                          // But we need to parse the content
+                      }
+                      
+                      // Parse the lines
+                      lines.forEach(line => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return;
+                          
+                          // Check for version header
+                          if (trimmed.match(/^[\d.]+/)) {
+                              // Do nothing, skip version line
+                              return;
+                          }
+                          
+                          // Check for section headers
+                          if (trimmed.endsWith(':')) {
+                              const section = trimmed.slice(0, -1).trim().toLowerCase();
+                              const sectionMap = {
+                                  'fa': 'fa',
+                                  'en': 'en'
+                              };
+                              // We'll handle language separation later
+                              return;
+                          }
+                          
+                          // Regular line - add to html
+                          html += `<p class="text-xs text-slate-600 dark:text-slate-300">• ${trimmed}</p>`;
                       });
-                      html += '</div></div>';
-                  }
-              });
-
-              container.innerHTML = html || '<p class="text-slate-400 text-xs">' + (i18n[lang]?.no_changes || 'No changes documented.') + '</p>';
+                      
+                      if (html) {
+                          container.innerHTML = html;
+                      } else {
+                          container.innerHTML = '<p class="text-slate-400 text-xs">' + (i18n[lang]?.no_changelog || 'No changelog available for this version.') + '</p>';
+                      }
+                  })
+                  .catch(err => {
+                      console.error('Error fetching changelog:', err);
+                      container.innerHTML = '<p class="text-slate-400 text-xs">' + (i18n[lang]?.no_changelog || 'No changelog available for this version.') + '</p>';
+                  });
           }
 
           let lang = localStorage.getItem('lang') || 'fa';
           let sessionKey = "", baseRoute = window.location.pathname.split('/dash')[0];
           let hostName = window.location.hostname, localUUID = "";
+
+          // Fetch current version from remote source
+          function fetchCurrentVersion() {
+              fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/version')
+                  .then(res => res.text())
+                  .then(version => {
+                      const cleanVersion = version.trim();
+                      const versionBadges = document.querySelectorAll('#top-version-badge, #app-version');
+                      versionBadges.forEach(el => {
+                          el.textContent = 'v' + cleanVersion;
+                      });
+                      // Update modal badge
+                      const modalBadge = document.getElementById('modal-version-badge');
+                      if (modalBadge) {
+                          modalBadge.textContent = 'v' + cleanVersion;
+                      }
+                  })
+                  .catch(err => console.error('Error fetching version:', err));
+          }
+          fetchCurrentVersion();
+
+          // Override CURRENT_VERSION from remote fetch
+          const originalVersion = CURRENT_VERSION;
+          // We'll update it dynamically
 
           window.addEventListener('DOMContentLoaded', () => {
               let savedSession = localStorage.getItem('nahan_session');
@@ -2524,43 +2112,65 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
               applyLang();
               
               try {
-                  const res = await fetch(baseRoute + '/api/update', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: sessionKey, action: 'check_for_update' })
-                  });
-                  const data = await res.json();
+                  // Check remote version
+                  const versionRes = await fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/version');
+                  const latestVersion = (await versionRes.text()).trim();
                   
-                  if (data.checked) {
-                      if (data.updateAvailable) {
-                          // Show update available
-                          const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
-                          statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
-                          statusDiv.innerHTML = `🎉 ${t('update_available')} (${data.latest})`;
-                          
-                          // Store pending update info
-                          pendingUpdate = {
-                              current: data.current,
-                              latest: data.latest,
-                              whatsNew: data.whatsNew
-                          };
-                          
-                          // Show update button
-                          actionsDiv.classList.remove('hidden');
-                          actionsDiv.innerHTML = `
-                              <button onclick="showUpdateConfirmModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
-                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                  <span>${t('update_now')}</span>
-                              </button>
-                          `;
-                      } else {
-                          statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-                          statusDiv.innerHTML = `✅ ${i18n[lang]?.update_not_available || 'You are running the latest version.'}`;
-                          actionsDiv.classList.add('hidden');
+                  // Get current version from DOM
+                  const currentVersionEl = document.getElementById('app-version');
+                  const currentVersion = currentVersionEl ? currentVersionEl.textContent.replace('v', '').trim() : '0.0.0';
+                  
+                  if (latestVersion && latestVersion !== currentVersion) {
+                      // Show update available
+                      const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+                      statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
+                      statusDiv.innerHTML = `🎉 ${t('update_available')} (${latestVersion})`;
+                      
+                      // Fetch what's new
+                      let whatsNewText = '';
+                      try {
+                          const wnRes = await fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/whatnew');
+                          const wnText = await wnRes.text();
+                          // Parse what's new
+                          const lines = wnText.split('\n').filter(line => line.trim());
+                          const versionLine = lines.find(line => line.trim().startsWith(latestVersion));
+                          if (versionLine) {
+                              const startIdx = lines.indexOf(versionLine) + 1;
+                              let endIdx = lines.length;
+                              for (let i = startIdx; i < lines.length; i++) {
+                                  if (lines[i].trim().match(/^[\d.]+/)) {
+                                      endIdx = i;
+                                      break;
+                                  }
+                              }
+                              const changes = lines.slice(startIdx, endIdx).filter(line => line.trim());
+                              whatsNewText = changes.join('\n');
+                          } else {
+                              // Fallback: use all content
+                              whatsNewText = wnText;
+                          }
+                      } catch (e) {
+                          console.error('Error fetching changelog:', e);
+                          whatsNewText = 'Update available. Please check GitHub for details.';
                       }
-                  } else if (data.error) {
-                      statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                      statusDiv.innerHTML = `❌ ${data.error}`;
+                      
+                      pendingUpdate = {
+                          current: currentVersion,
+                          latest: latestVersion,
+                          whatsNew: whatsNewText
+                      };
+                      
+                      // Show update button
+                      actionsDiv.classList.remove('hidden');
+                      actionsDiv.innerHTML = `
+                          <button onclick="showUpdateConfirmModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                              <span>${t('update_now')}</span>
+                          </button>
+                      `;
+                  } else {
+                      statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+                      statusDiv.innerHTML = `✅ ${i18n[lang]?.update_not_available || 'You are running the latest version.'}`;
                       actionsDiv.classList.add('hidden');
                   }
                   
@@ -2596,15 +2206,72 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
               let whatsNewHtml = '';
               if (pendingUpdate.whatsNew) {
                   const lines = pendingUpdate.whatsNew.split('\n').filter(line => line.trim());
-                  // First line is version
-                  const versionLine = lines.shift() || pendingUpdate.latest;
+                  
+                  // Determine language section
+                  let langSection = lang === 'fa' ? 'fa=' : 'en=';
+                  let sectionStart = -1;
+                  let sectionEnd = lines.length;
+                  
+                  lines.forEach((line, idx) => {
+                      if (line.trim().startsWith('fa=')) {
+                          langSection = 'fa=';
+                          sectionStart = idx + 1;
+                      } else if (line.trim().startsWith('en=')) {
+                          langSection = 'en=';
+                          sectionStart = idx + 1;
+                      } else if (line.trim().match(/^[a-z]{2}=/) && !line.trim().startsWith(langSection)) {
+                          if (sectionStart > 0) {
+                              sectionEnd = idx;
+                          }
+                      }
+                  });
+                  
+                  // If no section found, use all lines
+                  if (sectionStart === -1) {
+                      sectionStart = 0;
+                  }
+                  
+                  const sectionLines = lines.slice(sectionStart, sectionEnd).filter(line => line.trim());
+                  
+                  // Separate by language if both exist
+                  let faLines = [];
+                  let enLines = [];
+                  let currentLang = null;
+                  
+                  // Parse the section lines
+                  sectionLines.forEach(line => {
+                      const trimmed = line.trim();
+                      if (trimmed.startsWith('fa=')) {
+                          currentLang = 'fa';
+                          return;
+                      } else if (trimmed.startsWith('en=')) {
+                          currentLang = 'en';
+                          return;
+                      }
+                      
+                      if (currentLang === 'fa') {
+                          faLines.push(trimmed);
+                      } else if (currentLang === 'en') {
+                          enLines.push(trimmed);
+                      } else {
+                          // Try to detect language
+                          if (/[آ-ی]/.test(trimmed)) {
+                              faLines.push(trimmed);
+                          } else {
+                              enLines.push(trimmed);
+                          }
+                      }
+                  });
+                  
+                  const displayLines = lang === 'fa' ? faLines : enLines;
                   
                   whatsNewHtml = `
                       <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-darkborder/50">
                           <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${t('update_changes')}</p>
                           <div class="mt-2 space-y-1">
-                              ${lines.map(line => {
+                              ${displayLines.map(line => {
                                   const trimmed = line.trim();
+                                  if (!trimmed) return '';
                                   const isImportant = trimmed.includes('⚠️') || trimmed.includes('🔴');
                                   const icon = isImportant ? '⚠️' : '•';
                                   return `<p class="text-xs text-slate-600 dark:text-slate-300 ${isImportant ? 'font-semibold text-amber-600 dark:text-amber-400' : ''}">${icon} ${trimmed}</p>`;
@@ -2643,53 +2310,27 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           }
 
           // ============================================
-          // APPLY UPDATE FUNCTION
+          // APPLY UPDATE FUNCTION - REMOVED (No internal update logic)
           // ============================================
+          // The applyUpdate function is now a placeholder that shows a message
+          // about manual update process.
           async function applyUpdate() {
-              if (!pendingUpdate) return;
+              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
               
-              const btn = document.getElementById('btn-apply-update');
-              const originalText = btn.innerHTML;
-              btn.disabled = true;
-              btn.innerHTML = '⏳ Applying...';
-              
+              // Close the modal
               closeUpdateConfirmModal();
               
+              // Show a message that the user needs to update manually
               const statusDiv = document.getElementById('update-status');
               const actionsDiv = document.getElementById('update-actions');
               
               statusDiv.classList.remove('hidden');
-              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400 animate-pulse';
-              statusDiv.innerHTML = '⏳ ' + (i18n[lang]?.update_applying || 'Applying update... Please wait.');
+              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
+              statusDiv.innerHTML = '🔧 ' + (lang === 'fa' 
+                  ? 'برای بروزرسانی به داشبورد → تنظیمات → برسی آپدیت مراجعه کنید و سپس روی دکمه بروزرسانی کلیک کنید.'
+                  : 'To update, go to Dash → Settings → Check for Update and click the update button.');
               
-              try {
-                  const res = await fetch(baseRoute + '/api/update', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: sessionKey, action: 'apply_update' })
-                  });
-                  const data = await res.json();
-                  
-                  if (data.success) {
-                      statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
-                      statusDiv.innerHTML = '✅ ' + (i18n[lang]?.update_applied || 'Update applied successfully! The panel will reload.');
-                      actionsDiv.classList.add('hidden');
-                      
-                      // Reload after 3 seconds
-                      setTimeout(() => {
-                          window.location.reload();
-                      }, 3000);
-                  } else {
-                      statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                      statusDiv.innerHTML = (i18n[lang]?.update_failed || 'Update failed: {error}').replace('{error}', data.error || 'Unknown error');
-                  }
-              } catch (e) {
-                  statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
-                  statusDiv.innerHTML = (i18n[lang]?.update_failed || 'Update failed: {error}').replace('{error}', e.message);
-              } finally {
-                  btn.disabled = false;
-                  btn.innerHTML = originalText;
-              }
+              actionsDiv.classList.add('hidden');
               applyLang();
           }
 
@@ -2698,7 +2339,17 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
               if (!localStorage.getItem(popupKey)) {
                   setTimeout(() => {
                       const badge = document.getElementById('modal-version-badge');
-                      if (badge) badge.textContent = 'v' + CURRENT_VERSION;
+                      if (badge) {
+                          // Get version from remote source
+                          fetch('https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/version')
+                              .then(res => res.text())
+                              .then(version => {
+                                  badge.textContent = 'v' + version.trim();
+                              })
+                              .catch(() => {
+                                  badge.textContent = 'v' + CURRENT_VERSION;
+                              });
+                      }
                       renderChangelog(CURRENT_VERSION);
                       const m = document.getElementById('modal-version-update');
                       if (m) {
@@ -2806,7 +2457,14 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     let logsHtml = '';
                     data.logs.forEach(log => {
                         const dateStr = new Date(log.ts).toLocaleString('en-US', {hour12: false});
-                        logsHtml += `<div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-darkborder/50 gap-2"><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.type}</p><p class="text-xs text-slate-500 truncate max-w-[200px] sm:max-w-xs" title="${log.detail}">${log.detail}</p></div><span class="text-[10px] font-mono text-slate-400 bg-[var(--color-surface)]  px-2 py-1 rounded shrink-0">${dateStr}</span></div>`;
+                        // Replace "Clean IPs" with "Server List" in log messages
+                        let detail = log.detail;
+                        if (lang === 'fa') {
+                            detail = detail.replace(/آی‌پی تمیز/g, 'لیست سرور');
+                        } else {
+                            detail = detail.replace(/Clean IPs/g, 'Server List');
+                        }
+                        logsHtml += `<div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-darkborder/50 gap-2"><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.type}</p><p class="text-xs text-slate-500 truncate max-w-[200px] sm:max-w-xs" title="${detail}">${detail}</p></div><span class="text-[10px] font-mono text-slate-400 bg-[var(--color-surface)]  px-2 py-1 rounded shrink-0">${dateStr}</span></div>`;
                     });
                     container.innerHTML = logsHtml;
                 } else {
@@ -2864,7 +2522,13 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                         const dateStr = new Date(log.ts).toLocaleString('en-US', {hour12: false});
                         const typeColors = { 'Auth Success': 'bg-emerald-500', 'Auth Failed': 'bg-red-500', 'User Created': 'bg-blue-500', 'User Deleted': 'bg-red-500', 'User Toggled': 'bg-amber-500', 'User Updated': 'bg-indigo-500', 'User Auto-Disabled': 'bg-red-500', 'Traffic Reset': 'bg-cyan-500', 'Config Changed': 'bg-violet-500', 'Update Available': 'bg-amber-500', 'Source Updated': 'bg-indigo-500', 'Update Check': 'bg-slate-400' };
                         const dotColor = typeColors[log.type] || 'bg-slate-400';
-                        actHtml += '<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div class="w-2 h-2 rounded-full shrink-0 ' + dotColor + '"></div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">' + log.type + '</p><p class="text-[11px] text-slate-400 truncate">' + log.detail + '</p></div><span class="text-[10px] font-mono text-slate-400 shrink-0">' + dateStr + '</span></div>';
+                        let detail = log.detail;
+                        if (lang === 'fa') {
+                            detail = detail.replace(/آی‌پی تمیز/g, 'لیست سرور');
+                        } else {
+                            detail = detail.replace(/Clean IPs/g, 'Server List');
+                        }
+                        actHtml += '<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div class="w-2 h-2 rounded-full shrink-0 ' + dotColor + '"></div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">' + log.type + '</p><p class="text-[11px] text-slate-400 truncate">' + detail + '</p></div><span class="text-[10px] font-mono text-slate-400 shrink-0">' + dateStr + '</span></div>';
                     });
                     actList.innerHTML = actHtml;
                 } else {
