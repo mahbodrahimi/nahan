@@ -13,7 +13,7 @@
       <meta name="format-detection" content="telephone=no">
       <meta name="msapplication-tap-highlight" content="no">
       <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236366f1'/><text x='50' y='62' font-size='40' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>N</text></svg>">
-      <title>Vortix Gateway</title>
+      <title>Nahan Gateway</title>
       <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
       <script src="https://cdn.jsdelivr.net/gh/itsyebekhe/nahan@main/tailwindcss.js"></script>
             <script>
@@ -320,7 +320,7 @@ html.dark select option {
                           <svg class="w-9 h-9 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                       </div>
                   </div>
-                  <h2 class="text-3xl font-black" style="color: var(--color-text);" data-i18n="title">Vortix Gateway</h2>
+                  <h2 class="text-3xl font-black" style="color: var(--color-text);" data-i18n="title">Nahan Gateway</h2>
                   <p class="text-sm mt-2" style="color: var(--color-text-muted);">Sign in to manage your gateway</p>
               </div>
               <div class="rounded-3xl p-px" style="background: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 45%, transparent), color-mix(in srgb, var(--color-primary) 8%, transparent) 50%, color-mix(in srgb, var(--color-primary) 30%, transparent)); box-shadow: 0 25px 60px rgba(0,0,0,0.15);">
@@ -425,7 +425,7 @@ html.dark select option {
                               <div class="native-press bg-[var(--color-surface)]  rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm border border-slate-200 dark:border-darkborder">
                                   <div class="flex items-center justify-between mb-1 md:mb-2">
                                       <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider" data-i18n="ov_total_users">Total Users</span>
-                                      <div class="p-1.5 md:p-2 bg-primary/10 text-primary rounded-md md:rounded-lg"><svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857M12 4.354a4 4 0 110 5.292"></path></svg></div>
+                                      <div class="p-1.5 md:p-2 bg-primary/10 text-primary rounded-md md:rounded-lg"><svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857M12 4.354a4 4 0 110 5.292"></path></svg></div>
                                   </div>
                                   <p id="ov-total-users" class="text-xl md:text-2xl font-black text-slate-800 dark:text-white">-</p>
                               </div>
@@ -759,7 +759,7 @@ html.dark select option {
                                   </label>
                                </div>
 
-                               <!-- NEW: Auto Update Clean IPs Toggle - Only this button, no banner -->
+                               <!-- NEW: Auto Update Clean IPs Toggle -->
                                <div class="space-y-3 md:col-span-2">
                                    <label class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/30 cursor-pointer">
                                        <div>
@@ -771,6 +771,25 @@ html.dark select option {
                                            <div class="w-11 h-6 bg-slate-300 dark:bg-slate-600 rounded-full peer peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--color-surface)] after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-emerald-500"></div>
                                        </div>
                                    </label>
+                               </div>
+
+                               <!-- ===== NEW: Check for Update Section ===== -->
+                               <div class="md:col-span-2 bg-indigo-50/70 dark:bg-indigo-950/20 rounded-2xl border border-indigo-200 dark:border-indigo-800/40 p-4 space-y-3">
+                                   <div class="flex items-center justify-between flex-wrap gap-3">
+                                       <div>
+                                           <h4 class="text-sm font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+                                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                               <span data-i18n="check_for_update_title">Check for Update</span>
+                                           </h4>
+                                           <p class="text-[10px] text-indigo-500/70 dark:text-indigo-400/60 mt-0.5" data-i18n="check_for_update_desc">Manually check if a new version is available on GitHub</p>
+                                       </div>
+                                       <button onclick="checkForUpdate()" id="btn-check-update" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
+                                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                           <span data-i18n="check_btn">Check Now</span>
+                                       </button>
+                                   </div>
+                                   <div id="update-status" class="hidden text-sm"></div>
+                                   <div id="update-actions" class="hidden"></div>
                                </div>
 
                                 <!-- API Keys Management -->
@@ -1459,7 +1478,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                               <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                                   <div>
                                       <h3 class="text-lg font-black text-slate-800 dark:text-white" data-i18n="help_title">Help & Common Questions</h3>
-                                      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-i18n="help_desc">Learn about fields, features, and troubleshooting on your Vortix Gateway.</p>
+                                      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-i18n="help_desc">Learn about fields, features, and troubleshooting on your Nahan Gateway.</p>
                                   </div>
                                   <!-- Search bar -->
                                   <div class="relative w-full md:w-72">
@@ -1566,6 +1585,29 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                                           <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> 
                                               • <strong>آی‌پی‌های تمیز:</strong> آی‌پی‌های بدون فیلتر کلودفلر. این سیستم برای تک‌تک آی‌پی‌های ثبت شده در این بخش خروجی‌های مجزا می‌سازد تا اتصالی پایدار ارائه شود.<br>
                                               • <strong>آی‌پی‌های پروکسی:</strong> آی‌پی‌های ترانزیت پشت‌صحنه برای برقراری ارتباط با سایت‌های هدف فیلترشده.
+                                          </p>
+                                      </div>
+                                  </div>
+
+                                  <!-- Item 7: Check for Update -->
+                                  <div class="faq-item bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-darkborder/50 p-4 transition-all duration-200">
+                                      <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between text-start focus:outline-none font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
+                                          <span class="flex items-center gap-2">
+                                              <span class="text-primary text-sm">❓</span>
+                                              <span class="text-sm md:text-base">How does "Check for Update" work? / قابلیت «بررسی آپدیت» چطور کار می‌کند؟</span>
+                                          </span>
+                                          <svg class="w-5 h-5 transform transition-transform duration-200 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                      </button>
+                                      <div class="faq-content hidden mt-3 pt-3 border-t border-slate-200/50 dark:border-darkborder/50 text-xs md:text-sm text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
+                                          <p><strong>English:</strong> 
+                                              • <strong>Check for Update:</strong> Manually checks the GitHub repository for a new version. If a new version is available, it shows you the "What's New" details.<br>
+                                              • <strong>Apply Update:</strong> After confirming, it downloads the new source code from GitHub and deploys it to your Cloudflare Worker automatically.<br>
+                                              • Unlike Auto-Update, this requires your manual confirmation before any changes are made.
+                                          </p>
+                                          <p class="border-t border-dashed border-slate-200 dark:border-darkborder/50 pt-2"><strong>فارسی:</strong> 
+                                              • <strong>بررسی آپدیت:</strong> به‌صورت دستی مخزن گیت‌هاب را برای نسخه جدید بررسی می‌کند. اگر نسخه جدید موجود باشد، جزئیات «تغییرات جدید» را نمایش می‌دهد.<br>
+                                              • <strong>اعمال آپدیت:</strong> پس از تأیید شما، کد جدید را از گیت‌هاب دانلود کرده و به‌صورت خودکار روی وورکر کلودفلر شما دپلوی می‌کند.<br>
+                                              • برخلاف آپدیت خودکار، این قابلیت نیاز به تأیید دستی شما قبل از هر تغییری دارد.
                                           </p>
                                       </div>
                                   </div>
@@ -1680,7 +1722,48 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           </div>
       </div>
 
+      <!-- ===== NEW: Update Confirmation Modal ===== -->
+      <div id="modal-update-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[102] hidden items-center justify-center p-4">
+          <div class="bg-[var(--color-surface)] rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-darkborder relative overflow-hidden">
+              <div class="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
+              <div class="flex items-center justify-between mb-6">
+                  <div class="flex items-center gap-2.5">
+                      <div class="bg-amber-500/10 text-amber-500 p-2.5 rounded-2xl">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                          </svg>
+                      </div>
+                      <div>
+                          <h3 class="text-lg font-black text-slate-800 dark:text-white" id="update-confirm-title">Update Available</h3>
+                          <p class="text-xs text-slate-500 mt-0.5" id="update-confirm-sub">Do you want to apply this update now?</p>
+                      </div>
+                  </div>
+                  <button onclick="closeUpdateConfirmModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-100 dark:border-darkborder transition-colors">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                  </button>
+              </div>
+
+              <div id="update-confirm-content" class="space-y-4 max-h-[50vh] overflow-y-auto pe-2 text-start">
+              </div>
+
+              <div class="mt-6 pt-5 border-t border-slate-100 dark:border-darkborder/50 flex justify-end gap-3">
+                  <button onclick="closeUpdateConfirmModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" data-i18n="btn_cancel">Cancel</button>
+                  <button onclick="applyUpdate()" id="btn-apply-update" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                      <span data-i18n="update_now">Update Now</span>
+                  </button>
+              </div>
+          </div>
+      </div>
+
       <script>
+          // ============================================
+          // UPDATE FUNCTIONS
+          // ============================================
+          let pendingUpdate = null;
+
           function parseImportBindings(importStr) {
               const cleanStr = importStr.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').trim();
               const content = cleanStr
@@ -1777,7 +1860,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           const CURRENT_VERSION = "__CURRENT_VERSION__";
           const i18n = {
               en: {
-                  title: "Vortix Gateway", pass_ph: "Master Key", login_btn: "Authenticate", err_pass: "Access Denied", missing_db: "⚠️ IOT_DB namespace missing! Settings won't save.", system_online: "System online",
+                  title: "Nahan Gateway", pass_ph: "Master Key", login_btn: "Authenticate", err_pass: "Access Denied", missing_db: "⚠️ IOT_DB namespace missing! Settings won't save.", system_online: "System online",
                   logout: "Disconnect", tab_overview: "Dashboard", tab_info: "Endpoints", tab_status: "Metrics", tab_settings: "System", tab_adv: "Advanced", tab_logs: "Logs", tab_help: "Help & FAQ",
                   qr_title: "Direct Stream Link", badge_multi: "Dual-Core Multiplexed", copy: "Copy", copied: "Copied to clipboard!", sync_link: "Cloud Sync URL", active_id: "Hardware ID",
                   stat_ip: "Origin IP", stat_dc: "Edge Node", stat_loc: "Data Region",
@@ -1867,9 +1950,25 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     lbl_conn_limit: "IP Connection Limit", desc_conn_limit: "Max simultaneous connections per user. Leave empty for unlimited.",
                     lbl_user_panel_url: "Main Panel URL (Custom Nodes)", desc_user_panel_url: "Main panel domain for custom nodes. If empty, default panel URL is used.",
                     html_desc_strategy: "<details><summary class='cursor-pointer text-primary'>View supported placeholders...</summary><div class='mt-2'>Supported placeholders: <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{FLAG}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{COUNTRY}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{CITY}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{ISP}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PROTOCOL}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{USER}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PORT}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP_NAME}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{HOST}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{DATE}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{INDEX}</code>, <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{WORKER}</code>.<br><span class='text-[10px] text-slate-400 dark:text-slate-500 leading-snug'>• <b>{FLAG}</b>: Country flag emoji (e.g. 🇺🇸).<br>• <b>{COUNTRY}</b>: Country name.<br>• <b>{CITY}</b>: City name.<br>• <b>{ISP}</b>: ISP / ASN org.<br>• <b>{PROTOCOL}</b>: Core mode (VLESS / Trojan).<br>• <b>{USER}</b>: Subscriber name.<br>• <b>{PORT}</b>: Active port.<br>• <b>{PREFIX}</b>: Custom prefix.<br>• <b>{IP}</b>: Clean IP address.<br>• <b>{IP_NAME}</b>: Clean IP name.<br>• <b>{HOST}</b>: Hostname.<br>• <b>{DATE}</b>: Current date.<br>• <b>{INDEX}</b>: Config index.<br>• <b>{WORKER}</b>: Worker name.</span><br>Pre-defined strategies: <code>default</code>, <code>type-user-port</code>, <code>user-port</code>, <code>host-port-user</code>, <code>prefix-user-port</code>, <code>ip</code>.</div></details>",
-               },
+                   // ===== NEW: Update related strings =====
+                   check_for_update_title: "🔍 Check for Update",
+                   check_for_update_desc: "Manually check if a new version is available on GitHub",
+                   check_btn: "Check Now",
+                   update_now: "Update Now",
+                   update_available: "🎉 Update Available!",
+                   update_not_available: "✅ You are running the latest version.",
+                   update_check_failed: "❌ Failed to check for updates.",
+                   update_applying: "⏳ Applying update... Please wait.",
+                   update_applied: "✅ Update applied successfully! The panel will reload.",
+                   update_failed: "❌ Update failed: {error}",
+                   update_confirmation: "A new version is available! Do you want to update now?",
+                   update_changes: "Changes in this version:",
+                   update_current_version: "Current version: {version}",
+                   update_latest_version: "Latest version: {version}",
+                   update_no_cf: "⚠️ Cloudflare credentials required. Please configure CF Account ID, API Token, and Worker Name in Advanced settings.",
+              },
               fa: {
-                  title: "دروازه ورتیکس", pass_ph: "کلید اصلی", login_btn: "ورود به سیستم", err_pass: "دسترسی مسدود شد", missing_db: "⚠️ فضای پایگاه داده یافت نشد! تنظیمات ذخیره نمی‌شوند.", system_online: "سیستم فعال است",
+                  title: "دروازه نهان", pass_ph: "کلید اصلی", login_btn: "ورود به سیستم", err_pass: "دسترسی مسدود شد", missing_db: "⚠️ فضای پایگاه داده یافت نشد! تنظیمات ذخیره نمی‌شوند.", system_online: "سیستم فعال است",
                   logout: "خروج", tab_overview: "نمای کلی", tab_info: "نودها", tab_status: "شبکه", tab_settings: "تنظیمات", tab_adv: "پیشرفته", tab_logs: "گزارش", tab_help: "راهنما و سوالات",
                   qr_title: "لینک اتصال مستقیم", badge_multi: "ترکیب ترانزیت پیشرفته دوگانه", copy: "کپی", copied: "در حافظه کپی شد!", sync_link: "لینک ساب (همگام سازی ابری)", active_id: "شناسه سخت‌افزار",
                   stat_ip: "آی‌پی مبدا", stat_dc: "گره لبه", stat_loc: "منطقه داده",
@@ -1967,7 +2066,23 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       view_github: "مشاهده در گیت‌هاب",
                      update_requires_cf: "برای نصب خودکار، شناسه اکانت، توکن API و نام کارگر را تنظیم کنید.",
                      html_desc_strategy: "<details><summary class='cursor-pointer text-primary'>مشاهده متغیرهای پشتیبانی شده...</summary><div class='mt-2'>متغیرهای پشتیبانی شده: <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{FLAG}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{COUNTRY}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{CITY}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{ISP}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PROTOCOL}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{USER}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PORT}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{PREFIX}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{IP_NAME}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{HOST}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{DATE}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{INDEX}</code>، <code class='bg-slate-100 dark:bg-slate-800/80 px-1 py-0.5 rounded text-rose-500 font-mono'>{WORKER}</code>.<br><span class='text-[10px] text-slate-400 dark:text-slate-500 leading-snug'>• <b>{FLAG}</b>: ایموجی پرچم.<br>• <b>{COUNTRY}</b>: نام کشور.<br>• <b>{CITY}</b>: نام شهر.<br>• <b>{ISP}</b>: نام ارائه‌دهنده اینترنت.<br>• <b>{PROTOCOL}</b>: پروتکل اصلی.<br>• <b>{USER}</b>: نام مشترک.<br>• <b>{PORT}</b>: پورت فعال.<br>• <b>{PREFIX}</b>: پیشوند دلخواه.<br>• <b>{IP}</b>: آی‌پی تمیز.<br>• <b>{IP_NAME}</b>: نام آی‌پی تمیز.<br>• <b>{HOST}</b>: نام دامنه.<br>• <b>{DATE}</b>: تاریخ.<br>• <b>{INDEX}</b>: شماره ردیف کانفیگ.<br>• <b>{WORKER}</b>: نام اسکریپت.</span><br>طرح‌های پیش‌فرض: <code>default</code>، <code>type-user-port</code>، <code>user-port</code>، <code>host-port-user</code>، <code>prefix-user-port</code>، <code>ip</code>.</div></details>",
-                }
+                  // ===== NEW: Update related strings =====
+                  check_for_update_title: "🔍 بررسی آپدیت جدید",
+                  check_for_update_desc: "بررسی دستی وجود نسخه جدید در گیت‌هاب",
+                  check_btn: "بررسی کن",
+                  update_now: "بروزرسانی کن",
+                  update_available: "🎉 آپدیت جدید موجود است!",
+                  update_not_available: "✅ شما آخرین نسخه را دارید.",
+                  update_check_failed: "❌ بررسی آپدیت با خطا مواجه شد.",
+                  update_applying: "⏳ در حال بروزرسانی... لطفاً صبر کنید.",
+                  update_applied: "✅ بروزرسانی با موفقیت انجام شد! پنل دوباره بارگذاری می‌شود.",
+                  update_failed: "❌ بروزرسانی ناموفق: {error}",
+                  update_confirmation: "نسخه جدید موجود است! آیا می‌خواهید بروزرسانی کنید؟",
+                  update_changes: "تغییرات این نسخه:",
+                  update_current_version: "نسخه فعلی: {version}",
+                  update_latest_version: "نسخه جدید: {version}",
+                  update_no_cf: "⚠️ اطلاعات کلودفلر مورد نیاز است. لطفاً شناسه اکانت، توکن API و نام ورکر را در تنظیمات پیشرفته وارد کنید.",
+              }
           };
 
           const CHANGELOG_DATA = {
@@ -2246,6 +2361,22 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       { en: "User management panel interface", fa: "رابط کاربری پنل مدیریت کاربران" },
                   ],
                   notes: []
+              },
+              "2.9.5": {
+                  headline: { en: "Auto Update Server List & Manual Update Check", fa: "بروزرسانی خودکار لیست سرور و بررسی دستی آپدیت" },
+                  added: [
+                      { en: "Added manual Check for Update button in dashboard to check GitHub for new versions", fa: "افزودن دکمه دستی «بررسی آپدیت» در داشبورد برای بررسی نسخه‌های جدید در گیت‌هاب" },
+                      { en: "Added What's New display showing changes before applying update", fa: "افزودن نمایش تغییرات جدید قبل از اعمال آپدیت" },
+                      { en: "Update confirmation modal requiring user approval before deployment", fa: "پنجره تأیید آپدیت که نیاز به تأیید کاربر قبل از دپلوی دارد" },
+                      { en: "Last update check status displayed in dashboard", fa: "نمایش وضعیت آخرین بررسی آپدیت در داشبورد" }
+                  ],
+                  fixed: [],
+                  improved: [
+                      { en: "Removed automatic source code update - now requires manual confirmation", fa: "حذف بروزرسانی خودکار سورس کد - اکنون نیاز به تأیید دستی دارد" }
+                  ],
+                  notes: [
+                      { en: "To update: Go to Settings → Click 'Check for Update' → Review changes → Click 'Update Now'", fa: "برای بروزرسانی: به تنظیمات بروید → روی «بررسی آپدیت» کلیک کنید → تغییرات را بررسی کنید → روی «بروزرسانی کن» کلیک کنید" }
+                  ]
               }
           };
 
@@ -2371,6 +2502,195 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
           function toggleTheme() {
               document.documentElement.classList.toggle('dark');
               localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+          }
+
+          // ============================================
+          // CHECK FOR UPDATE FUNCTION
+          // ============================================
+          async function checkForUpdate() {
+              const btn = document.getElementById('btn-check-update');
+              const statusDiv = document.getElementById('update-status');
+              const actionsDiv = document.getElementById('update-actions');
+              
+              if (!btn) return;
+              
+              const origText = btn.innerHTML;
+              btn.disabled = true;
+              btn.innerHTML = '⏳ Checking...';
+              
+              statusDiv.classList.remove('hidden');
+              statusDiv.className = 'text-sm text-slate-500 animate-pulse';
+              statusDiv.innerHTML = '<span data-i18n="checking_update">Checking for updates...</span>';
+              applyLang();
+              
+              try {
+                  const res = await fetch(baseRoute + '/api/update', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ key: sessionKey, action: 'check_for_update' })
+                  });
+                  const data = await res.json();
+                  
+                  if (data.checked) {
+                      if (data.updateAvailable) {
+                          // Show update available
+                          const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+                          statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400';
+                          statusDiv.innerHTML = `🎉 ${t('update_available')} (${data.latest})`;
+                          
+                          // Store pending update info
+                          pendingUpdate = {
+                              current: data.current,
+                              latest: data.latest,
+                              whatsNew: data.whatsNew
+                          };
+                          
+                          // Show update button
+                          actionsDiv.classList.remove('hidden');
+                          actionsDiv.innerHTML = `
+                              <button onclick="showUpdateConfirmModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2">
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                  <span>${t('update_now')}</span>
+                              </button>
+                          `;
+                      } else {
+                          statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+                          statusDiv.innerHTML = `✅ ${i18n[lang]?.update_not_available || 'You are running the latest version.'}`;
+                          actionsDiv.classList.add('hidden');
+                      }
+                  } else if (data.error) {
+                      statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+                      statusDiv.innerHTML = `❌ ${data.error}`;
+                      actionsDiv.classList.add('hidden');
+                  }
+                  
+                  applyLang();
+                  
+              } catch (e) {
+                  statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+                  statusDiv.innerHTML = `❌ ${i18n[lang]?.update_check_failed || 'Failed to check for updates.'}`;
+                  actionsDiv.classList.add('hidden');
+              } finally {
+                  btn.disabled = false;
+                  btn.innerHTML = origText;
+              }
+          }
+
+          // ============================================
+          // UPDATE CONFIRMATION MODAL
+          // ============================================
+          function showUpdateConfirmModal() {
+              if (!pendingUpdate) return;
+              
+              const modal = document.getElementById('modal-update-confirm');
+              const content = document.getElementById('update-confirm-content');
+              const title = document.getElementById('update-confirm-title');
+              const sub = document.getElementById('update-confirm-sub');
+              
+              const t = (key) => i18n[lang]?.[key] || i18n['en']?.[key] || key;
+              
+              title.textContent = t('update_available');
+              sub.textContent = t('update_confirmation');
+              
+              // Parse and render what's new content
+              let whatsNewHtml = '';
+              if (pendingUpdate.whatsNew) {
+                  const lines = pendingUpdate.whatsNew.split('\n').filter(line => line.trim());
+                  // First line is version
+                  const versionLine = lines.shift() || pendingUpdate.latest;
+                  
+                  whatsNewHtml = `
+                      <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-darkborder/50">
+                          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${t('update_changes')}</p>
+                          <div class="mt-2 space-y-1">
+                              ${lines.map(line => {
+                                  const trimmed = line.trim();
+                                  const isImportant = trimmed.includes('⚠️') || trimmed.includes('🔴');
+                                  const icon = isImportant ? '⚠️' : '•';
+                                  return `<p class="text-xs text-slate-600 dark:text-slate-300 ${isImportant ? 'font-semibold text-amber-600 dark:text-amber-400' : ''}">${icon} ${trimmed}</p>`;
+                              }).join('')}
+                          </div>
+                      </div>
+                  `;
+              }
+              
+              content.innerHTML = `
+                  <div class="space-y-3">
+                      <div class="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+                          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">${t('update_current_version').replace('{version}', pendingUpdate.current)}</span>
+                          <span class="text-xs font-bold text-emerald-500">→</span>
+                          <span class="text-xs font-bold text-amber-600 dark:text-amber-400">${t('update_latest_version').replace('{version}', pendingUpdate.latest)}</span>
+                      </div>
+                      ${whatsNewHtml}
+                      <div class="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/30">
+                          <p class="text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                              <span>⚠️</span>
+                              <span>${t('update_warning') || 'The panel will be updated to the new version. This process may take a few moments.'}</span>
+                          </p>
+                      </div>
+                  </div>
+              `;
+              
+              modal.classList.remove('hidden');
+              modal.classList.add('flex');
+              applyLang();
+          }
+
+          function closeUpdateConfirmModal() {
+              const modal = document.getElementById('modal-update-confirm');
+              modal.classList.add('hidden');
+              modal.classList.remove('flex');
+          }
+
+          // ============================================
+          // APPLY UPDATE FUNCTION
+          // ============================================
+          async function applyUpdate() {
+              if (!pendingUpdate) return;
+              
+              const btn = document.getElementById('btn-apply-update');
+              const originalText = btn.innerHTML;
+              btn.disabled = true;
+              btn.innerHTML = '⏳ Applying...';
+              
+              closeUpdateConfirmModal();
+              
+              const statusDiv = document.getElementById('update-status');
+              const actionsDiv = document.getElementById('update-actions');
+              
+              statusDiv.classList.remove('hidden');
+              statusDiv.className = 'text-sm text-amber-600 dark:text-amber-400 animate-pulse';
+              statusDiv.innerHTML = '⏳ ' + (i18n[lang]?.update_applying || 'Applying update... Please wait.');
+              
+              try {
+                  const res = await fetch(baseRoute + '/api/update', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ key: sessionKey, action: 'apply_update' })
+                  });
+                  const data = await res.json();
+                  
+                  if (data.success) {
+                      statusDiv.className = 'text-sm text-emerald-600 dark:text-emerald-400';
+                      statusDiv.innerHTML = '✅ ' + (i18n[lang]?.update_applied || 'Update applied successfully! The panel will reload.');
+                      actionsDiv.classList.add('hidden');
+                      
+                      // Reload after 3 seconds
+                      setTimeout(() => {
+                          window.location.reload();
+                      }, 3000);
+                  } else {
+                      statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+                      statusDiv.innerHTML = (i18n[lang]?.update_failed || 'Update failed: {error}').replace('{error}', data.error || 'Unknown error');
+                  }
+              } catch (e) {
+                  statusDiv.className = 'text-sm text-red-600 dark:text-red-400';
+                  statusDiv.innerHTML = (i18n[lang]?.update_failed || 'Update failed: {error}').replace('{error}', e.message);
+              } finally {
+                  btn.disabled = false;
+                  btn.innerHTML = originalText;
+              }
+              applyLang();
           }
 
           function checkVersionPopup() {
@@ -2542,7 +2862,7 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                     let actHtml = '';
                     logsData.logs.slice(0, 8).forEach(log => {
                         const dateStr = new Date(log.ts).toLocaleString('en-US', {hour12: false});
-                        const typeColors = { 'Auth Success': 'bg-emerald-500', 'Auth Failed': 'bg-red-500', 'User Created': 'bg-blue-500', 'User Deleted': 'bg-red-500', 'User Toggled': 'bg-amber-500', 'User Updated': 'bg-indigo-500', 'User Auto-Disabled': 'bg-red-500', 'Traffic Reset': 'bg-cyan-500', 'Config Changed': 'bg-violet-500' };
+                        const typeColors = { 'Auth Success': 'bg-emerald-500', 'Auth Failed': 'bg-red-500', 'User Created': 'bg-blue-500', 'User Deleted': 'bg-red-500', 'User Toggled': 'bg-amber-500', 'User Updated': 'bg-indigo-500', 'User Auto-Disabled': 'bg-red-500', 'Traffic Reset': 'bg-cyan-500', 'Config Changed': 'bg-violet-500', 'Update Available': 'bg-amber-500', 'Source Updated': 'bg-indigo-500', 'Update Check': 'bg-slate-400' };
                         const dotColor = typeColors[log.type] || 'bg-slate-400';
                         actHtml += '<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div class="w-2 h-2 rounded-full shrink-0 ' + dotColor + '"></div><div class="flex-1 min-w-0"><p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">' + log.type + '</p><p class="text-[11px] text-slate-400 truncate">' + log.detail + '</p></div><span class="text-[10px] font-mono text-slate-400 shrink-0">' + dateStr + '</span></div>';
                     });
