@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "2.9.9";
+const CURRENT_VERSION = "2.9.8";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -37,7 +37,7 @@ let lastCleanIpsUpdate = 0;
 const SYSTEM_DEFAULTS = {
     name: "",
     apiRoute: "sync",
-    maintenanceHost: "https://www.ubuntu.com, https://www.ubuntu.com",
+    maintenanceHost: "https://www.ubuntu.com, https://www.docker.com",
     backupRelay: "",
     customRelay: "",
     masterKey: "admin",
@@ -61,7 +61,7 @@ const SYSTEM_DEFAULTS = {
     cfWorkerName: "",
     isPaused: false,
     silentAlerts: false,
-    githubRepo: "mahbodrahimi/nahan",
+    githubRepo: "itsyebekhe/nahan",
     nameStrategy: "default",
     namePrefix: "Core",
     tgBotLang: "fa",
@@ -83,8 +83,6 @@ const SYSTEM_DEFAULTS = {
         { name: "📊 {usage}", enabled: true },
         { name: "📅 {expiry}", enabled: true },
     ],
-    currentVersion: CURRENT_VERSION,  // <-- اضافه کنید
-    lastUpdateCheck: 0,               // <-- اضافه کنید
 };
 
 let sysConfig = { ...SYSTEM_DEFAULTS };
@@ -548,12 +546,6 @@ async function loadSysConfig(env, ctx = null) {
                             ...SYSTEM_DEFAULTS,
                             ...(stored ? JSON.parse(stored) : null),
                         };
-                        
-                        // ===== اگر currentVersion در دیتابیس نبود، مقدار پیش‌فرض را تنظیم کن =====
-                        if (!sysConfig.currentVersion) {
-                            sysConfig.currentVersion = CURRENT_VERSION;
-                        }
-                        
                         sysConfigCacheTime = Date.now();
                         if (migrateSlaveNodesToLinkedPanels(sysConfig)) {
                             const promise = cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
@@ -565,10 +557,7 @@ async function loadSysConfig(env, ctx = null) {
                         }
                     })
                     .catch(() => {
-                        sysConfig = { 
-                            ...SYSTEM_DEFAULTS,
-                            currentVersion: CURRENT_VERSION  // <-- مقدار پیش‌فرض
-                        };
+                        sysConfig = { ...SYSTEM_DEFAULTS };
                         sysConfigCacheTime = Date.now();
                     })
                     .finally(() => {
@@ -577,9 +566,53 @@ async function loadSysConfig(env, ctx = null) {
             }
             await sysConfigLoading;
         }
-        // ... بقیه کد
+        if (now - sysUsageCacheTime > CACHE_TTL_USAGE) {
+            if (!sysUsageLoading) {
+                sysUsageLoading = d1Get(env, "sys_usage")
+                    .then((ustored) => {
+                        if (ustored) sysUsageCache = JSON.parse(ustored);
+                        else sysUsageCache = { users: {} };
+                        sysUsageCacheTime = Date.now();
+                    })
+                    .catch(() => {
+                        sysUsageCache = { users: {} };
+                        sysUsageCacheTime = Date.now();
+                    })
+                    .finally(() => {
+                        sysUsageLoading = null;
+                    });
+            }
+            await sysUsageLoading;
+        }
     }
-    // ... بقیه کد
+
+    if (now - backupIpCacheTime > CACHE_TTL_BACKUP_IP) {
+        if (!backupIpLoading) {
+            backupIpLoading = (
+                env.IOT_DB ? d1Get(env, "backup_ip") : Promise.resolve(null)
+            )
+                .then((val) => {
+                    backupIpCache = val;
+                    backupIpCacheTime = Date.now();
+                })
+                .catch(() => {
+                    backupIpCacheTime = Date.now();
+                })
+                .finally(() => {
+                    backupIpLoading = null;
+                });
+        }
+        await backupIpLoading;
+    }
+    sysConfig.customRelay = backupIpCache ?? env.RELAY_IP ?? "";
+    
+    if (sysConfig.autoUpdateCleanIps === true && now - lastCleanIpsUpdate > CLEAN_IPS_UPDATE_INTERVAL) {
+        if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
+        } else {
+            await applyRemoteCleanIps(env, ctx);
+        }
+    }
 }
 
 // ============================================
@@ -729,9 +762,6 @@ async function sendTelegramMessage(request, type, hostName) {
 // ============================================
 // ===== HANDLE UPDATE API =====
 // ============================================
-// ============================================
-// ===== HANDLE UPDATE API =====
-// ============================================
 async function handleUpdateApi(request, env, ctx) {
     try {
         if (request.method !== "POST") {
@@ -741,6 +771,7 @@ async function handleUpdateApi(request, env, ctx) {
         const data = await request.json();
         const authKey = extractAuthKey(request, data);
 
+        // بررسی احراز هویت
         if (authKey !== sysConfig.masterKey) {
             return new Response(
                 JSON.stringify({ success: false, error: "Unauthorized" }),
@@ -759,19 +790,13 @@ async function handleUpdateApi(request, env, ctx) {
                     body: JSON.stringify({
                         action: "check",
                         masterKey: authKey,
+                        // ارسال credentials به updater (اختیاری برای چک)
                         cfAccountId: sysConfig.cfAccountId || "",
                         cfApiToken: sysConfig.cfApiToken || "",
-                        cfWorkerName: sysConfig.cfWorkerName || "",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,  // <-- از دیتابیس
-                        repo: sysConfig.githubRepo || "mahbodrahimi/nahan"
+                        cfWorkerName: sysConfig.cfWorkerName || ""
                     })
                 });
                 const result = await res.json();
-                
-                // به‌روزرسانی زمان آخرین چک
-                sysConfig.lastUpdateCheck = Date.now();
-                await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
-                
                 return new Response(JSON.stringify(result), {
                     headers: { "Content-Type": "application/json" }
                 });
@@ -792,56 +817,13 @@ async function handleUpdateApi(request, env, ctx) {
                     body: JSON.stringify({
                         action: "apply_update",
                         masterKey: authKey,
+                        // ===== ارسال credentials به updater =====
                         cfAccountId: sysConfig.cfAccountId || "",
                         cfApiToken: sysConfig.cfApiToken || "",
-                        cfWorkerName: sysConfig.cfWorkerName || "",
-                        repo: sysConfig.githubRepo || "mahbodrahimi/nahan",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION  // <-- از دیتابیس
+                        cfWorkerName: sysConfig.cfWorkerName || ""
                     })
                 });
                 const result = await res.json();
-                
-                // ===== اگر آپدیت موفق بود، نسخه را به‌روزرسانی کن =====
-                if (result.success && result.updated && result.latest) {
-                    const oldVersion = sysConfig.currentVersion || CURRENT_VERSION;
-                    sysConfig.currentVersion = result.latest;
-                    sysConfig.lastUpdateCheck = Date.now();
-                    
-                    // ذخیره در دیتابیس
-                    await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
-                    
-                    // ثبت در لاگ
-                    await logActivity(
-                        env,
-                        'Version Updated',
-                        `Version updated from ${oldVersion} to ${result.latest}`
-                    );
-                    
-                    // ارسال نوتیفیکیشن تلگرام
-                    if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-                        const tgMsg = `✅ <b>Version Updated</b>\n\n` +
-                                     `🔄 <b>Old Version:</b> ${oldVersion}\n` +
-                                     `📦 <b>New Version:</b> ${result.latest}\n` +
-                                     `⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
-                        const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
-                        ctx?.waitUntil(
-                            fetch(`https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    chat_id: notifyChatId,
-                                    text: tgMsg,
-                                    parse_mode: 'HTML'
-                                })
-                            }).catch(() => {})
-                        );
-                    }
-                    
-                    // به‌روزرسانی result برای ارسال به کاربر
-                    result.oldVersion = oldVersion;
-                    result.savedToDatabase = true;
-                }
-                
                 return new Response(JSON.stringify(result), {
                     headers: { "Content-Type": "application/json" }
                 });
@@ -866,6 +848,7 @@ async function handleUpdateApi(request, env, ctx) {
                 });
                 const result = await res.json();
                 
+                // اگر آپدیتر IPS را برگرداند، آنها را در sysConfig ذخیره کن
                 if (result.success && result.ips) {
                     const currentIps = (sysConfig.cleanIps || '').trim();
                     const normalizedNew = result.ips.trim();
@@ -900,11 +883,6 @@ async function handleUpdateApi(request, env, ctx) {
                     })
                 });
                 const result = await res.json();
-                
-                // اضافه کردن نسخه فعلی از دیتابیس به پاسخ
-                result.currentVersion = sysConfig.currentVersion || CURRENT_VERSION;
-                result.lastUpdateCheck = sysConfig.lastUpdateCheck || 0;
-                
                 return new Response(JSON.stringify(result), {
                     headers: { "Content-Type": "application/json" }
                 });
@@ -916,23 +894,10 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
-        // ===== ACTION: get_version =====
-        if (action === "get_version") {
-            return new Response(
-                JSON.stringify({
-                    success: true,
-                    currentVersion: sysConfig.currentVersion || CURRENT_VERSION,
-                    lastUpdateCheck: sysConfig.lastUpdateCheck || 0,
-                    lastUpdateCheckDate: sysConfig.lastUpdateCheck ? new Date(sysConfig.lastUpdateCheck).toISOString() : null
-                }),
-                { headers: { "Content-Type": "application/json" } }
-            );
-        }
-
         return new Response(
             JSON.stringify({
                 success: false,
-                error: "Invalid action. Use: check, apply_update, update_clean_ips, status, get_version"
+                error: "Invalid action. Use: check, apply_update, update_clean_ips, status"
             }),
             { status: 400, headers: { "Content-Type": "application/json" } }
         );
@@ -1515,50 +1480,37 @@ async function handleStatsApi(request, env) {
 // ============================================
 // ===== HANDLE AUTH =====
 // ============================================
-// ============================================
-// ===== HANDLE AUTH =====
-// ============================================
 async function handleAuth(request, hostName, ctx, env) {
     try {
         const data = await request.json();
         const ip = request.headers.get("cf-connecting-ip") || "Unknown";
         const loginKey = data.key || "";
-        const isKeyAuth = loginKey === sysConfig.masterKey || isPanelApiKey(loginKey);
-        
+        const isKeyAuth =
+            loginKey === sysConfig.masterKey || isPanelApiKey(loginKey);
         if (isKeyAuth) {
-            // ===== به‌روزرسانی آخرین استفاده از API Key =====
             if (isPanelApiKey(loginKey)) {
                 const apiKeyEntry = (sysConfig.panelApiKeys || []).find(
                     (k) => k.key === loginKey,
                 );
                 if (apiKeyEntry) apiKeyEntry.lastUsed = Date.now();
-                // ذخیره در دیتابیس
-                ctx?.waitUntil(
-                    cachedD1Put(env, "sys_config", JSON.stringify(sysConfig)).catch(() => {})
-                );
             }
-            
-            // ===== ثبت لاگ ورود موفق =====
             ctx?.waitUntil(
                 logActivity(
                     env,
                     "Auth Success",
                     `Successful panel login from ${ip} (via ${isPanelApiKey(loginKey) ? "API Key" : "Master Key"})`,
-                ).catch(() => {})
+                ),
             );
-            
-            // ===== ارسال نوتیفیکیشن تلگرام (در صورت فعال نبودن حالت سایلنت) =====
-            if (!sysConfig.silentAlerts && ctx) {
+            if (!sysConfig.silentAlerts && ctx)
                 ctx.waitUntil(
                     sendTelegramMessage(
                         request,
                         "ورود به پنل (موفق)",
                         hostName,
-                    ).catch(() => {})
+                    ),
                 );
-            }
 
-            // ===== ذخیره سیگنال ورود برای ربات تلگرام =====
+            // Store login signal for Telegram bot
             if (sysConfig.tgAdminId && env.IOT_DB) {
                 const loginSignal = {
                     name: sysConfig.name || hostName,
@@ -1577,7 +1529,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
-            // ===== ارسال سیگنال به پنل هاب (در صورت تنظیم) =====
+            // Notify hub panel if configured
             if (
                 sysConfig.hubPanelUrl &&
                 sysConfig.hubPanelUrl.trim() &&
@@ -1585,7 +1537,8 @@ async function handleAuth(request, hostName, ctx, env) {
             ) {
                 try {
                     let hubUrl = sysConfig.hubPanelUrl.trim();
-                    if (!hubUrl.startsWith("http")) hubUrl = "https://" + hubUrl;
+                    if (!hubUrl.startsWith("http"))
+                        hubUrl = "https://" + hubUrl;
                     const signalPayload = {
                         signal: "panel_login",
                         panelName: sysConfig.name || hostName,
@@ -1607,28 +1560,24 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
-            // ===== اطلاعات شبکه =====
             const netInfo = {
                 ip: ip,
                 colo: request.cf?.colo || "Unknown",
-                loc: (request.cf?.city || "Unknown") + ", " + (request.cf?.country || "Unknown"),
+                loc:
+                    (request.cf?.city || "Unknown") +
+                    ", " +
+                    (request.cf?.country || "Unknown"),
             };
-            
-            // ===== آمار استفاده زنده =====
             let usageData = {};
-            for (let [k, v] of uuidUsage.entries()) {
-                usageData[k] = { 
-                    ...v, 
-                    connects: activeConns.get(k) || 0 
-                };
-            }
-            
-            // ===== ساخت آدرس پایه برای لینک‌ها =====
+            for (let [k, v] of uuidUsage.entries()) usageData[k] = { ...v, connects: activeConns.get(k) || 0 };
             let baseHost = hostName;
             let protocol = "https";
             if (sysConfig.customPanelUrl && sysConfig.customPanelUrl.trim()) {
                 let customUrlStr = sysConfig.customPanelUrl.trim();
-                if (!customUrlStr.startsWith("http://") && !customUrlStr.startsWith("https://")) {
+                if (
+                    !customUrlStr.startsWith("http://") &&
+                    !customUrlStr.startsWith("https://")
+                ) {
                     customUrlStr = "https://" + customUrlStr;
                 }
                 try {
@@ -1637,103 +1586,64 @@ async function handleAuth(request, hostName, ctx, env) {
                     protocol = customUrl.protocol.replace(":", "");
                 } catch (e) {}
             }
-
-            // ===== پاسخ نهایی =====
             return new Response(
                 JSON.stringify({
                     success: true,
-                    // ===== پیکربندی کامل =====
-                    config: isPanelApiKey(loginKey) 
+                    config: isPanelApiKey(loginKey)
                         ? {
-                            ...sysConfig,
-                            masterKey: "[PROTECTED]",
-                            panelApiKeys: "[PROTECTED]",
-                            cfApiToken: "[PROTECTED]",
-                            cfAccountId: "[PROTECTED]",
-                            cfWorkerName: "[PROTECTED]",
-                            tgToken: "[PROTECTED]",
-                            tgChatId: "[PROTECTED]",
-                            tgAdminId: "[PROTECTED]",
-                            syncApiKey: "[PROTECTED]",
+                              ...sysConfig,
+                              masterKey: "[PROTECTED]",
+                              panelApiKeys: "[PROTECTED]",
+                              cfApiToken: "[PROTECTED]",
+                              cfAccountId: "[PROTECTED]",
+                              cfWorkerName: "[PROTECTED]",
+                              tgToken: "[PROTECTED]",
+                              tgChatId: "[PROTECTED]",
+                              tgAdminId: "[PROTECTED]",
+                              syncApiKey: "[PROTECTED]",
                           }
                         : sysConfig,
-                    
-                    // ===== شناسه دستگاه =====
                     deviceId: activeDeviceId,
-                    
-                    // ===== اطلاعات شبکه =====
                     network: netInfo,
-                    
-                    // ===== آمار مصرف زنده =====
                     usage: usageData,
-                    
-                    // ===== آمار مصرف ذخیره شده =====
-                    sysUsage: sysUsageCache && sysUsageCache.users 
-                        ? sysUsageCache.users 
-                        : {},
-                    
-                    // ===== نسخه فعلی (از دیتابیس) =====
-                    version: sysConfig.currentVersion || CURRENT_VERSION,
-                    
-                    // ===== آخرین زمان بررسی آپدیت =====
-                    lastUpdateCheck: sysConfig.lastUpdateCheck || 0,
-                    
-                    // ===== پروفایل‌ها =====
+                    sysUsage:
+                        sysUsageCache && sysUsageCache.users
+                            ? sysUsageCache.users
+                            : {},
+                    version: CURRENT_VERSION,
                     profiles: getAllProfiles().map((p) => {
-                        let subSuffix = p.name === "Default"
-                            ? ""
-                            : "?sub=" + encodeURIComponent(p.name);
+                        let subSuffix =
+                            p.name === "Default"
+                                ? ""
+                                : "?sub=" + encodeURIComponent(p.name);
                         return {
                             name: p.name,
                             id: p.id,
                             sync: `${protocol}://${baseHost}/${sysConfig.apiRoute}${subSuffix}`,
                         };
                     }),
-                    
-                    // ===== وضعیت سیستم =====
-                    system: {
-                        isPaused: sysConfig.isPaused || false,
-                        uptime: Math.floor((Date.now() - isolateStartTime) / 1000),
-                        activeConnections: activeConnections,
-                        mode: sysConfig.mode || "alpha",
-                    }
                 }),
                 { status: 200 },
             );
         }
-        
-        // ===== ورود ناموفق =====
         ctx?.waitUntil(
-            logActivity(env, "Auth Failed", `Failed login attempt from ${ip}`).catch(() => {})
+            logActivity(env, "Auth Failed", `Failed login attempt from ${ip}`),
         );
-        
-        if (ctx) {
+        if (ctx)
             ctx.waitUntil(
                 sendTelegramMessage(
                     request,
                     "تلاش ناموفق ورود به پنل!",
                     hostName,
-                ).catch(() => {})
+                ),
             );
-        }
-        
-        return new Response(
-            JSON.stringify({ 
-                success: false,
-                error: "Invalid credentials"
-            }), 
-            { status: 401 }
-        );
-        
+        return new Response(JSON.stringify({ success: false }), {
+            status: 401,
+        });
     } catch (e) {
-        // ===== خطا =====
-        return new Response(
-            JSON.stringify({ 
-                success: false, 
-                error: "Authentication error: " + e.message 
-            }), 
-            { status: 400 }
-        );
+        return new Response(JSON.stringify({ success: false }), {
+            status: 400,
+        });
     }
 }
 
@@ -2116,7 +2026,7 @@ async function handleApiKeys(request, env, ctx) {
 
 const botI18n = {
     en: {
-        welcome: "🤖 **Welcome to Vortix Gateway Bot**\nSelect your option below to manage your system:",
+        welcome: "🤖 **Welcome to Nahan Gateway Bot**\nSelect your option below to manage your system:",
         status: "System Status",
         users: "Subscribers",
         metrics: "Gateway Health",
@@ -2257,7 +2167,7 @@ const botI18n = {
         tg_cf_usage: "CF Usage",
     },
     fa: {
-        welcome: "🤖 **به ربات ورتیکس گیت‌وی خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
+        welcome: "🤖 **به ربات ترانزیت نهان خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
         status: "وضعیت سیستم",
         users: "مدیریت مشترکین",
         metrics: "سلامت درگاه شبکه",
