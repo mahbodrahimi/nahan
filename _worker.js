@@ -37,7 +37,7 @@ let lastCleanIpsUpdate = 0;
 const SYSTEM_DEFAULTS = {
     name: "",
     apiRoute: "sync",
-    maintenanceHost: "https://www.ubuntu.com, https://www.docker.com",
+    maintenanceHost: "https://www.ubuntu.com, https://www.ubuntu.com",
     backupRelay: "",
     customRelay: "",
     masterKey: "admin",
