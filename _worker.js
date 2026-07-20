@@ -1,11 +1,11 @@
 import { connect } from "cloudflare:sockets";
 
 /*
- * Project Nahan (نهان) - IoT Device Telemetry Gateway
+ * Project Nahan (نهان) - IoT Device Telemetry Gatewa
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "3.0.0";
+const CURRENT_VERSION = "3.0.1";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -543,18 +543,53 @@ async function loadSysConfig(env, ctx = null) {
         if (now - sysConfigCacheTime > CACHE_TTL_CONFIG) {
             if (!sysConfigLoading) {
                 sysConfigLoading = d1Get(env, "sys_config")
-                    .then((stored) => {
+                    .then(async (stored) => {
+                        const oldConfig = stored ? JSON.parse(stored) : null;
+                        
+                        // ===== ذخیره deviceId قبلی =====
+                        const oldDeviceId = oldConfig?.deviceId || null;
+                        
                         sysConfig = {
                             ...SYSTEM_DEFAULTS,
-                            ...(stored ? JSON.parse(stored) : null),
+                            ...(oldConfig || null),
                         };
                         
-                        // ===== اگر currentVersion در دیتابیس نبود، مقدار پیش‌فرض را تنظیم کن =====
+                        // ===== اگر currentVersion در دیتابیس نبود =====
                         if (!sysConfig.currentVersion) {
                             sysConfig.currentVersion = CURRENT_VERSION;
                         }
                         
+                        // ===== CRITICAL FIX: حفظ deviceId =====
+                        if (!sysConfig.deviceId || sysConfig.deviceId === "") {
+                            // ۱. از مقدار قبلی استفاده کن
+                            if (oldDeviceId) {
+                                sysConfig.deviceId = oldDeviceId;
+                            } 
+                            // ۲. از sys_usage بگیر
+                            else {
+                                const usage = await d1Get(env, "sys_usage");
+                                if (usage) {
+                                    try {
+                                        const usageParsed = JSON.parse(usage);
+                                        const keys = Object.keys(usageParsed.users || {});
+                                        if (keys.length > 0) {
+                                            sysConfig.deviceId = keys[0];
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            
+                            // ۳. اگه هیچی نبود، یکی بساز
+                            if (!sysConfig.deviceId || sysConfig.deviceId === "") {
+                                sysConfig.deviceId = generateHardwareId(sysConfig.apiRoute || "sync");
+                            }
+                            
+                            // ===== ذخیره در دیتابیس =====
+                            await cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
+                        }
+                        
                         sysConfigCacheTime = Date.now();
+                        
                         if (migrateSlaveNodesToLinkedPanels(sysConfig)) {
                             const promise = cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
                             if (ctx && typeof ctx.waitUntil === "function") {
@@ -567,7 +602,7 @@ async function loadSysConfig(env, ctx = null) {
                     .catch(() => {
                         sysConfig = { 
                             ...SYSTEM_DEFAULTS,
-                            currentVersion: CURRENT_VERSION  // <-- مقدار پیش‌فرض
+                            currentVersion: CURRENT_VERSION
                         };
                         sysConfigCacheTime = Date.now();
                     })
@@ -577,9 +612,65 @@ async function loadSysConfig(env, ctx = null) {
             }
             await sysConfigLoading;
         }
-        // ... بقیه کد
+        
+        // ===== بارگذاری sys_usage =====
+        if (now - sysUsageCacheTime > CACHE_TTL_USAGE) {
+            if (!sysUsageLoading) {
+                sysUsageLoading = d1Get(env, "sys_usage")
+                    .then((ustored) => {
+                        if (ustored) {
+                            try {
+                                sysUsageCache = JSON.parse(ustored);
+                                if (!sysUsageCache.users) sysUsageCache.users = {};
+                            } catch (e) {
+                                sysUsageCache = { users: {} };
+                            }
+                        } else {
+                            sysUsageCache = { users: {} };
+                        }
+                        sysUsageCacheTime = Date.now();
+                    })
+                    .catch(() => {
+                        sysUsageCache = { users: {} };
+                        sysUsageCacheTime = Date.now();
+                    })
+                    .finally(() => {
+                        sysUsageLoading = null;
+                    });
+            }
+            await sysUsageLoading;
+        }
     }
-    // ... بقیه کد
+
+    // ===== بارگذاری backup_ip =====
+    if (now - backupIpCacheTime > CACHE_TTL_BACKUP_IP) {
+        if (!backupIpLoading) {
+            backupIpLoading = (
+                env.IOT_DB ? d1Get(env, "backup_ip") : Promise.resolve(null)
+            )
+                .then((val) => {
+                    backupIpCache = val;
+                    backupIpCacheTime = Date.now();
+                })
+                .catch(() => {
+                    backupIpCacheTime = Date.now();
+                })
+                .finally(() => {
+                    backupIpLoading = null;
+                });
+        }
+        await backupIpLoading;
+    }
+    
+    sysConfig.customRelay = backupIpCache ?? env.RELAY_IP ?? "";
+    
+    if (sysConfig.autoUpdateCleanIps === true && now - lastCleanIpsUpdate > CLEAN_IPS_UPDATE_INTERVAL) {
+        if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
+        } else {
+            await applyRemoteCleanIps(env, ctx);
+        }
+    }
 }
 
 // ============================================
