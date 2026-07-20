@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "2.3.0";
+const CURRENT_VERSION = "2.2.8";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -83,8 +83,8 @@ const SYSTEM_DEFAULTS = {
         { name: "📊 {usage}", enabled: true },
         { name: "📅 {expiry}", enabled: true },
     ],
-    currentVersion: CURRENT_VERSION,
-    lastUpdateCheck: 0,
+    currentVersion: CURRENT_VERSION,  // <-- اضافه کنید
+    lastUpdateCheck: 0,               // <-- اضافه کنید
 };
 
 let sysConfig = { ...SYSTEM_DEFAULTS };
@@ -316,127 +316,87 @@ function generateApiKey(name) {
     };
 }
 
-// ============================================
-// ===== TRACK USAGE - REFACTORED =====
-// ============================================
 function trackUsage(uuid, bytes, env, ctx) {
-    if (!uuid) return;
-    
-    // مقداردهی اولیه
     if (!sysUsageCache) sysUsageCache = { users: {} };
     if (!sysUsageCache.users) sysUsageCache.users = {};
-    
-    const uuidClean = uuid.replace(/-/g, "").toLowerCase();
-    
-    if (!sysUsageCache.users[uuidClean]) {
-        sysUsageCache.users[uuidClean] = {
+    if (!sysUsageCache.users[uuid])
+        sysUsageCache.users[uuid] = {
             reqs: 0,
-            bytes: 0,
             dReqs: 0,
-            dBytes: 0,
             lastDay: new Date().toISOString().split("T")[0],
         };
-    }
 
-    let u = sysUsageCache.users[uuidClean];
-    const today = new Date().toISOString().split("T")[0];
-    
-    // ریست روزانه
+    let u = sysUsageCache.users[uuid];
+    let today = new Date().toISOString().split("T")[0];
     if (u.lastDay !== today) {
         u.dReqs = 0;
-        u.dBytes = 0;
         u.lastDay = today;
     }
-
-    // مقداردهی اولیه فیلدها
     if (u.reqs === undefined) u.reqs = 0;
-    if (u.bytes === undefined) u.bytes = 0;
     if (u.dReqs === undefined) u.dReqs = 0;
-    if (u.dBytes === undefined) u.dBytes = 0;
 
-    // ===== ثبت حجم واقعی ترافیک =====
-    const bytesToAdd = Math.max(0, bytes || 0);
-    
-    if (bytesToAdd === 0) {
-        // درخواست بدون حجم (handshake)
+    if (bytes === 0) {
         u.reqs += 1;
         u.dReqs += 1;
-    } else {
-        // حجم واقعی ترافیک
-        u.bytes += bytesToAdd;
-        u.dBytes += bytesToAdd;
-        
-        // همچنین برای سازگاری با سیستم قدیمی، معادل درخواست را هم افزایش می‌دهیم
-        // هر 1GB = 6000 درخواست (تقریباً)
-        const bytesPerRequest = 1073741824 / 6000; // ~178KB per request
-        const requestEquivalent = Math.floor(bytesToAdd / bytesPerRequest);
-        if (requestEquivalent > 0) {
-            u.reqs += requestEquivalent;
-            u.dReqs += requestEquivalent;
-        }
     }
 
-    // ===== ذخیره در دیتابیس در بازه‌های زمانی =====
     const now = Date.now();
     if (now - lastSysUsageSync > 30000) {
         lastSysUsageSync = now;
         if (env && env.IOT_DB) {
-            // بررسی محدودیت‌های کاربران
             let changedConfig = false;
             if (sysConfig.users && sysConfig.users.length > 0) {
-                sysConfig.users.forEach((user) => {
-                    const userId = user.id.replace(/-/g, "").toLowerCase();
-                    const sysU = sysUsageCache.users[userId];
-                    if (!user.isPaused && sysU) {
+                sysConfig.users.forEach((u) => {
+                    let uId = u.id.replace(/-/g, "").toLowerCase();
+                    let sysU = sysUsageCache.users[uId];
+                    if (!u.isPaused) {
                         let reason = null;
-                        // بررسی انقضا
-                        if (user.expiryMs && Date.now() > user.expiryMs) {
-                            reason = `Expiration date reached (${new Date(user.expiryMs).toLocaleDateString()})`;
-                        }
-                        // بررسی محدودیت ترافیک (بر اساس بایت)
-                        else if (user.limitTotalReq && sysU.reqs >= user.limitTotalReq) {
-                            const usedGB = (sysU.bytes / 1073741824).toFixed(2);
-                            const limitGB = (user.limitTotalReq / 6000).toFixed(2);
+                        if (u.expiryMs && Date.now() > u.expiryMs) {
+                            reason = `Expiration date reached (${new Date(u.expiryMs).toLocaleDateString()})`;
+                        } else if (
+                            sysU &&
+                            u.limitTotalReq &&
+                            sysU.reqs >= u.limitTotalReq
+                        ) {
+                            let usedGB = (sysU.reqs / 6000).toFixed(2);
+                            let limitGB = (u.limitTotalReq / 6000).toFixed(2);
                             reason = `Traffic limit exceeded (${usedGB}GB / ${limitGB}GB)`;
                         }
-                        // بررسی محدودیت روزانه (بر اساس بایت)
-                        else if (user.limitDailyReq && sysU.dReqs >= user.limitDailyReq) {
-                            const usedGB = (sysU.dBytes / 1073741824).toFixed(2);
-                            const limitGB = (user.limitDailyReq / 6000).toFixed(2);
-                            reason = `Daily limit exceeded (${usedGB}GB / ${limitGB}GB)`;
-                        }
-                        
                         if (reason) {
-                            user.isPaused = true;
-                            user.disabledReason = reason;
-                            user.disabledAt = Date.now();
+                            u.isPaused = true;
+                            u.disabledReason = reason;
+                            u.disabledAt = Date.now();
                             changedConfig = true;
-                            
                             ctx?.waitUntil(
                                 logActivity(
                                     env,
                                     "User Auto-Disabled",
-                                    `User "${user.name}" (${user.id}) disabled: ${reason}`,
-                                ).catch(() => {})
+                                    `User "${u.name}" (${u.id}) disabled: ${reason}`,
+                                ).catch(() => {}),
                             );
-                            
-                            // ارسال نوتیفیکیشن تلگرام
-                            if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
-                                const tgMsg = `⚠️ <b>User Auto-Disabled</b>\n\n👤 <b>User:</b> ${user.name}\n🆔 <b>ID:</b> <code>${user.id}</code>\n📝 <b>Reason:</b> ${reason}`;
-                                const notifyChatId = sysConfig.tgAdminId || sysConfig.tgChatId;
+                            if (
+                                sysConfig.tgToken &&
+                                (sysConfig.tgAdminId || sysConfig.tgChatId)
+                            ) {
+                                const tgMsg = `⚠️ <b>User Auto-Disabled</b>\n\n👤 <b>User:</b> ${u.name}\n🆔 <b>ID:</b> <code>${u.id}</code>\n📝 <b>Reason:</b> ${reason}`;
+                                const notifyChatId =
+                                    sysConfig.tgAdminId || sysConfig.tgChatId;
                                 ctx?.waitUntil(
                                     fetch(
                                         `https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`,
                                         {
                                             method: "POST",
-                                            headers: { "Content-Type": "application/json" },
+                                            headers: {
+                                                "Content-Type":
+                                                    "application/json",
+                                            },
                                             body: JSON.stringify({
                                                 chat_id: notifyChatId,
                                                 text: tgMsg,
                                                 parse_mode: "HTML",
                                             }),
-                                        }
-                                    ).catch(() => {})
+                                        },
+                                    ).catch(() => {}),
                                 );
                             }
                         }
@@ -446,12 +406,19 @@ function trackUsage(uuid, bytes, env, ctx) {
 
             if (changedConfig) {
                 ctx?.waitUntil(
-                    cachedD1Put(env, "sys_config", JSON.stringify(sysConfig)).catch(() => {})
+                    cachedD1Put(
+                        env,
+                        "sys_config",
+                        JSON.stringify(sysConfig),
+                    ).catch(() => {}),
                 );
             }
-            
             ctx?.waitUntil(
-                cachedD1Put(env, "sys_usage", JSON.stringify(sysUsageCache)).catch(() => {})
+                cachedD1Put(
+                    env,
+                    "sys_usage",
+                    JSON.stringify(sysUsageCache),
+                ).catch(() => {}),
             );
         }
     }
@@ -497,7 +464,9 @@ async function fetchRemoteCleanIps() {
 }
 
 async function applyRemoteCleanIps(env, ctx) {
-    if (sysConfig.autoUpdateCleanIps !== true) return;
+    if (sysConfig.autoUpdateCleanIps !== true) {
+        return;
+    }
     
     const now = Date.now();
     if (now - lastCleanIpsUpdate < CLEAN_IPS_UPDATE_INTERVAL) return;
@@ -580,6 +549,7 @@ async function loadSysConfig(env, ctx = null) {
                             ...(stored ? JSON.parse(stored) : null),
                         };
                         
+                        // ===== اگر currentVersion در دیتابیس نبود، مقدار پیش‌فرض را تنظیم کن =====
                         if (!sysConfig.currentVersion) {
                             sysConfig.currentVersion = CURRENT_VERSION;
                         }
@@ -597,7 +567,7 @@ async function loadSysConfig(env, ctx = null) {
                     .catch(() => {
                         sysConfig = { 
                             ...SYSTEM_DEFAULTS,
-                            currentVersion: CURRENT_VERSION
+                            currentVersion: CURRENT_VERSION  // <-- مقدار پیش‌فرض
                         };
                         sysConfigCacheTime = Date.now();
                     })
@@ -607,30 +577,9 @@ async function loadSysConfig(env, ctx = null) {
             }
             await sysConfigLoading;
         }
-        
-        if (now - sysUsageCacheTime > CACHE_TTL_USAGE) {
-            if (!sysUsageLoading) {
-                sysUsageLoading = d1Get(env, "sys_usage")
-                    .then((stored) => {
-                        if (stored) {
-                            const parsed = JSON.parse(stored);
-                            sysUsageCache = parsed || { users: {} };
-                        } else {
-                            sysUsageCache = { users: {} };
-                        }
-                        sysUsageCacheTime = Date.now();
-                    })
-                    .catch(() => {
-                        sysUsageCache = { users: {} };
-                        sysUsageCacheTime = Date.now();
-                    })
-                    .finally(() => {
-                        sysUsageLoading = null;
-                    });
-            }
-            await sysUsageLoading;
-        }
+        // ... بقیه کد
     }
+    // ... بقیه کد
 }
 
 // ============================================
@@ -654,7 +603,7 @@ async function fetchCloudflareUsage(accountId, apiToken) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ query, variables }),
-            }
+            },
         );
 
         const json = await res.json();
@@ -774,6 +723,15 @@ async function sendTelegramMessage(request, type, hostName) {
 // ============================================
 // ===== HANDLE UPDATE API =====
 // ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
 async function handleUpdateApi(request, env, ctx) {
     try {
         if (request.method !== "POST") {
@@ -792,6 +750,7 @@ async function handleUpdateApi(request, env, ctx) {
 
         const action = data.action;
 
+        // ===== ACTION: check =====
         if (action === "check") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -803,12 +762,13 @@ async function handleUpdateApi(request, env, ctx) {
                         cfAccountId: sysConfig.cfAccountId || "",
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,
+                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,  // <-- از دیتابیس
                         repo: sysConfig.githubRepo || "mahbodrahimi/nahan"
                     })
                 });
                 const result = await res.json();
                 
+                // به‌روزرسانی زمان آخرین چک
                 sysConfig.lastUpdateCheck = Date.now();
                 await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
                 
@@ -823,6 +783,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: apply_update =====
         if (action === "apply_update") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -835,24 +796,28 @@ async function handleUpdateApi(request, env, ctx) {
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
                         repo: sysConfig.githubRepo || "mahbodrahimi/nahan",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION
+                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION  // <-- از دیتابیس
                     })
                 });
                 const result = await res.json();
                 
+                // ===== اگر آپدیت موفق بود، نسخه را به‌روزرسانی کن =====
                 if (result.success && result.updated && result.latest) {
                     const oldVersion = sysConfig.currentVersion || CURRENT_VERSION;
                     sysConfig.currentVersion = result.latest;
                     sysConfig.lastUpdateCheck = Date.now();
                     
+                    // ذخیره در دیتابیس
                     await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
                     
+                    // ثبت در لاگ
                     await logActivity(
                         env,
                         'Version Updated',
                         `Version updated from ${oldVersion} to ${result.latest}`
                     );
                     
+                    // ارسال نوتیفیکیشن تلگرام
                     if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
                         const tgMsg = `✅ <b>Version Updated</b>\n\n` +
                                      `🔄 <b>Old Version:</b> ${oldVersion}\n` +
@@ -872,6 +837,7 @@ async function handleUpdateApi(request, env, ctx) {
                         );
                     }
                     
+                    // به‌روزرسانی result برای ارسال به کاربر
                     result.oldVersion = oldVersion;
                     result.savedToDatabase = true;
                 }
@@ -887,6 +853,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: update_clean_ips =====
         if (action === "update_clean_ips") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -921,6 +888,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: status =====
         if (action === "status") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -933,6 +901,7 @@ async function handleUpdateApi(request, env, ctx) {
                 });
                 const result = await res.json();
                 
+                // اضافه کردن نسخه فعلی از دیتابیس به پاسخ
                 result.currentVersion = sysConfig.currentVersion || CURRENT_VERSION;
                 result.lastUpdateCheck = sysConfig.lastUpdateCheck || 0;
                 
@@ -947,6 +916,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: get_version =====
         if (action === "get_version") {
             return new Response(
                 JSON.stringify({
@@ -1096,12 +1066,12 @@ async function handleUsersApi(request, env, ctx) {
                 const idClean = u.id.replace(/-/g, "").toLowerCase();
                 const sysU = sysUsageCache?.users?.[idClean] || {
                     reqs: 0,
-                    bytes: 0,
                     dReqs: 0,
-                    dBytes: 0,
                     lastDay: "",
                 };
-                const usedBytes = sysU.bytes || 0;
+                const usedBytes = Math.floor(
+                    (sysU.reqs || 0) * (1073741824 / 6000),
+                );
                 const limitBytes = u.limitTotalReq
                     ? Math.floor(u.limitTotalReq * (1073741824 / 6000))
                     : 0;
@@ -1117,7 +1087,6 @@ async function handleUsersApi(request, env, ctx) {
                         limit: limitBytes,
                         daily: sysU.dReqs || 0,
                         dailyLimit: u.limitDailyReq || 0,
-                        dailyBytes: sysU.dBytes || 0,
                     },
                     status,
                 };
@@ -1149,12 +1118,12 @@ async function handleUsersApi(request, env, ctx) {
             const idClean = u.id.replace(/-/g, "").toLowerCase();
             const sysU = sysUsageCache?.users?.[idClean] || {
                 reqs: 0,
-                bytes: 0,
                 dReqs: 0,
-                dBytes: 0,
                 lastDay: "",
             };
-            const usedBytes = sysU.bytes || 0;
+            const usedBytes = Math.floor(
+                (sysU.reqs || 0) * (1073741824 / 6000),
+            );
             const limitBytes = u.limitTotalReq
                 ? Math.floor(u.limitTotalReq * (1073741824 / 6000))
                 : 0;
@@ -1175,7 +1144,6 @@ async function handleUsersApi(request, env, ctx) {
                             limit: limitBytes,
                             daily: sysU.dReqs || 0,
                             dailyLimit: u.limitDailyReq || 0,
-                            dailyBytes: sysU.dBytes || 0,
                         },
                         status,
                         subscriptionUrl: subUrl,
@@ -1417,15 +1385,11 @@ async function handleUsersApi(request, env, ctx) {
             const uuidClean = userId.replace(/-/g, "").toLowerCase();
             if (sysUsageCache.users[uuidClean]) {
                 sysUsageCache.users[uuidClean].reqs = 0;
-                sysUsageCache.users[uuidClean].bytes = 0;
                 sysUsageCache.users[uuidClean].dReqs = 0;
-                sysUsageCache.users[uuidClean].dBytes = 0;
             } else {
                 sysUsageCache.users[uuidClean] = {
                     reqs: 0,
-                    bytes: 0,
                     dReqs: 0,
-                    dBytes: 0,
                     lastDay: new Date().toISOString().split("T")[0],
                 };
             }
@@ -1492,27 +1456,20 @@ async function handleStatsApi(request, env) {
         ).length;
 
         let totalTrafficReqs = 0;
-        let totalTrafficBytes = 0;
         let dailyTrafficReqs = 0;
-        let dailyTrafficBytes = 0;
         const todayDate = new Date().toISOString().split("T")[0];
         users.forEach((u) => {
             const idClean = u.id.replace(/-/g, "").toLowerCase();
             const sysU = sysUsageCache?.users?.[idClean] || {
                 reqs: 0,
-                bytes: 0,
                 dReqs: 0,
-                dBytes: 0,
                 lastDay: "",
             };
             totalTrafficReqs += sysU.reqs || 0;
-            totalTrafficBytes += sysU.bytes || 0;
-            if (sysU.lastDay === todayDate) {
-                dailyTrafficReqs += sysU.dReqs || 0;
-                dailyTrafficBytes += sysU.dBytes || 0;
-            }
+            if (sysU.lastDay === todayDate) dailyTrafficReqs += sysU.dReqs || 0;
         });
 
+        
         let usageData = {};
         for (let [k, v] of uuidUsage.entries()) {
             usageData[k] = { ...v, connects: activeConns.get(k) || 0 };
@@ -1532,14 +1489,12 @@ async function handleStatsApi(request, env) {
                     },
                     traffic: {
                         totalRequests: totalTrafficReqs,
-                        totalBytes: totalTrafficBytes,
-                        totalGB: (totalTrafficBytes / 1073741824).toFixed(2),
+                        totalGB: (totalTrafficReqs / 6000).toFixed(2),
                         dailyRequests: dailyTrafficReqs,
-                        dailyBytes: dailyTrafficBytes,
-                        dailyGB: (dailyTrafficBytes / 1073741824).toFixed(2),
+                        dailyGB: (dailyTrafficReqs / 6000).toFixed(2),
                     },
                     usage: usageData,
-                    system: {
+                system: {
                         uptimeSeconds: upSeconds,
                         activeConnections,
                         version: CURRENT_VERSION,
@@ -1560,6 +1515,9 @@ async function handleStatsApi(request, env) {
 // ============================================
 // ===== HANDLE AUTH =====
 // ============================================
+// ============================================
+// ===== HANDLE AUTH =====
+// ============================================
 async function handleAuth(request, hostName, ctx, env) {
     try {
         const data = await request.json();
@@ -1568,16 +1526,19 @@ async function handleAuth(request, hostName, ctx, env) {
         const isKeyAuth = loginKey === sysConfig.masterKey || isPanelApiKey(loginKey);
         
         if (isKeyAuth) {
+            // ===== به‌روزرسانی آخرین استفاده از API Key =====
             if (isPanelApiKey(loginKey)) {
                 const apiKeyEntry = (sysConfig.panelApiKeys || []).find(
                     (k) => k.key === loginKey,
                 );
                 if (apiKeyEntry) apiKeyEntry.lastUsed = Date.now();
+                // ذخیره در دیتابیس
                 ctx?.waitUntil(
                     cachedD1Put(env, "sys_config", JSON.stringify(sysConfig)).catch(() => {})
                 );
             }
             
+            // ===== ثبت لاگ ورود موفق =====
             ctx?.waitUntil(
                 logActivity(
                     env,
@@ -1586,6 +1547,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 ).catch(() => {})
             );
             
+            // ===== ارسال نوتیفیکیشن تلگرام (در صورت فعال نبودن حالت سایلنت) =====
             if (!sysConfig.silentAlerts && ctx) {
                 ctx.waitUntil(
                     sendTelegramMessage(
@@ -1596,6 +1558,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
+            // ===== ذخیره سیگنال ورود برای ربات تلگرام =====
             if (sysConfig.tgAdminId && env.IOT_DB) {
                 const loginSignal = {
                     name: sysConfig.name || hostName,
@@ -1614,6 +1577,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
+            // ===== ارسال سیگنال به پنل هاب (در صورت تنظیم) =====
             if (
                 sysConfig.hubPanelUrl &&
                 sysConfig.hubPanelUrl.trim() &&
@@ -1643,12 +1607,14 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
+            // ===== اطلاعات شبکه =====
             const netInfo = {
                 ip: ip,
                 colo: request.cf?.colo || "Unknown",
                 loc: (request.cf?.city || "Unknown") + ", " + (request.cf?.country || "Unknown"),
             };
             
+            // ===== آمار استفاده زنده =====
             let usageData = {};
             for (let [k, v] of uuidUsage.entries()) {
                 usageData[k] = { 
@@ -1657,6 +1623,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 };
             }
             
+            // ===== ساخت آدرس پایه برای لینک‌ها =====
             let baseHost = hostName;
             let protocol = "https";
             if (sysConfig.customPanelUrl && sysConfig.customPanelUrl.trim()) {
@@ -1671,9 +1638,11 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
+            // ===== پاسخ نهایی =====
             return new Response(
                 JSON.stringify({
                     success: true,
+                    // ===== پیکربندی کامل =====
                     config: isPanelApiKey(loginKey) 
                         ? {
                             ...sysConfig,
@@ -1688,14 +1657,28 @@ async function handleAuth(request, hostName, ctx, env) {
                             syncApiKey: "[PROTECTED]",
                           }
                         : sysConfig,
+                    
+                    // ===== شناسه دستگاه =====
                     deviceId: activeDeviceId,
+                    
+                    // ===== اطلاعات شبکه =====
                     network: netInfo,
+                    
+                    // ===== آمار مصرف زنده =====
                     usage: usageData,
+                    
+                    // ===== آمار مصرف ذخیره شده =====
                     sysUsage: sysUsageCache && sysUsageCache.users 
                         ? sysUsageCache.users 
                         : {},
+                    
+                    // ===== نسخه فعلی (از دیتابیس) =====
                     version: sysConfig.currentVersion || CURRENT_VERSION,
+                    
+                    // ===== آخرین زمان بررسی آپدیت =====
                     lastUpdateCheck: sysConfig.lastUpdateCheck || 0,
+                    
+                    // ===== پروفایل‌ها =====
                     profiles: getAllProfiles().map((p) => {
                         let subSuffix = p.name === "Default"
                             ? ""
@@ -1706,6 +1689,8 @@ async function handleAuth(request, hostName, ctx, env) {
                             sync: `${protocol}://${baseHost}/${sysConfig.apiRoute}${subSuffix}`,
                         };
                     }),
+                    
+                    // ===== وضعیت سیستم =====
                     system: {
                         isPaused: sysConfig.isPaused || false,
                         uptime: Math.floor((Date.now() - isolateStartTime) / 1000),
@@ -1717,6 +1702,7 @@ async function handleAuth(request, hostName, ctx, env) {
             );
         }
         
+        // ===== ورود ناموفق =====
         ctx?.waitUntil(
             logActivity(env, "Auth Failed", `Failed login attempt from ${ip}`).catch(() => {})
         );
@@ -1740,6 +1726,7 @@ async function handleAuth(request, hostName, ctx, env) {
         );
         
     } catch (e) {
+        // ===== خطا =====
         return new Response(
             JSON.stringify({ 
                 success: false, 
@@ -1828,15 +1815,11 @@ async function handleConfigSync(request, env, ctx) {
             if (!sysUsageCache.users) sysUsageCache.users = {};
             if (sysUsageCache.users[uuidClean]) {
                 sysUsageCache.users[uuidClean].reqs = 0;
-                sysUsageCache.users[uuidClean].bytes = 0;
                 sysUsageCache.users[uuidClean].dReqs = 0;
-                sysUsageCache.users[uuidClean].dBytes = 0;
             } else {
                 sysUsageCache.users[uuidClean] = {
                     reqs: 0,
-                    bytes: 0,
                     dReqs: 0,
-                    dBytes: 0,
                     lastDay: new Date().toISOString().split("T")[0],
                 };
             }
@@ -1865,6 +1848,7 @@ async function handleConfigSync(request, env, ctx) {
                 "customPanelUrl"
             ].forEach((k) => delete slaveConfig[k]);
 
+            // Propagate config to slaveNodes
             if (nextConfig.slaveNodes && nextConfig.slaveNodes.trim().length > 0) {
                 let nodes = nextConfig.slaveNodes
                     .split(/[\r\n,;]+/)
@@ -1891,6 +1875,7 @@ async function handleConfigSync(request, env, ctx) {
                 });
             }
 
+            // Propagate config to linkedPanels
             if (nextConfig.linkedPanels && Array.isArray(nextConfig.linkedPanels)) {
                 nextConfig.linkedPanels.forEach((p) => {
                     if (p && p.url && p.apiKey) {
@@ -2829,12 +2814,10 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
 
             const sysU = sysUsageCache?.users?.[
                 u.id.replace(/-/g, "").toLowerCase()
-            ] || { reqs: 0, dReqs: 0, lastDay: "", bytes: 0, dBytes: 0 };
+            ] || { reqs: 0, dReqs: 0, lastDay: "" };
             const userReqs = sysU.reqs || 0;
-            const userBytes = sysU.bytes || 0;
             const curDate = new Date().toISOString().split("T")[0];
             const userDReqs = sysU.lastDay === curDate ? sysU.dReqs || 0 : 0;
-            const userDBytes = sysU.lastDay === curDate ? sysU.dBytes || 0 : 0;
 
             const limitTotalTxt = u.limitTotalReq
                 ? `${u.limitTotalReq}`
@@ -2842,7 +2825,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
             const limitDailyTxt = u.limitDailyReq
                 ? `${u.limitDailyReq}`
                 : t("unlimited");
-            const usedGB = (userBytes / 1073741824).toFixed(2);
+            const usedGB = (userReqs / 6000).toFixed(2);
             const limitGB = u.limitTotalReq
                 ? (u.limitTotalReq / 6000).toFixed(2)
                 : t("unlimited");
@@ -2898,7 +2881,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
             text += `🆔 **UUID**: \`${u.id}\`\n`;
             text += `🚦 **${t("lbl_status")}**: ${statusEmoji} ${statusText}\n`;
             text += `📊 **${t("total")}**: ${usedGB} GB / ${limitGB} GB (${userReqs} reqs)\n`;
-            text += `⏱ **${t("daily")}**: ${(userDBytes / 1073741824).toFixed(2)} GB / ${limitDailyTxt}\n`;
+            text += `⏱ **${t("daily")}**: ${userDReqs} / ${limitDailyTxt}\n`;
             text += `📅 **${t("expiry")}**: ${expTxt}\n`;
             text += `⏳ **${t("days")}**: ${daysLeft}\n`;
             text += `📡 **${t("tg_u_mode")}**: ${modeTxt}\n`;
@@ -3682,15 +3665,11 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                         const uuidClean = uuid.replace(/-/g, "").toLowerCase();
                         if (sysUsageCache.users[uuidClean]) {
                             sysUsageCache.users[uuidClean].reqs = 0;
-                            sysUsageCache.users[uuidClean].bytes = 0;
                             sysUsageCache.users[uuidClean].dReqs = 0;
-                            sysUsageCache.users[uuidClean].dBytes = 0;
                         } else {
                             sysUsageCache.users[uuidClean] = {
                                 reqs: 0,
-                                bytes: 0,
                                 dReqs: 0,
-                                dBytes: 0,
                                 lastDay: new Date().toISOString().split("T")[0],
                             };
                         }
@@ -5515,77 +5494,43 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
 }
 
 // ============================================
-// ===== PROCESS TELEMETRY STREAM - REFACTORED =====
+// ===== PROCESS TELEMETRY STREAM =====
 // ============================================
 async function processTelemetryStream(env, ctx, wsRelayIdx) {
     const [client, webSocket] = Object.values(new WebSocketPair());
     webSocket.accept();
     webSocket.binaryType = "arraybuffer";
-    await startDataPipe(webSocket, env, ctx, wsRelayIdx);
+    startDataPipe(webSocket, env, ctx, wsRelayIdx);
     return new Response(null, { status: 101, webSocket: client });
 }
 
-// ============================================
-// ===== START DATA PIPE - REFACTORED =====
-// ============================================
 async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
     activeConnections++;
-    let activeClientHash = null;
-    let totalBytes = 0;
-    let totalPackets = 0;
-    let lastFlushTime = Date.now();
-    const FLUSH_INTERVAL = 30000; // 30 seconds
-    const FLUSH_BYTES_THRESHOLD = 1024 * 1024; // 1MB
-
     webSocket.addEventListener("close", () => {
         activeConnections--;
         if (activeClientHash) {
             let cur = activeConns.get(activeClientHash) || 0;
             if (cur > 0) activeConns.set(activeClientHash, cur - 1);
-            
-            // ===== ثبت نهایی مصرف هنگام قطع اتصال =====
-            if (totalBytes > 0 && env && env.IOT_DB) {
-                trackUsage(activeClientHash, totalBytes, env, ctx);
-                // فلاش فوری
-                lastSysUsageSync = 0;
-            }
         }
     });
-    
-    webSocket.addEventListener("error", () => {
-        // خطا را نادیده می‌گیریم اما اتصال بسته می‌شود
-    });
-
-    let remoteSocket, dataWriter, isInit = true, queue = Promise.resolve();
-
+    webSocket.addEventListener("error", () => {});
+    let remoteSocket,
+        dataWriter,
+        isInit = true,
+        queue = Promise.resolve();
+    let activeClientHash = null;
     webSocket.addEventListener("message", (event) => {
         queue = queue.then(async () => {
             try {
                 if (isInit) {
                     isInit = false;
-                    const isModeAlpha = await parseSensorData(event.data, wsRelayIdx);
+                    const isModeAlpha = await parseSensorData(
+                        event.data,
+                        wsRelayIdx,
+                    );
                     if (isModeAlpha) webSocket.send(new Uint8Array([0, 0]));
                 } else if (dataWriter) {
-                    const data = event.data;
-                    const bytesToWrite = data.byteLength || data.length || 0;
-                    
-                    if (bytesToWrite > 0 && activeClientHash) {
-                        totalBytes += bytesToWrite;
-                        totalPackets++;
-                        
-                        // ===== ثبت مصرف در بازه‌های زمانی یا حجمی =====
-                        const now = Date.now();
-                        const shouldFlush = (now - lastFlushTime > FLUSH_INTERVAL) || 
-                                           (totalBytes > FLUSH_BYTES_THRESHOLD);
-                        
-                        if (shouldFlush && env && env.IOT_DB) {
-                            trackUsage(activeClientHash, totalBytes, env, ctx);
-                            totalBytes = 0;
-                            lastFlushTime = now;
-                        }
-                    }
-                    
-                    await dataWriter.write(data);
+                    await dataWriter.write(event.data);
                 }
             } catch (err) {
                 webSocket.close();
@@ -5656,11 +5601,7 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
                     .replace(/-/g, "")
                     .toLowerCase();
             }
-            
-            // ===== ثبت handshake (0 bytes) =====
-            if (activeClientHash) {
-                trackUsage(activeClientHash, 0, env, ctx);
-            }
+            trackUsage(activeClientHash, 0, env, ctx);
 
             let currentConns = activeConns.get(activeClientHash) || 0;
             if (activeProfile && activeProfile.connLimit) {
@@ -5753,12 +5694,7 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
                     }
                 }
             }
-            
-            // ===== ثبت handshake (0 bytes) =====
-            if (activeClientHash) {
-                trackUsage(activeClientHash, 0, env, ctx);
-            }
-            
+            trackUsage(activeClientHash, 0, env, ctx);
             let currentConns = activeConns.get(activeClientHash) || 0;
             if (activeProfile && activeProfile.connLimit) {
                 if (currentConns >= activeProfile.connLimit) {
@@ -5886,42 +5822,14 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
         dataWriter = remoteSocket.writable.getWriter();
         if (offset < bufferData.byteLength) {
             let chunk = bufferData.slice(offset);
-            const bytesToWrite = chunk.byteLength || chunk.length || 0;
-            if (bytesToWrite > 0 && activeClientHash) {
-                totalBytes += bytesToWrite;
-                totalPackets++;
-                const now = Date.now();
-                const shouldFlush = (now - lastFlushTime > FLUSH_INTERVAL) || 
-                                   (totalBytes > FLUSH_BYTES_THRESHOLD);
-                if (shouldFlush && env && env.IOT_DB) {
-                    trackUsage(activeClientHash, totalBytes, env, ctx);
-                    totalBytes = 0;
-                    lastFlushTime = now;
-                }
-            }
             await dataWriter.write(chunk);
         }
-        
         remoteSocket.readable.pipeTo(
             new WritableStream({
                 write(chunk) {
-                    // ===== ثبت حجم داده دریافتی =====
-                    const bytesToWrite = chunk.byteLength || chunk.length || 0;
-                    if (bytesToWrite > 0 && activeClientHash) {
-                        totalBytes += bytesToWrite;
-                        totalPackets++;
-                        const now = Date.now();
-                        const shouldFlush = (now - lastFlushTime > FLUSH_INTERVAL) || 
-                                           (totalBytes > FLUSH_BYTES_THRESHOLD);
-                        if (shouldFlush && env && env.IOT_DB) {
-                            trackUsage(activeClientHash, totalBytes, env, ctx);
-                            totalBytes = 0;
-                            lastFlushTime = now;
-                        }
-                    }
                     webSocket.send(chunk);
-                }
-            })
+                },
+            }),
         );
 
         return isModeAlpha;
@@ -5973,16 +5881,10 @@ function getSubscriptionStats(targetSub = null) {
     }
 
     let idClean = id.replace(/-/g, "").toLowerCase();
-    let sysU = sysUsageCache?.users?.[idClean] || { 
-        reqs: 0, 
-        bytes: 0,
-        dReqs: 0,
-        dBytes: 0
-    };
-    let totalBytes = sysU.bytes || 0;
+    let sysU = sysUsageCache?.users?.[idClean] || { reqs: 0, dReqs: 0 };
     let totalReqs = sysU.reqs || 0;
 
-    let totalGb = (totalBytes / 1073741824).toFixed(2);
+    let totalGb = (totalReqs / 6000).toFixed(2);
     let limitTotalGb = limitTotalReq
         ? (limitTotalReq / 6000).toFixed(2)
         : "Unlimited";
@@ -5995,7 +5897,7 @@ function getSubscriptionStats(targetSub = null) {
         let remDays = Math.ceil(
             (expiryMs - Date.now()) / (1000 * 60 * 60 * 24),
         );
-        remDaysTxt = remDays >= 0 ? `${remDays} Days Left` : "Expired";
+remDaysTxt = remDays >= 0 ? `${remDays} Days Left` : "Expired";
     }
 
     return {
@@ -6073,20 +5975,29 @@ function getAllProfiles(targetSub = null) {
             let skip = false;
             if (u.expiryMs && now > u.expiryMs) skip = true;
             if (u.isPaused) skip = true;
-            
-            const idClean = u.id.replace(/-/g, "").toLowerCase();
-            const sysU = sysUsageCache?.users?.[idClean];
-            
-            if (u.limitTotalReq && sysU) {
-                // بررسی بر اساس بایت
-                const bytesLimit = Math.floor(u.limitTotalReq * (1073741824 / 6000));
-                if ((sysU.bytes || 0) >= bytesLimit) skip = true;
-            }
-            if (u.limitDailyReq && sysU) {
-                const bytesLimit = Math.floor(u.limitDailyReq * (1073741824 / 6000));
+            if (
+                u.limitTotalReq &&
+                sysUsageCache &&
+                sysUsageCache.users &&
+                sysUsageCache.users[u.id.replace(/-/g, "").toLowerCase()]
+            ) {
                 if (
-                    sysU.lastDay === new Date().toISOString().split("T")[0] &&
-                    (sysU.dBytes || 0) >= bytesLimit
+                    sysUsageCache.users[u.id.replace(/-/g, "").toLowerCase()]
+                        .reqs >= u.limitTotalReq
+                )
+                    skip = true;
+            }
+            if (
+                u.limitDailyReq &&
+                sysUsageCache &&
+                sysUsageCache.users &&
+                sysUsageCache.users[u.id.replace(/-/g, "").toLowerCase()]
+            ) {
+                let usr =
+                    sysUsageCache.users[u.id.replace(/-/g, "").toLowerCase()];
+                if (
+                    usr.lastDay === new Date().toISOString().split("T")[0] &&
+                    usr.dReqs >= u.limitDailyReq
                 )
                     skip = true;
             }
@@ -8433,26 +8344,18 @@ export default {
                                 const resp = await fetch(subscriptionUrl);
                                 let html = await resp.text();
                                 const idClean = targetUser.id.replace(/-/g, '').toLowerCase();
-                                const sysU = sysUsageCache?.users?.[idClean] || { 
-                                    reqs: 0, 
-                                    bytes: 0,
-                                    dReqs: 0,
-                                    dBytes: 0,
-                                    lastDay: '' 
-                                };
-                                const totalBytes = sysU.bytes || 0;
+                                const sysU = sysUsageCache?.users?.[idClean] || { reqs: 0, dReqs: 0, lastDay: '' };
                                 const totalReqs = sysU.reqs || 0;
                                 const todayDate = new Date().toISOString().split('T')[0];
-                                const dailyBytes = sysU.lastDay === todayDate ? (sysU.dBytes || 0) : 0;
                                 const dailyReqs = sysU.lastDay === todayDate ? (sysU.dReqs || 0) : 0;
                                 const limitTotal = targetUser.limitTotalReq || 0;
                                 const limitDaily = targetUser.limitDailyReq || 0;
-                                const totalGb = (totalBytes / 1073741824).toFixed(2);
+                                const totalGb = (totalReqs / 6000).toFixed(2);
                                 const limitTotalGb = limitTotal ? (limitTotal / 6000).toFixed(2) : '9999';
-                                const dailyGb = (dailyBytes / 1073741824).toFixed(2);
+                                const dailyGb = (dailyReqs / 6000).toFixed(2);
                                 const limitDailyGb = limitDaily ? (limitDaily / 6000).toFixed(2) : '9999';
-                                const totalPercent = limitTotal ? Math.min(100, (totalBytes / (limitTotal * 1073741824 / 6000)) * 100).toFixed(1) : '0';
-                                const dailyPercent = limitDaily ? Math.min(100, (dailyBytes / (limitDaily * 1073741824 / 6000)) * 100).toFixed(1) : '0';
+                                const totalPercent = limitTotal ? Math.min(100, (totalReqs / limitTotal) * 100).toFixed(1) : '0';
+                                const dailyPercent = limitDaily ? Math.min(100, (dailyReqs / limitDaily) * 100).toFixed(1) : '0';
                                 let expiryDateTxt = '2099-01-01';
                                 let isExpired = false;
                                 if (targetUser.expiryMs) {
@@ -8462,8 +8365,8 @@ export default {
                                 let statusCode = 'active';
                                 if (targetUser.isPaused) statusCode = 'paused';
                                 else if (isExpired) statusCode = 'expired';
-                                else if (limitTotal && totalBytes >= (limitTotal * 1073741824 / 6000)) statusCode = 'limit';
-                                else if (limitDaily && dailyBytes >= (limitDaily * 1073741824 / 6000)) statusCode = 'dailyLimit';
+                                else if (limitTotal && totalReqs >= limitTotal) statusCode = 'limit';
+                                else if (limitDaily && dailyReqs >= limitDaily) statusCode = 'dailyLimit';
                                 let cleanUrl = new URL(url.href);
                                 let panelUrlToUse = sysConfig.customPanelUrl;
                                 if (targetUser.userPanelUrl && targetUser.userPanelUrl.trim()) panelUrlToUse = targetUser.userPanelUrl.trim();
@@ -8535,13 +8438,7 @@ export default {
 
                     if (isValidUser && targetUser) {
                         let idClean = targetUser.id.replace(/-/g, "").toLowerCase();
-                        let sysU = sysUsageCache?.users?.[idClean] || { 
-                            reqs: 0, 
-                            bytes: 0,
-                            dReqs: 0,
-                            dBytes: 0
-                        };
-                        let totalBytes = sysU.bytes || 0;
+                        let sysU = sysUsageCache?.users?.[idClean] || { reqs: 0, dReqs: 0 };
                         let totalReqs = sysU.reqs || 0;
                         let limitTotal = 0;
                         let expiryMs = 0;
@@ -8553,7 +8450,7 @@ export default {
                             expiryMs = sysConfig.expiryMs || 0;
                         }
 
-                        let usedBytes = totalBytes;
+                        let usedBytes = Math.floor(totalReqs * (1073741824 / 6000));
                         let limitBytes = Math.floor(limitTotal * (1073741824 / 6000));
                         let expireSec = expiryMs ? Math.floor(expiryMs / 1000) : 0;
 
