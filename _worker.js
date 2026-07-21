@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "3.0.2";
+const CURRENT_VERSION = "3.0.3";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -3614,7 +3614,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                         );
                         if (reqs !== null) {
                             const pct = ((reqs / 100000) * 100).toFixed(2);
-                            statsText += `\n☁️ **Cloudflare API**: ${reqs}/100000 (${pct}%)`;
+                            statsText += `\n☁️ **Useage**: ${reqs}/100000 (${pct}%)`;
                         }
                     }
                     const kb = {
