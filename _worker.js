@@ -5,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "3.0.1";
+const CURRENT_VERSION = "3.0.2";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -2453,10 +2453,10 @@ const botI18n = {
         tg_ech: "ECH",
         tg_silent: "هشدار خاموش",
         tg_pause: "کلید توقف",
-        tg_auto_update_clean_ips: "بروزرسانی خودکار آی‌پی تمیز",
+        tg_auto_update_clean_ips: "بروزرسانی خودکار لیست سرور ",
         tg_direct: "کانفیگ مستقیم",
         tg_nat64: "NAT64",
-        tg_clean_ips: "آی‌پی تمیز",
+        tg_clean_ips: " لیست سرور ",
         tg_nodes: "نودها",
         tg_strategy: "روش نام‌گذاری",
         tg_prefix: "پیشوند",
@@ -2486,7 +2486,7 @@ const botI18n = {
         tg_uptime: "زمان کارکرد",
         tg_conns: "اتصالات فعال",
         tg_version: "نسخه",
-        tg_cf_usage: "مصرف کلودفلر",
+        tg_cf_usage: "مصرف ",
     },
 };
 
@@ -3126,7 +3126,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                     text += `━━━━━━━━━━━━━━━━\n`;
                     text += `⏱ **${t("uptime")}**: ${dh}h ${dm}m\n`;
                     text += `🔌 **${t("streams")}**: ${activeConnections}\n`;
-                    text += `📊 **Cloudflare API Usage**: ${usageStr}\n`;
+                    text += `📊 ** Usage**: ${usageStr}\n`;
                     text += `━━━━━━━━━━━━━━━━`;
 
                     const kb = {
