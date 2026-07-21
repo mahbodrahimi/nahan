@@ -3614,7 +3614,7 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                         );
                         if (reqs !== null) {
                             const pct = ((reqs / 100000) * 100).toFixed(2);
-                            statsText += `\n☁️ **Useage**: ${reqs}/100000 (${pct}%)`;
+                            statsText += `\n☁️ **Usage**: ${reqs}/100000 (${pct}%)`;
                         }
                     }
                     const kb = {
