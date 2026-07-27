@@ -1,4 +1,3 @@
-1234567890
 import { connect } from "cloudflare:sockets";
 
 /*
@@ -6,7 +5,7 @@ import { connect } from "cloudflare:sockets";
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "3.0.5";
+const CURRENT_VERSION = "3.0.4";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -84,8 +83,8 @@ const SYSTEM_DEFAULTS = {
         { name: "📊 {usage}", enabled: true },
         { name: "📅 {expiry}", enabled: true },
     ],
-    currentVersion: CURRENT_VERSION,
-    lastUpdateCheck: 0,
+    currentVersion: CURRENT_VERSION,  // <-- اضافه کنید
+    lastUpdateCheck: 0,               // <-- اضافه کنید
 };
 
 let sysConfig = { ...SYSTEM_DEFAULTS };
@@ -547,6 +546,7 @@ async function loadSysConfig(env, ctx = null) {
                     .then(async (stored) => {
                         const oldConfig = stored ? JSON.parse(stored) : null;
                         
+                        // ===== ذخیره deviceId قبلی =====
                         const oldDeviceId = oldConfig?.deviceId || null;
                         
                         sysConfig = {
@@ -554,14 +554,18 @@ async function loadSysConfig(env, ctx = null) {
                             ...(oldConfig || null),
                         };
                         
+                        // ===== اگر currentVersion در دیتابیس نبود =====
                         if (!sysConfig.currentVersion) {
                             sysConfig.currentVersion = CURRENT_VERSION;
                         }
                         
+                        // ===== CRITICAL FIX: حفظ deviceId =====
                         if (!sysConfig.deviceId || sysConfig.deviceId === "") {
+                            // ۱. از مقدار قبلی استفاده کن
                             if (oldDeviceId) {
                                 sysConfig.deviceId = oldDeviceId;
                             } 
+                            // ۲. از sys_usage بگیر
                             else {
                                 const usage = await d1Get(env, "sys_usage");
                                 if (usage) {
@@ -575,10 +579,12 @@ async function loadSysConfig(env, ctx = null) {
                                 }
                             }
                             
+                            // ۳. اگه هیچی نبود، یکی بساز
                             if (!sysConfig.deviceId || sysConfig.deviceId === "") {
                                 sysConfig.deviceId = generateHardwareId(sysConfig.apiRoute || "sync");
                             }
                             
+                            // ===== ذخیره در دیتابیس =====
                             await cachedD1Put(env, "sys_config", JSON.stringify(sysConfig));
                         }
                         
@@ -607,6 +613,7 @@ async function loadSysConfig(env, ctx = null) {
             await sysConfigLoading;
         }
         
+        // ===== بارگذاری sys_usage =====
         if (now - sysUsageCacheTime > CACHE_TTL_USAGE) {
             if (!sysUsageLoading) {
                 sysUsageLoading = d1Get(env, "sys_usage")
@@ -635,6 +642,7 @@ async function loadSysConfig(env, ctx = null) {
         }
     }
 
+    // ===== بارگذاری backup_ip =====
     if (now - backupIpCacheTime > CACHE_TTL_BACKUP_IP) {
         if (!backupIpLoading) {
             backupIpLoading = (
@@ -657,7 +665,7 @@ async function loadSysConfig(env, ctx = null) {
     sysConfig.customRelay = backupIpCache ?? env.RELAY_IP ?? "";
     
     if (sysConfig.autoUpdateCleanIps === true && now - lastCleanIpsUpdate > CLEAN_IPS_UPDATE_INTERVAL) {
-        if (ctx && typeof ctx.waitUntil === "function") {
+        if (ctx && typeof ctx.waitUntil === 'function') {
             ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
         } else {
             await applyRemoteCleanIps(env, ctx);
@@ -806,6 +814,15 @@ async function sendTelegramMessage(request, type, hostName) {
 // ============================================
 // ===== HANDLE UPDATE API =====
 // ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
+// ============================================
+// ===== HANDLE UPDATE API =====
+// ============================================
 async function handleUpdateApi(request, env, ctx) {
     try {
         if (request.method !== "POST") {
@@ -824,6 +841,7 @@ async function handleUpdateApi(request, env, ctx) {
 
         const action = data.action;
 
+        // ===== ACTION: check =====
         if (action === "check") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -835,12 +853,13 @@ async function handleUpdateApi(request, env, ctx) {
                         cfAccountId: sysConfig.cfAccountId || "",
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,
+                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,  // <-- از دیتابیس
                         repo: sysConfig.githubRepo || "mahbodrahimi/nahan"
                     })
                 });
                 const result = await res.json();
                 
+                // به‌روزرسانی زمان آخرین چک
                 sysConfig.lastUpdateCheck = Date.now();
                 await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
                 
@@ -855,6 +874,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: apply_update =====
         if (action === "apply_update") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -867,24 +887,28 @@ async function handleUpdateApi(request, env, ctx) {
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
                         repo: sysConfig.githubRepo || "mahbodrahimi/nahan",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION
+                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION  // <-- از دیتابیس
                     })
                 });
                 const result = await res.json();
                 
+                // ===== اگر آپدیت موفق بود، نسخه را به‌روزرسانی کن =====
                 if (result.success && result.updated && result.latest) {
                     const oldVersion = sysConfig.currentVersion || CURRENT_VERSION;
                     sysConfig.currentVersion = result.latest;
                     sysConfig.lastUpdateCheck = Date.now();
                     
+                    // ذخیره در دیتابیس
                     await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
                     
+                    // ثبت در لاگ
                     await logActivity(
                         env,
                         'Version Updated',
                         `Version updated from ${oldVersion} to ${result.latest}`
                     );
                     
+                    // ارسال نوتیفیکیشن تلگرام
                     if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
                         const tgMsg = `✅ <b>Version Updated</b>\n\n` +
                                      `🔄 <b>Old Version:</b> ${oldVersion}\n` +
@@ -904,6 +928,7 @@ async function handleUpdateApi(request, env, ctx) {
                         );
                     }
                     
+                    // به‌روزرسانی result برای ارسال به کاربر
                     result.oldVersion = oldVersion;
                     result.savedToDatabase = true;
                 }
@@ -919,6 +944,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: update_clean_ips =====
         if (action === "update_clean_ips") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -953,6 +979,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: status =====
         if (action === "status") {
             try {
                 const res = await fetch(UPDATER_URL, {
@@ -965,6 +992,7 @@ async function handleUpdateApi(request, env, ctx) {
                 });
                 const result = await res.json();
                 
+                // اضافه کردن نسخه فعلی از دیتابیس به پاسخ
                 result.currentVersion = sysConfig.currentVersion || CURRENT_VERSION;
                 result.lastUpdateCheck = sysConfig.lastUpdateCheck || 0;
                 
@@ -979,6 +1007,7 @@ async function handleUpdateApi(request, env, ctx) {
             }
         }
 
+        // ===== ACTION: get_version =====
         if (action === "get_version") {
             return new Response(
                 JSON.stringify({
@@ -1577,6 +1606,9 @@ async function handleStatsApi(request, env) {
 // ============================================
 // ===== HANDLE AUTH =====
 // ============================================
+// ============================================
+// ===== HANDLE AUTH =====
+// ============================================
 async function handleAuth(request, hostName, ctx, env) {
     try {
         const data = await request.json();
@@ -1585,16 +1617,19 @@ async function handleAuth(request, hostName, ctx, env) {
         const isKeyAuth = loginKey === sysConfig.masterKey || isPanelApiKey(loginKey);
         
         if (isKeyAuth) {
+            // ===== به‌روزرسانی آخرین استفاده از API Key =====
             if (isPanelApiKey(loginKey)) {
                 const apiKeyEntry = (sysConfig.panelApiKeys || []).find(
                     (k) => k.key === loginKey,
                 );
                 if (apiKeyEntry) apiKeyEntry.lastUsed = Date.now();
+                // ذخیره در دیتابیس
                 ctx?.waitUntil(
                     cachedD1Put(env, "sys_config", JSON.stringify(sysConfig)).catch(() => {})
                 );
             }
             
+            // ===== ثبت لاگ ورود موفق =====
             ctx?.waitUntil(
                 logActivity(
                     env,
@@ -1603,6 +1638,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 ).catch(() => {})
             );
             
+            // ===== ارسال نوتیفیکیشن تلگرام (در صورت فعال نبودن حالت سایلنت) =====
             if (!sysConfig.silentAlerts && ctx) {
                 ctx.waitUntil(
                     sendTelegramMessage(
@@ -1613,6 +1649,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
+            // ===== ذخیره سیگنال ورود برای ربات تلگرام =====
             if (sysConfig.tgAdminId && env.IOT_DB) {
                 const loginSignal = {
                     name: sysConfig.name || hostName,
@@ -1631,6 +1668,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
+            // ===== ارسال سیگنال به پنل هاب (در صورت تنظیم) =====
             if (
                 sysConfig.hubPanelUrl &&
                 sysConfig.hubPanelUrl.trim() &&
@@ -1660,12 +1698,14 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
+            // ===== اطلاعات شبکه =====
             const netInfo = {
                 ip: ip,
                 colo: request.cf?.colo || "Unknown",
                 loc: (request.cf?.city || "Unknown") + ", " + (request.cf?.country || "Unknown"),
             };
             
+            // ===== آمار استفاده زنده =====
             let usageData = {};
             for (let [k, v] of uuidUsage.entries()) {
                 usageData[k] = { 
@@ -1674,6 +1714,7 @@ async function handleAuth(request, hostName, ctx, env) {
                 };
             }
             
+            // ===== ساخت آدرس پایه برای لینک‌ها =====
             let baseHost = hostName;
             let protocol = "https";
             if (sysConfig.customPanelUrl && sysConfig.customPanelUrl.trim()) {
@@ -1688,9 +1729,11 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
+            // ===== پاسخ نهایی =====
             return new Response(
                 JSON.stringify({
                     success: true,
+                    // ===== پیکربندی کامل =====
                     config: isPanelApiKey(loginKey) 
                         ? {
                             ...sysConfig,
@@ -1706,14 +1749,27 @@ async function handleAuth(request, hostName, ctx, env) {
                           }
                         : sysConfig,
                     
+                    // ===== شناسه دستگاه =====
                     deviceId: activeDeviceId,
+                    
+                    // ===== اطلاعات شبکه =====
                     network: netInfo,
+                    
+                    // ===== آمار مصرف زنده =====
                     usage: usageData,
+                    
+                    // ===== آمار مصرف ذخیره شده =====
                     sysUsage: sysUsageCache && sysUsageCache.users 
                         ? sysUsageCache.users 
                         : {},
+                    
+                    // ===== نسخه فعلی (از دیتابیس) =====
                     version: sysConfig.currentVersion || CURRENT_VERSION,
+                    
+                    // ===== آخرین زمان بررسی آپدیت =====
                     lastUpdateCheck: sysConfig.lastUpdateCheck || 0,
+                    
+                    // ===== پروفایل‌ها =====
                     profiles: getAllProfiles().map((p) => {
                         let subSuffix = p.name === "Default"
                             ? ""
@@ -1724,6 +1780,8 @@ async function handleAuth(request, hostName, ctx, env) {
                             sync: `${protocol}://${baseHost}/${sysConfig.apiRoute}${subSuffix}`,
                         };
                     }),
+                    
+                    // ===== وضعیت سیستم =====
                     system: {
                         isPaused: sysConfig.isPaused || false,
                         uptime: Math.floor((Date.now() - isolateStartTime) / 1000),
@@ -1735,6 +1793,7 @@ async function handleAuth(request, hostName, ctx, env) {
             );
         }
         
+        // ===== ورود ناموفق =====
         ctx?.waitUntil(
             logActivity(env, "Auth Failed", `Failed login attempt from ${ip}`).catch(() => {})
         );
@@ -1758,6 +1817,7 @@ async function handleAuth(request, hostName, ctx, env) {
         );
         
     } catch (e) {
+        // ===== خطا =====
         return new Response(
             JSON.stringify({ 
                 success: false, 
@@ -1879,6 +1939,7 @@ async function handleConfigSync(request, env, ctx) {
                 "customPanelUrl"
             ].forEach((k) => delete slaveConfig[k]);
 
+            // Propagate config to slaveNodes
             if (nextConfig.slaveNodes && nextConfig.slaveNodes.trim().length > 0) {
                 let nodes = nextConfig.slaveNodes
                     .split(/[\r\n,;]+/)
@@ -1905,6 +1966,7 @@ async function handleConfigSync(request, env, ctx) {
                 });
             }
 
+            // Propagate config to linkedPanels
             if (nextConfig.linkedPanels && Array.isArray(nextConfig.linkedPanels)) {
                 nextConfig.linkedPanels.forEach((p) => {
                     if (p && p.url && p.apiKey) {
@@ -4782,7 +4844,8 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
                                 u.limitTotalReq = tReq;
                                 u.limitDailyReq = dReq;
                                 u.expiryMs = days
-                                    ? Date.now() + days * 86400000                                    : null;
+                                    ? Date.now() + days * 86400000
+                                    : null;
                                 await cachedD1Put(
                                     env,
                                     "sys_config",
@@ -5522,39 +5585,6 @@ async function handleTelegramWebhook(request, env, hostName, ctx) {
 }
 
 // ============================================
-// ===== EXTRACT PROXY FROM CUSTOM ROUTING =====
-// ============================================
-function extractProxyFromCustomRouting() {
-    if (!sysConfig.customRouting || !sysConfig.customRouting.trim()) {
-        return null;
-    }
-    
-    const lines = sysConfig.customRouting
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && !line.startsWith('#'));
-    
-    for (const line of lines) {
-        if (line.includes(':') && 
-            !line.startsWith('DOMAIN') && 
-            !line.startsWith('IP') &&
-            !line.startsWith('GEOIP') &&
-            !line.startsWith('GEOSITE')) {
-            
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-                return {
-                    host: parts[0].trim(),
-                    port: parseInt(parts[1].trim()) || 5096
-                };
-            }
-        }
-    }
-    
-    return null;
-}
-
-// ============================================
 // ===== PROCESS TELEMETRY STREAM =====
 // ============================================
 async function processTelemetryStream(env, ctx, wsRelayIdx) {
@@ -5821,38 +5851,9 @@ async function startDataPipe(webSocket, env, ctx, wsRelayIdx) {
             } catch (e) {}
         }
 
-        // ===== استفاده از customRouting به عنوان پروکسی خروجی =====
-        let proxyConfig = extractProxyFromCustomRouting();
-        
         try {
-            if (proxyConfig) {
-                // اتصال به پروکسی میانی (سرور رایگان)
-                remoteSocket = connect({ 
-                    hostname: proxyConfig.host, 
-                    port: proxyConfig.port 
-                });
-                await remoteSocket.opened;
-                
-                // ارسال درخواست CONNECT به پروکسی برای اتصال به سرور هدف
-                const proxyRequest = `CONNECT ${connectAddr}:${targetPort} HTTP/1.1\r\nHost: ${connectAddr}\r\n\r\n`;
-                const writer = remoteSocket.writable.getWriter();
-                await writer.write(new TextEncoder().encode(proxyRequest));
-                writer.releaseLock();
-                
-                // خواندن پاسخ پروکسی
-                const reader = remoteSocket.readable.getReader();
-                const response = await reader.read();
-                const responseText = new TextDecoder().decode(response.value);
-                if (!responseText.includes('200 Connection established')) {
-                    throw new Error('Proxy connection failed');
-                }
-                reader.releaseLock();
-                
-            } else {
-                // اتصال مستقیم به سرور هدف
-                remoteSocket = connect({ hostname: connectAddr, port: targetPort });
-                await remoteSocket.opened;
-            }
+            remoteSocket = connect({ hostname: connectAddr, port: targetPort });
+            await remoteSocket.opened;
         } catch {
             let pips = [];
             if (activeProfile && activeProfile.proxyIp) {
@@ -5987,7 +5988,7 @@ function getSubscriptionStats(targetSub = null) {
         let remDays = Math.ceil(
             (expiryMs - Date.now()) / (1000 * 60 * 60 * 24),
         );
-        remDaysTxt = remDays >= 0 ? `${remDays} Days Left` : "Expired";
+remDaysTxt = remDays >= 0 ? `${remDays} Days Left` : "Expired";
     }
 
     return {
@@ -6150,19 +6151,7 @@ function getGlobalNodeHosts() {
 
 function getProxyIpsArray(proxyIpString) {
     if (!proxyIpString) return [];
-    
-    // ===== اضافه شدن: بررسی customRouting به عنوان منبع پروکسی =====
-    let proxyString = proxyIpString;
-    if (!proxyString) {
-        const proxyConfig = extractProxyFromCustomRouting();
-        if (proxyConfig) {
-            proxyString = `${proxyConfig.host}:${proxyConfig.port}`;
-        }
-    }
-    
-    if (!proxyString) return [];
-    
-    return proxyString
+    return proxyIpString
         .split(/[\r\n,;]+/)
         .map((s) => {
             let trimmed = s.trim();
@@ -6248,12 +6237,6 @@ async function preloadIpFlags(profiles, hostNames) {
         getProxyIpsArray(sysConfig.customRelay).forEach((ip) =>
             uniqueIps.add(ip),
         );
-    }
-    
-    // ===== اضافه شدن: preload برای customRouting =====
-    const proxyConfig = extractProxyFromCustomRouting();
-    if (proxyConfig) {
-        uniqueIps.add(proxyConfig.host);
     }
 
     let uncached = Array.from(uniqueIps).filter((ip) => !ipGeoCache.has(ip));
@@ -6519,19 +6502,9 @@ function getEffectiveNat64(userNat64) {
 function getEffectivePips(p) {
     let effectiveNat64 = getEffectiveNat64(p.nat64);
     let pips = getProxyIpsWithNat64(p.proxyIp, effectiveNat64);
-    
     if (pips.length === 0 && sysConfig.backupRelay) {
         pips = getProxyIpsWithNat64(sysConfig.backupRelay, effectiveNat64);
     }
-    
-    // ===== اضافه شدن: استفاده از customRouting به عنوان منبع پروکسی =====
-    if (pips.length === 0) {
-        const proxyConfig = extractProxyFromCustomRouting();
-        if (proxyConfig) {
-            pips = getProxyIpsWithNat64(`${proxyConfig.host}:${proxyConfig.port}`, effectiveNat64);
-        }
-    }
-    
     if (pips.length === 0 && sysConfig.customRelay) {
         pips = getProxyIpsWithNat64(sysConfig.customRelay, effectiveNat64);
     }
@@ -6773,8 +6746,6 @@ function getCustomRouting() {
             geosites.push(l.substring(8).trim().toLowerCase());
         } else if (l.match(/^[0-9\.\/:]+$/)) {
             ips.push(l);
-        } else if (l.includes(':') && !l.startsWith('DOMAIN') && !l.startsWith('IP') && !l.startsWith('GEOIP') && !l.startsWith('GEOSITE')) {
-            // پروکسی را نادیده می‌گیریم
         } else {
             domains.push(l);
         }
@@ -8291,7 +8262,7 @@ export default {
             if (configRegistry.size > 10000) { configRegistry.clear(); trojanHashCache.clear(); }
             await loadSysConfig(env, ctx);
             
-            if (sysConfig.autoUpdateCleanIps === true && ctx && typeof ctx.waitUntil === "function") {
+            if (sysConfig.autoUpdateCleanIps === true && ctx && typeof ctx.waitUntil === 'function') {
                 ctx.waitUntil(applyRemoteCleanIps(env, ctx).catch(() => {}));
             }
             
