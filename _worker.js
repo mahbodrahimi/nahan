@@ -1,3 +1,4 @@
+1234567890
 import { connect } from "cloudflare:sockets";
 
 /*
@@ -6208,28 +6209,6 @@ function getProxyIpsWithNat64(proxyIpString, nat64Prefix) {
         ips = ips.concat(nat64Ips);
     }
     return ips;
-}
-
-function getEffectivePips(p) {
-    let effectiveNat64 = getEffectiveNat64(p.nat64);
-    let pips = getProxyIpsWithNat64(p.proxyIp, effectiveNat64);
-    
-    if (pips.length === 0 && sysConfig.backupRelay) {
-        pips = getProxyIpsWithNat64(sysConfig.backupRelay, effectiveNat64);
-    }
-    
-    // ===== اضافه شدن: استفاده از customRouting به عنوان منبع پروکسی =====
-    if (pips.length === 0) {
-        const proxyConfig = extractProxyFromCustomRouting();
-        if (proxyConfig) {
-            pips = getProxyIpsWithNat64(`${proxyConfig.host}:${proxyConfig.port}`, effectiveNat64);
-        }
-    }
-    
-    if (pips.length === 0 && sysConfig.customRelay) {
-        pips = getProxyIpsWithNat64(sysConfig.customRelay, effectiveNat64);
-    }
-    return pips;
 }
 
 const VALID_NAME_TAGS = [
