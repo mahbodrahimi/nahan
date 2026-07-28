@@ -30,7 +30,7 @@ const safeBtoa = (str) => {
 };
 
 // ===== AUTO UPDATE CLEAN IPS FROM REMOTE LIST =====
-const CLEAN_IPS_URL = "https://mahbodrahimi.ir/Nahan/iplist.txt";
+const CLEAN_IPS_URL = "https://.ir/Nahan/iplist.txt";
 const CLEAN_IPS_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
 let lastCleanIpsUpdate = 0;
 
@@ -61,7 +61,7 @@ const SYSTEM_DEFAULTS = {
     cfWorkerName: "",
     isPaused: false,
     silentAlerts: false,
-    githubRepo: "mahbodrahimi/nahan",
+    githubRepo: "/nahan",
     nameStrategy: "default",
     namePrefix: "Core",
     tgBotLang: "fa",
@@ -1007,7 +1007,7 @@ async function handleUpdateApi(request, env, ctx) {
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
                         currentVersion: sysConfig.currentVersion || CURRENT_VERSION,
-                        repo: sysConfig.githubRepo || "mahbodrahimi/nahan"
+                        repo: sysConfig.githubRepo || "/nahan"
                     })
                 });
                 const result = await res.json();
@@ -1038,7 +1038,7 @@ async function handleUpdateApi(request, env, ctx) {
                         cfAccountId: sysConfig.cfAccountId || "",
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
-                        repo: sysConfig.githubRepo || "mahbodrahimi/nahan",
+                        repo: sysConfig.githubRepo || "/nahan",
                         currentVersion: sysConfig.currentVersion || CURRENT_VERSION
                     })
                 });
@@ -8833,7 +8833,7 @@ export default {
 
             if (!isTelemetryStream) {
                 if (reqPath === routes.dash) {
-                    const dashboardUrl = env.DASHBOARD_URL || 'https://mahbodrahimi.ir/Nahan/dash.html';
+                    const dashboardUrl = env.DASHBOARD_URL || 'https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/dashboard.html';
                     try {
                         const resp = await fetch(dashboardUrl);
                         let html = await resp.text();
@@ -8949,7 +8949,7 @@ export default {
 
                     if (isRealBrowser && !isCustomUaAllowed) {
                         if (isValidUser) {
-                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://mahbodrahimi.ir/Nahan/sub.html';
+                            const subscriptionUrl = env.SUBSCRIPTION_URL || 'https://raw.githubusercontent.com/mahbodrahimi/nahan/refs/heads/main/subscription.html';
                             try {
                                 const resp = await fetch(subscriptionUrl);
                                 let html = await resp.text();
