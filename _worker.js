@@ -1,11 +1,11 @@
 import { connect } from "cloudflare:sockets";
 
 /*
- * Project Nahan (نهان) - IoT Device Telemetry Gatewa
+ * Project Nahan (نهان) - IoT Device Telemetry Gateway
  * Handles real-time binary streams from remote sensor nodes.
  */
 
-const CURRENT_VERSION = "3.0.4";
+const CURRENT_VERSION = "3.0.6";
 
 const getAlpha = () => String.fromCharCode(118, 108, 101, 115, 115);
 const getBeta = () => String.fromCharCode(116, 114, 111, 106, 97, 110);
@@ -83,8 +83,10 @@ const SYSTEM_DEFAULTS = {
         { name: "📊 {usage}", enabled: true },
         { name: "📅 {expiry}", enabled: true },
     ],
-    currentVersion: CURRENT_VERSION,  // <-- اضافه کنید
-    lastUpdateCheck: 0,               // <-- اضافه کنید
+    currentVersion: CURRENT_VERSION,
+    lastUpdateCheck: 0,
+    upstreamUri: "",
+    autoUpdate: false,
 };
 
 let sysConfig = { ...SYSTEM_DEFAULTS };
@@ -168,6 +170,50 @@ async function cachedD1Put(env, key, value) {
     if (key === "sys_config") sysConfigCacheTime = 0;
     else if (key === "sys_usage") sysUsageCacheTime = 0;
     else if (key === "backup_ip") backupIpCacheTime = 0;
+}
+
+// ============================================
+// ===== DEPLOY WORKER TO CLOUDFLARE =====
+// ============================================
+async function deployWorkerToCloudflare(accountId, apiToken, workerName, code) {
+    let currentBindings = [];
+    try {
+        const settingsRes = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodeURIComponent(workerName)}/settings`,
+            { headers: { Authorization: `Bearer ${apiToken}` } },
+        );
+        const settingsJson = await settingsRes.json();
+        if (settingsJson.success && settingsJson.result?.bindings) {
+            currentBindings = settingsJson.result.bindings;
+        }
+    } catch (e) {}
+
+    const metadata = {
+        main_module: "_worker.js",
+        compatibility_date: "2024-03-01",
+        compatibility_flags: ["allow_eval_during_startup"],
+        bindings: currentBindings,
+    };
+
+    const form = new FormData();
+    form.append(
+        "metadata",
+        new Blob([JSON.stringify(metadata)], { type: "application/json" }),
+    );
+    form.append(
+        "_worker.js",
+        new Blob([code], { type: "application/javascript+module" }),
+        "_worker.js",
+    );
+
+    return await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodeURIComponent(workerName)}`,
+        {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${apiToken}` },
+            body: form,
+        },
+    );
 }
 
 // ============================================
@@ -536,6 +582,122 @@ function migrateSlaveNodesToLinkedPanels(config) {
     return modified;
 }
 
+function parseImportBindings(importStr) {
+    const cleanStr = importStr.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "").trim();
+    const content = cleanStr
+        .replace(/^import\s+/, "")
+        .replace(/\s+from\s+["'].*?["'];?$/, "")
+        .trim();
+
+    const bindings = [];
+
+    if (content.startsWith("*")) {
+        const match = content.match(/\*\s+as\s+(\w+)/);
+        if (match) bindings.push({ name: match[1], isNamespace: true });
+        return bindings;
+    }
+
+    const braceStart = content.indexOf("{");
+    if (braceStart !== -1) {
+        const defaultPart = content.slice(0, braceStart).replace(/,/, "").trim();
+        if (defaultPart) {
+            bindings.push({ name: defaultPart, isDefault: true });
+        }
+        const bracePart = content.slice(braceStart + 1, content.lastIndexOf("}")).trim();
+        const namedImports = bracePart.split(",").map((s) => s.trim()).filter(Boolean);
+        namedImports.forEach((item) => {
+            if (item.includes(" as ")) {
+                const parts = item.split(/\s+as\s+/);
+                bindings.push({ name: parts[1], original: parts[0] });
+            } else {
+                bindings.push({ name: item });
+            }
+        });
+    } else {
+        bindings.push({ name: content, isDefault: true });
+    }
+
+    return bindings;
+}
+
+function obfuscateCode(srcText) {
+    const importRegex = /import\s+[\s\S]*?from\s+["'].*?["'];?/g;
+    const imports = [];
+    let match;
+
+    while ((match = importRegex.exec(srcText)) !== null) {
+        imports.push(match[0]);
+    }
+
+    let cleanCode = srcText.replace(importRegex, "");
+
+    const bindings = [];
+    imports.forEach((imp) => {
+        const parsed = parseImportBindings(imp);
+        bindings.push(...parsed);
+    });
+
+    const uniqueBindings = [];
+    const seenNames = new Set();
+    bindings.forEach((b) => {
+        if (!seenNames.has(b.name)) {
+            seenNames.add(b.name);
+            uniqueBindings.push(b);
+        }
+    });
+
+    cleanCode = cleanCode.replace(/export\s+default\s+/g, "const _0xNahanModule = ");
+    cleanCode += "\nreturn _0xNahanModule;";
+
+    const randKey = Math.floor(Math.random() * 80) + 64;
+
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(cleanCode);
+
+    let hexOutput = "";
+    for (let i = 0; i < bytes.length; i++) {
+        const xorByte = bytes[i] ^ randKey;
+        hexOutput += xorByte.toString(16).padStart(2, "0");
+    }
+
+    const rawImportsStr = imports.join("\n");
+    const bindingNames = uniqueBindings.map((b) => b.name);
+
+    const finalLoaderCode =
+        rawImportsStr +
+        "\n\n" +
+        "// Nahan Gateway - Obfuscated Loader Context (v2.5.4.2 Optimized)\n" +
+        'const _0xNahanPayload = "' +
+        hexOutput +
+        '";\n' +
+        "const _0xNahanKey = " +
+        randKey +
+        ";\n\n" +
+        "const _0xNahanBytes = new Uint8Array((_0xNahanPayload.match(/.{1,2}/g) || []).map(x => parseInt(x, 16) ^ _0xNahanKey));\n" +
+        "const _0xNahanCode = new TextDecoder().decode(_0xNahanBytes);\n" +
+        "const _0xNahanRuntime = new Function(" +
+        bindingNames.map((name) => '"' + name + '"').join(", ") +
+        ", _0xNahanCode)(" +
+        bindingNames.join(", ") +
+        ");\n\n" +
+        "export default _0xNahanRuntime;";
+
+    return finalLoaderCode;
+}
+
+function cmpVersions(a, b) {
+    const strip = (v) => String(v).replace(/^v/, "").trim();
+    const pa = strip(a).split(".").map(Number);
+    const pb = strip(b).split(".").map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        let na = pa[i] || 0,
+            nb = pb[i] || 0;
+        if (na > nb) return 1;
+        if (nb > na) return -1;
+    }
+    return 0;
+}
+
 async function loadSysConfig(env, ctx = null) {
     const now = Date.now();
 
@@ -814,15 +976,6 @@ async function sendTelegramMessage(request, type, hostName) {
 // ============================================
 // ===== HANDLE UPDATE API =====
 // ============================================
-// ============================================
-// ===== HANDLE UPDATE API =====
-// ============================================
-// ============================================
-// ===== HANDLE UPDATE API =====
-// ============================================
-// ============================================
-// ===== HANDLE UPDATE API =====
-// ============================================
 async function handleUpdateApi(request, env, ctx) {
     try {
         if (request.method !== "POST") {
@@ -853,13 +1006,12 @@ async function handleUpdateApi(request, env, ctx) {
                         cfAccountId: sysConfig.cfAccountId || "",
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,  // <-- از دیتابیس
+                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION,
                         repo: sysConfig.githubRepo || "mahbodrahimi/nahan"
                     })
                 });
                 const result = await res.json();
                 
-                // به‌روزرسانی زمان آخرین چک
                 sysConfig.lastUpdateCheck = Date.now();
                 await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
                 
@@ -887,28 +1039,24 @@ async function handleUpdateApi(request, env, ctx) {
                         cfApiToken: sysConfig.cfApiToken || "",
                         cfWorkerName: sysConfig.cfWorkerName || "",
                         repo: sysConfig.githubRepo || "mahbodrahimi/nahan",
-                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION  // <-- از دیتابیس
+                        currentVersion: sysConfig.currentVersion || CURRENT_VERSION
                     })
                 });
                 const result = await res.json();
                 
-                // ===== اگر آپدیت موفق بود، نسخه را به‌روزرسانی کن =====
                 if (result.success && result.updated && result.latest) {
                     const oldVersion = sysConfig.currentVersion || CURRENT_VERSION;
                     sysConfig.currentVersion = result.latest;
                     sysConfig.lastUpdateCheck = Date.now();
                     
-                    // ذخیره در دیتابیس
                     await cachedD1Put(env, 'sys_config', JSON.stringify(sysConfig));
                     
-                    // ثبت در لاگ
                     await logActivity(
                         env,
                         'Version Updated',
                         `Version updated from ${oldVersion} to ${result.latest}`
                     );
                     
-                    // ارسال نوتیفیکیشن تلگرام
                     if (sysConfig.tgToken && (sysConfig.tgAdminId || sysConfig.tgChatId)) {
                         const tgMsg = `✅ <b>Version Updated</b>\n\n` +
                                      `🔄 <b>Old Version:</b> ${oldVersion}\n` +
@@ -928,7 +1076,6 @@ async function handleUpdateApi(request, env, ctx) {
                         );
                     }
                     
-                    // به‌روزرسانی result برای ارسال به کاربر
                     result.oldVersion = oldVersion;
                     result.savedToDatabase = true;
                 }
@@ -992,7 +1139,6 @@ async function handleUpdateApi(request, env, ctx) {
                 });
                 const result = await res.json();
                 
-                // اضافه کردن نسخه فعلی از دیتابیس به پاسخ
                 result.currentVersion = sysConfig.currentVersion || CURRENT_VERSION;
                 result.lastUpdateCheck = sysConfig.lastUpdateCheck || 0;
                 
@@ -1020,10 +1166,181 @@ async function handleUpdateApi(request, env, ctx) {
             );
         }
 
+        // ===== ACTION: deploy (for auto-update) =====
+        if (action === "deploy") {
+            if (!sysConfig.cfAccountId || !sysConfig.cfApiToken || !sysConfig.cfWorkerName) {
+                return new Response(
+                    JSON.stringify({
+                        success: false,
+                        error: "CF credentials not configured"
+                    }),
+                    {
+                        status: 400,
+                        headers: { "Content-Type": "application/json" },
+                    }
+                );
+            }
+
+            let finalCodeToDeploy = data.code;
+            if (!finalCodeToDeploy) {
+                const repo = (sysConfig.githubRepo || "mahbodrahimi/nahan")
+                    .replace(/https?:\/\/github\.com\//, "")
+                    .trim();
+                try {
+                    const res = await fetch(
+                        `https://raw.githubusercontent.com/${repo}/main/_worker.js`,
+                    );
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    finalCodeToDeploy = await res.text();
+                } catch (e) {
+                    return new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: "Failed to fetch from GitHub: " + e.message,
+                        }),
+                        {
+                            status: 502,
+                            headers: { "Content-Type": "application/json" },
+                        }
+                    );
+                }
+            }
+
+            const versionMatch = finalCodeToDeploy.match(
+                /const\s+CURRENT_VERSION\s*=\s*["']([^"']+)["']/,
+            );
+            const newVersion = versionMatch ? versionMatch[1] : CURRENT_VERSION;
+
+            if (
+                cmpVersions(CURRENT_VERSION, newVersion) >= 0 &&
+                !data.force &&
+                !data.code
+            ) {
+                return new Response(
+                    JSON.stringify({
+                        success: false,
+                        error: "Remote version is not newer. Click force redeploy to switch formats or overwrite.",
+                    }),
+                    {
+                        status: 400,
+                        headers: { "Content-Type": "application/json" },
+                    }
+                );
+            }
+
+            const format = data.format || sysConfig.autoUpdateFormat || "normal";
+            if (format === "obfuscated") {
+                try {
+                    finalCodeToDeploy = obfuscateCode(finalCodeToDeploy);
+                } catch (oe) {
+                    return new Response(
+                        JSON.stringify({
+                            success: false,
+                            error: "Obfuscation failed: " + oe.message,
+                        }),
+                        {
+                            status: 500,
+                            headers: { "Content-Type": "application/json" },
+                        }
+                    );
+                }
+            }
+
+            const deployRes = await deployWorkerToCloudflare(
+                sysConfig.cfAccountId,
+                sysConfig.cfApiToken,
+                sysConfig.cfWorkerName,
+                finalCodeToDeploy,
+            );
+            const deployResult = await deployRes.json();
+
+            if (deployResult.success) {
+                ctx?.waitUntil(
+                    logActivity(
+                        env,
+                        "Panel Updated",
+                        `v${CURRENT_VERSION} → v${newVersion} (${format})`,
+                    ).catch(() => {}),
+                );
+
+                if (sysConfig.linkedPanels && Array.isArray(sysConfig.linkedPanels)) {
+                    for (const p of sysConfig.linkedPanels) {
+                        if (p && p.url && p.apiKey) {
+                            let cleanUrl = p.url.trim();
+                            if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+                                cleanUrl = "https://" + cleanUrl;
+                            }
+                            try {
+                                const parsed = new URL(cleanUrl);
+                                const targetUrl = `${parsed.protocol}//${parsed.host}/${encodeURI(sysConfig.apiRoute)}/api/update`;
+                                ctx?.waitUntil(
+                                    fetch(targetUrl, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            key: p.apiKey,
+                                            action: "deploy",
+                                            code: finalCodeToDeploy,
+                                            force: true
+                                        }),
+                                        signal: AbortSignal.timeout(15000)
+                                    }).catch(() => {})
+                                );
+                            } catch (err) {}
+                        }
+                    }
+                }
+
+                if (
+                    sysConfig.tgToken &&
+                    (sysConfig.tgAdminId || sysConfig.tgChatId)
+                ) {
+                    const tgMsg = `🔄 <b>Panel Updated</b>\n\n📦 v${CURRENT_VERSION} → v${newVersion}\n🌐 <b>Format:</b> ${format}`;
+                    const notifyChatId =
+                        sysConfig.tgAdminId || sysConfig.tgChatId;
+                    ctx?.waitUntil(
+                        fetch(
+                            `https://api.telegram.org/bot${sysConfig.tgToken}/sendMessage`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    chat_id: notifyChatId,
+                                    text: tgMsg,
+                                    parse_mode: "HTML",
+                                }),
+                            },
+                        ).catch(() => {}),
+                    );
+                }
+                return new Response(
+                    JSON.stringify({
+                        success: true,
+                        message: `Updated to v${newVersion}`,
+                        newVersion,
+                    }),
+                    { headers: { "Content-Type": "application/json" } },
+                );
+            } else {
+                const errMsg =
+                    deployResult.errors?.[0]?.message || "Unknown API error";
+                return new Response(
+                    JSON.stringify({
+                        success: false,
+                        error: "Cloudflare API: " + errMsg,
+                    }),
+                    {
+                        status: 502,
+                        headers: { "Content-Type": "application/json" },
+                    }
+                );
+            }
+        }
+
         return new Response(
             JSON.stringify({
                 success: false,
-                error: "Invalid action. Use: check, apply_update, update_clean_ips, status, get_version"
+                error: "Invalid action. Use: check, apply_update, update_clean_ips, status, get_version, deploy"
             }),
             { status: 400, headers: { "Content-Type": "application/json" } }
         );
@@ -1606,9 +1923,6 @@ async function handleStatsApi(request, env) {
 // ============================================
 // ===== HANDLE AUTH =====
 // ============================================
-// ============================================
-// ===== HANDLE AUTH =====
-// ============================================
 async function handleAuth(request, hostName, ctx, env) {
     try {
         const data = await request.json();
@@ -1617,19 +1931,16 @@ async function handleAuth(request, hostName, ctx, env) {
         const isKeyAuth = loginKey === sysConfig.masterKey || isPanelApiKey(loginKey);
         
         if (isKeyAuth) {
-            // ===== به‌روزرسانی آخرین استفاده از API Key =====
             if (isPanelApiKey(loginKey)) {
                 const apiKeyEntry = (sysConfig.panelApiKeys || []).find(
                     (k) => k.key === loginKey,
                 );
                 if (apiKeyEntry) apiKeyEntry.lastUsed = Date.now();
-                // ذخیره در دیتابیس
                 ctx?.waitUntil(
                     cachedD1Put(env, "sys_config", JSON.stringify(sysConfig)).catch(() => {})
                 );
             }
             
-            // ===== ثبت لاگ ورود موفق =====
             ctx?.waitUntil(
                 logActivity(
                     env,
@@ -1638,7 +1949,6 @@ async function handleAuth(request, hostName, ctx, env) {
                 ).catch(() => {})
             );
             
-            // ===== ارسال نوتیفیکیشن تلگرام (در صورت فعال نبودن حالت سایلنت) =====
             if (!sysConfig.silentAlerts && ctx) {
                 ctx.waitUntil(
                     sendTelegramMessage(
@@ -1649,7 +1959,6 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
-            // ===== ذخیره سیگنال ورود برای ربات تلگرام =====
             if (sysConfig.tgAdminId && env.IOT_DB) {
                 const loginSignal = {
                     name: sysConfig.name || hostName,
@@ -1668,7 +1977,6 @@ async function handleAuth(request, hostName, ctx, env) {
                 );
             }
 
-            // ===== ارسال سیگنال به پنل هاب (در صورت تنظیم) =====
             if (
                 sysConfig.hubPanelUrl &&
                 sysConfig.hubPanelUrl.trim() &&
@@ -1698,14 +2006,12 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
-            // ===== اطلاعات شبکه =====
             const netInfo = {
                 ip: ip,
                 colo: request.cf?.colo || "Unknown",
                 loc: (request.cf?.city || "Unknown") + ", " + (request.cf?.country || "Unknown"),
             };
             
-            // ===== آمار استفاده زنده =====
             let usageData = {};
             for (let [k, v] of uuidUsage.entries()) {
                 usageData[k] = { 
@@ -1714,7 +2020,6 @@ async function handleAuth(request, hostName, ctx, env) {
                 };
             }
             
-            // ===== ساخت آدرس پایه برای لینک‌ها =====
             let baseHost = hostName;
             let protocol = "https";
             if (sysConfig.customPanelUrl && sysConfig.customPanelUrl.trim()) {
@@ -1729,11 +2034,9 @@ async function handleAuth(request, hostName, ctx, env) {
                 } catch (e) {}
             }
 
-            // ===== پاسخ نهایی =====
             return new Response(
                 JSON.stringify({
                     success: true,
-                    // ===== پیکربندی کامل =====
                     config: isPanelApiKey(loginKey) 
                         ? {
                             ...sysConfig,
@@ -1749,27 +2052,14 @@ async function handleAuth(request, hostName, ctx, env) {
                           }
                         : sysConfig,
                     
-                    // ===== شناسه دستگاه =====
                     deviceId: activeDeviceId,
-                    
-                    // ===== اطلاعات شبکه =====
                     network: netInfo,
-                    
-                    // ===== آمار مصرف زنده =====
                     usage: usageData,
-                    
-                    // ===== آمار مصرف ذخیره شده =====
                     sysUsage: sysUsageCache && sysUsageCache.users 
                         ? sysUsageCache.users 
                         : {},
-                    
-                    // ===== نسخه فعلی (از دیتابیس) =====
                     version: sysConfig.currentVersion || CURRENT_VERSION,
-                    
-                    // ===== آخرین زمان بررسی آپدیت =====
                     lastUpdateCheck: sysConfig.lastUpdateCheck || 0,
-                    
-                    // ===== پروفایل‌ها =====
                     profiles: getAllProfiles().map((p) => {
                         let subSuffix = p.name === "Default"
                             ? ""
@@ -1780,8 +2070,6 @@ async function handleAuth(request, hostName, ctx, env) {
                             sync: `${protocol}://${baseHost}/${sysConfig.apiRoute}${subSuffix}`,
                         };
                     }),
-                    
-                    // ===== وضعیت سیستم =====
                     system: {
                         isPaused: sysConfig.isPaused || false,
                         uptime: Math.floor((Date.now() - isolateStartTime) / 1000),
@@ -1793,7 +2081,6 @@ async function handleAuth(request, hostName, ctx, env) {
             );
         }
         
-        // ===== ورود ناموفق =====
         ctx?.waitUntil(
             logActivity(env, "Auth Failed", `Failed login attempt from ${ip}`).catch(() => {})
         );
@@ -1817,7 +2104,6 @@ async function handleAuth(request, hostName, ctx, env) {
         );
         
     } catch (e) {
-        // ===== خطا =====
         return new Response(
             JSON.stringify({ 
                 success: false, 
@@ -1939,7 +2225,6 @@ async function handleConfigSync(request, env, ctx) {
                 "customPanelUrl"
             ].forEach((k) => delete slaveConfig[k]);
 
-            // Propagate config to slaveNodes
             if (nextConfig.slaveNodes && nextConfig.slaveNodes.trim().length > 0) {
                 let nodes = nextConfig.slaveNodes
                     .split(/[\r\n,;]+/)
@@ -1966,7 +2251,6 @@ async function handleConfigSync(request, env, ctx) {
                 });
             }
 
-            // Propagate config to linkedPanels
             if (nextConfig.linkedPanels && Array.isArray(nextConfig.linkedPanels)) {
                 nextConfig.linkedPanels.forEach((p) => {
                     if (p && p.url && p.apiKey) {
@@ -2346,6 +2630,7 @@ const botI18n = {
         tg_conns: "Active Connections",
         tg_version: "Version",
         tg_cf_usage: "CF Usage",
+        tg_auto_update: "Auto Update",
     },
     fa: {
         welcome: "🤖 **به ربات ورتیکس گیت‌وی خوش آمدید**\nجهت مدیریت سیستم نظارتی خود یکی از گزینه‌های زیر را انتخاب نمایید:",
@@ -2487,6 +2772,7 @@ const botI18n = {
         tg_conns: "اتصالات فعال",
         tg_version: "نسخه",
         tg_cf_usage: "مصرف ",
+        tg_auto_update: "بروزرسانی خودکار",
     },
 };
 
@@ -6511,6 +6797,178 @@ function getEffectivePips(p) {
     return pips;
 }
 
+// ─── Upstream VLESS URI Parser ───────────────────────────────────────
+function parseVlessUri(uri) {
+    if (!uri || typeof uri !== "string") return null;
+    uri = uri.trim();
+    if (!uri.startsWith("vless://")) return null;
+    try {
+        let rest = uri.slice(8);
+        let fragment = "";
+        let hashIdx = rest.indexOf("#");
+        if (hashIdx !== -1) {
+            fragment = decodeURIComponent(rest.slice(hashIdx + 1));
+            rest = rest.slice(0, hashIdx);
+        }
+        let queryStr = "";
+        let qIdx = rest.indexOf("?");
+        if (qIdx !== -1) {
+            queryStr = rest.slice(qIdx + 1);
+            rest = rest.slice(0, qIdx);
+        }
+        let params = {};
+        if (queryStr) {
+            queryStr.split("&").forEach((pair) => {
+                let [k, v] = pair.split("=");
+                if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || "");
+            });
+        }
+        let atIdx = rest.indexOf("@");
+        if (atIdx === -1) return null;
+        let uuid = rest.slice(0, atIdx);
+        let hostPort = rest.slice(atIdx + 1);
+        let server, port;
+        if (hostPort.startsWith("[")) {
+            let bracketEnd = hostPort.indexOf("]");
+            server = hostPort.slice(1, bracketEnd);
+            port = parseInt(hostPort.slice(bracketEnd + 2)) || 443;
+        } else {
+            let colonIdx = hostPort.lastIndexOf(":");
+            server = hostPort.slice(0, colonIdx);
+            port = parseInt(hostPort.slice(colonIdx + 1)) || 443;
+        }
+        return {
+            uuid,
+            server,
+            port,
+            name: fragment || "Upstream",
+            security: params.security || "tls",
+            sni: params.sni || params.servername || server,
+            host: params.host || server,
+            path: params.path || "/",
+            type: params.type || "ws",
+            fp: params.fp || params["client-fingerprint"] || "random",
+            allowInsecure: params.allowInsecure === "1" || params.allowInsecure === "true",
+            pbk: params.pbk || "",
+            sid: params.sid || "",
+            flow: params.flow || "",
+            encryption: params.encryption || "none",
+            alpn: params.alpn || "",
+            mode: params.mode || "",
+            raw: uri,
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+function upstreamToSingboxOb(parsed) {
+    if (!parsed) return null;
+    let ob = {
+        type: "vless",
+        tag: "🔗 " + parsed.name,
+        server: parsed.server,
+        server_port: parsed.port,
+        uuid: parsed.uuid,
+        packet_encoding: "xudp",
+        network: parsed.type || "ws",
+        tls: {
+            enabled: parsed.security === "tls" || parsed.security === "reality",
+            server_name: parsed.sni,
+            insecure: parsed.allowInsecure,
+            utls: { enabled: true, fingerprint: parsed.fp || "randomized" },
+        },
+        transport: {
+            type: parsed.type || "ws",
+            path: parsed.path || "/",
+            headers: { Host: parsed.host || parsed.sni },
+        },
+    };
+    if (parsed.flow) ob.flow = parsed.flow;
+    if (parsed.pbk) {
+        ob.tls.reality = {
+            enabled: true,
+            public_key: parsed.pbk,
+            short_id: parsed.sid || "",
+        };
+    }
+    if (parsed.alpn) ob.tls.alpn = parsed.alpn.split(",");
+    return ob;
+}
+
+function upstreamToClashProxy(parsed) {
+    if (!parsed) return null;
+    let proxy = {
+        name: parsed.name,
+        type: "vless",
+        server: parsed.server,
+        port: parsed.port,
+        uuid: parsed.uuid,
+        udp: true,
+        tls: parsed.security === "tls" || parsed.security === "reality",
+        servername: parsed.sni,
+        "client-fingerprint": parsed.fp || "random",
+        "skip-cert-verify": parsed.allowInsecure,
+        network: parsed.type || "ws",
+        "ws-opts": {
+            path: parsed.path || "/",
+            headers: { Host: parsed.host || parsed.sni },
+        },
+    };
+    if (parsed.flow) proxy.flow = parsed.flow;
+    if (parsed.pbk) {
+        proxy["reality-opts"] = {
+            "public-key": parsed.pbk,
+            "short-id": parsed.sid || "",
+        };
+    }
+    if (parsed.alpn) proxy.alpn = parsed.alpn.split(",");
+    return proxy;
+}
+
+function upstreamToV2RayOb(parsed) {
+    if (!parsed) return null;
+    let ob = {
+        tag: "🔗 " + parsed.name,
+        protocol: "vless",
+        settings: {
+            vnext: [
+                {
+                    address: parsed.server,
+                    port: parsed.port,
+                    users: [
+                        {
+                            id: parsed.uuid,
+                            encryption: parsed.encryption || "none",
+                            flow: parsed.flow || "",
+                        },
+                    ],
+                },
+            ],
+        },
+        streamSettings: {
+            network: parsed.type || "ws",
+            security: parsed.security === "tls" || parsed.security === "reality" ? "tls" : "none",
+            tlsSettings: parsed.security === "tls" ? {
+                serverName: parsed.sni,
+                allowInsecure: parsed.allowInsecure,
+                fingerprint: parsed.fp || "random",
+            } : undefined,
+            realitySettings: parsed.security === "reality" ? {
+                serverName: parsed.sni,
+                publicKey: parsed.pbk || "",
+                shortId: parsed.sid || "",
+                fingerprint: parsed.fp || "random",
+            } : undefined,
+            wsSettings: {
+                path: parsed.path || "/",
+                headers: { Host: parsed.host || parsed.sni },
+            },
+        },
+    };
+    return ob;
+}
+
 async function buildUriProfile(
     hostName,
     targetSub = null,
@@ -6702,6 +7160,10 @@ async function buildUriProfile(
             });
         });
     });
+    let parsedUpstream = parseVlessUri(sysConfig.upstreamUri);
+    if (parsedUpstream) {
+        lines.unshift(parsedUpstream.raw);
+    }
     return lines.join("\n");
 }
 
@@ -6710,7 +7172,7 @@ let singboxTemplate = null;
 let VTemplate = null;
 
 async function fetchTemplates(env) {
-    const repo = sysConfig.githubRepo || "itsyebekhe/nahan";
+    const repo = sysConfig.githubRepo || "mahbodrahimi/nahan";
     if (!clashTemplate) {
         try {
             let res = await fetch(`https://raw.githubusercontent.com/${repo}/main/clash.yml`);
@@ -7012,6 +7474,30 @@ async function buildYamlProfile(hostName, targetSub = null, allowInsecure = fals
             });
         });
     });
+
+    let parsedUpstreamYaml = parseVlessUri(sysConfig.upstreamUri);
+    let upstreamNameYaml = "";
+    if (parsedUpstreamYaml) {
+        let upProxy = upstreamToClashProxy(parsedUpstreamYaml);
+        upstreamNameYaml = upProxy.name;
+        let upYaml = `- name: "${upProxy.name.replace(/"/g, '""')}"
+  type: ${getAlpha()}
+  server: ${upProxy.server}
+  port: ${upProxy.port}
+  uuid: ${upProxy.uuid}
+  udp: true
+  tls: ${upProxy.tls}
+  servername: ${upProxy.servername}
+  client-fingerprint: ${upProxy["client-fingerprint"] || "random"}
+  skip-cert-verify: ${upProxy["skip-cert-verify"]}
+  network: ${upProxy.network}
+  ws-opts:
+    path: "${upProxy["ws-opts"]?.path || "/"}"
+    headers:
+      Host: ${upProxy["ws-opts"]?.headers?.Host || upProxy.servername}`;
+        proxies.unshift(upYaml);
+        proxyNames.unshift(`"${upProxy.name}"`);
+    }
 
     let countryGroups = new Map();
     proxyGeoInfo.forEach((geo, name) => {
@@ -7558,6 +8044,16 @@ async function buildClashJsonProfile(
     });
 
     if (dynamicTags.length === 0) { dynamicTags.push("direct"); }
+
+    let parsedUpstream = parseVlessUri(sysConfig.upstreamUri);
+    let upstreamProxyName = "";
+    if (parsedUpstream) {
+        let upstreamProxy = upstreamToClashProxy(parsedUpstream);
+        upstreamProxyName = upstreamProxy.name;
+        proxiesArr.unshift(upstreamProxy);
+        dynamicTags.unshift(upstreamProxyName);
+    }
+
     let countryGroups = new Map();
     proxyGeoInfo.forEach((geo, name) => {
         let key = geo.country || "Unknown";
@@ -7817,6 +8313,17 @@ async function buildVJsonProfile(hostName, targetSub = null, allowInsecure = fal
             });
         });
     });
+
+    let parsedUpstream = parseVlessUri(sysConfig.upstreamUri);
+    if (parsedUpstream) {
+        let upstreamOb = upstreamToV2RayOb(parsedUpstream);
+        outboundsArr.forEach(ob => {
+            if (ob.protocol !== "direct" && ob.protocol !== "freedom" && ob.protocol !== "blackhole") {
+                ob.proxySettings = { tag: upstreamOb.tag, transportSeries: [] };
+            }
+        });
+        outboundsArr.unshift(upstreamOb);
+    }
 
     await fetchTemplates(env);
     if (VTemplate) {
@@ -8218,6 +8725,18 @@ async function buildSingBoxJsonProfile(hostName, targetSub = null, allowInsecure
         dynamicTags.push("direct");
     }
 
+    let parsedUpstream = parseVlessUri(sysConfig.upstreamUri);
+    let upstreamTag = "";
+    if (parsedUpstream) {
+        let upstreamOb = upstreamToSingboxOb(parsedUpstream);
+        upstreamTag = upstreamOb.tag;
+        outboundsArr.forEach(ob => {
+            if (ob.type !== "direct" && ob.type !== "block" && ob.type !== "dns") {
+                ob.detour = upstreamTag;
+            }
+        });
+        outboundsArr.unshift(upstreamOb);
+    }
     
     await fetchTemplates(env);
     if (singboxTemplate) {
@@ -8655,6 +9174,70 @@ export default {
             await loadSysConfig(env, ctx);
             if (sysConfig.autoUpdateCleanIps === true) {
                 await applyRemoteCleanIps(env, ctx);
+            }
+            
+            if (sysConfig.autoUpdate && sysConfig.cfAccountId && sysConfig.cfApiToken && sysConfig.cfWorkerName) {
+                const repo = (sysConfig.githubRepo || "mahbodrahimi/nahan")
+                    .replace(/https?:\/\/github\.com\//, "")
+                    .trim();
+                let remoteVer = null;
+                try {
+                    const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/version`);
+                    if (res.ok) {
+                        remoteVer = (await res.text()).trim();
+                    }
+                } catch (e) {}
+                
+                if (remoteVer && cmpVersions(CURRENT_VERSION, remoteVer) < 0) {
+                    try {
+                        const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/_worker.js`);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        let latestCode = await res.text();
+                        const format = sysConfig.autoUpdateFormat || "normal";
+                        if (format === "obfuscated") {
+                            latestCode = obfuscateCode(latestCode);
+                        }
+                        const deployRes = await deployWorkerToCloudflare(
+                            sysConfig.cfAccountId,
+                            sysConfig.cfApiToken,
+                            sysConfig.cfWorkerName,
+                            latestCode
+                        );
+                        const deployResult = await deployRes.json();
+                        if (deployResult.success) {
+                            await logActivity(env, "Auto-Update Success", `Auto-updated to v${remoteVer} (${format})`);
+                            if (sysConfig.linkedPanels && Array.isArray(sysConfig.linkedPanels)) {
+                                for (const p of sysConfig.linkedPanels) {
+                                    if (p && p.url && p.apiKey) {
+                                        let cleanUrl = p.url.trim();
+                                        if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+                                            cleanUrl = "https://" + cleanUrl;
+                                        }
+                                        try {
+                                            const parsed = new URL(cleanUrl);
+                                            const targetUrl = `${parsed.protocol}//${parsed.host}/${encodeURI(sysConfig.apiRoute)}/api/update`;
+                                            ctx?.waitUntil(
+                                                fetch(targetUrl, {
+                                                    method: "POST",
+                                                    headers: { "Content-Type": "application/json" },
+                                                    body: JSON.stringify({
+                                                        key: p.apiKey,
+                                                        action: "deploy",
+                                                        code: latestCode,
+                                                        force: true
+                                                    }),
+                                                    signal: AbortSignal.timeout(15000)
+                                                }).catch(() => {})
+                                            );
+                                        } catch (err) {}
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        await logActivity(env, "Auto-Update Failed", `Auto-update failed: ${e.message}`);
+                    }
+                }
             }
         } catch (e) {}
     }
