@@ -1967,6 +1967,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                    adv_routing_label: "Custom Direct Routing",
                    adv_routing_hint: "One domain, IP, geoip (e.g., geoip:ir) or geosite (e.g., geosite:ir) per line.",
                    adv_routing_warning: "Wrong entries or bad formatting can break connections. Double check before saving.",
+                   // Save messages
+                   msg_saving: "Saving...",
+                   msg_saved: "Saved!",
+                   msg_err: "Connection Error",
               },
               fa: {
                   title: "ورتیکس گیت‌وی", pass_ph: "کلید اصلی", login_btn: "ورود به سیستم", err_pass: "دسترسی مسدود شد", missing_db: "⚠️ فضای پایگاه داده یافت نشد! تنظیمات ذخیره نمی‌شوند.", system_online: "سیستم فعال است",
@@ -2095,6 +2099,10 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                   adv_routing_label: "مسیریابی مستقیم سفارشی",
                   adv_routing_hint: "هر خط یه آدرس، IP، geoip (مثلاً geoip:ir) یا geosite (مثلاً geosite:ir) باشه.",
                   adv_routing_warning: "اگه آدرس اشتباه بنویسی یا فرمت درست نباشه، اتصال قطع میشه. قبل از ذخیره حتماً چک کن.",
+                  // Save messages
+                  msg_saving: "در حال ذخیره...",
+                  msg_saved: "ذخیره شد!",
+                  msg_err: "خطای ارتباط",
               }
           };
 
@@ -3228,12 +3236,15 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       u.userPorts = filtered.length ? filtered.join(',') : globalPorts[0];
                           return u;
                           });
-              const stat = el('save-status'); stat.textContent = i18n[lang].msg_saving; stat.className = "text-sm font-bold text-primary animate-pulse md:me-4";
+              const stat = el('save-status'); 
+              stat.textContent = i18n[lang].msg_saving; 
+              stat.className = "text-sm font-bold text-primary animate-pulse md:me-4";
               try {
                   const res = await fetch(baseRoute + '/api/sync', { method: 'POST', body: JSON.stringify(payload) });
                   const data = await res.json();
                   if (data.success) {
-                      stat.textContent = i18n[lang].msg_saved; stat.className = "text-sm font-bold text-emerald-500 md:me-4";
+                      stat.textContent = i18n[lang].msg_saved; 
+                      stat.className = "text-sm font-bold text-emerald-500 md:me-4";
                       if (Array.isArray(window.nahanConfig?.linkedPanels) && window.nahanConfig.linkedPanels.length > 0) {
                           const sc = payload.config;
                           const slaveCfg = { ...sc };
@@ -3266,8 +3277,14 @@ proxyip.cmliussss.net" class="w-full px-4 py-3 rounded-xl border border-slate-20
                       renderLinkedNodes();
                       loadDashboard();
                       setTimeout(() => { stat.textContent = ''; }, 2500);
-                  } else { stat.textContent = i18n[lang].msg_err; stat.className = "text-sm font-bold text-red-500 md:me-4"; }
-              } catch(e) { stat.textContent = i18n[lang].msg_err; stat.className = "text-sm font-bold text-red-500 md:me-4"; }
+                  } else { 
+                      stat.textContent = i18n[lang].msg_err; 
+                      stat.className = "text-sm font-bold text-red-500 md:me-4"; 
+                  }
+              } catch(e) { 
+                  stat.textContent = i18n[lang].msg_err; 
+                  stat.className = "text-sm font-bold text-red-500 md:me-4"; 
+              }
           }
 
           document.getElementById('pwd').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
